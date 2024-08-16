@@ -1,3 +1,6 @@
+volumen
+.vscode/
+CPack*
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
