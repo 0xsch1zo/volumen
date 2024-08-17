@@ -3,12 +3,10 @@
 #include <string>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/screen/color.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/component_base.hpp>
-#include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/screen_interactive.hpp>
-#include <iostream>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/captured_mouse.hpp>
+
 
 // Split text to individual lines. This helps to display ascii art properly
 ft::Elements login::split(std::string text) {
