@@ -23,7 +23,7 @@ void authorization::write_func_cleanup(cl::Easy* request) {
     }));
 }
 
-void authorization::get_access_token(std::string authcode, cl::Easy* request) {
+authorization::oauth_data_t* authorization::get_access_token(std::string authcode, cl::Easy* request, authorization::oauth_data_t* oauth_data) {
     std::ostringstream os;
     request->setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
     cl::Forms access_token_data; 
@@ -35,7 +35,31 @@ void authorization::get_access_token(std::string authcode, cl::Easy* request) {
     request->setOpt<cl::options::WriteStream>(&os);
     request->perform();
 
+    json data = json::parse(os.str());
+    try {
+        oauth_data->token_type     = data["token_type"];
+        oauth_data->expires_in     = data["expires_in"];
+        oauth_data->access_token   = data["access_token"];
+        oauth_data->refresh_token  = data["refresh_token"];
+    }
+    catch (json::type_error &e) {
+        // Add some diagnostics on top of the thrown exception
+        // If this fails authorization::authorize() will catch it
+        spd::critical(R"(
+            error: {}
+            error_description: {}
+            hint: {}
+            message: {})", 
+            data["error"], 
+            data["error_description"], 
+            data["hint"],
+            data["message"]
+        );
+        throw;
+    }
+
     write_func_cleanup(request);
+    return oauth_data;
 }
 
 // TODO: make custom exception type for login
@@ -50,7 +74,7 @@ void authorization::authorize(std::string email, std::string password, bool& log
     try {
         // if login failed return
         authcode = get_authcode(email, password, &request);
-        get_access_token(authcode, &request);
+        get_access_token(authcode, &request, &oauth_data);
     }
     catch(cl::RuntimeError &e) {
 		spd::error("Request failed with exception: {}", e.what());
