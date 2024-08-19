@@ -5,11 +5,10 @@
 namespace ft = ftxui;
 
 class login {
-    static std::string email;
-    static std::string password;
+    login();
     static ft::Elements split(std::string text);
     static ft::ButtonOption button_style();
+
 public:
-    login();
     static void ui();
 };

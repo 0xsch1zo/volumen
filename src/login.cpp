@@ -1,6 +1,6 @@
 #include "login.hpp"
+#include "authorization.hpp"
 #include <sstream>
-#include <string>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -34,8 +34,9 @@ ft::ButtonOption login::button_style() {
 }
 
 // Function that displays login interface and gets email and password
-void login::ui() {
+void login::ui(){
         auto screen = ft::ScreenInteractive::FullscreenAlternateScreen();
+        bool login_failed{};
         std::string email;
         std::string password;
         std::string splash = R"(
@@ -55,7 +56,10 @@ void login::ui() {
         ft::InputOption password_opt;
         password_opt.password = true;
         ft::Component password_box = ft::Input(&password, password_opt);
-        ft::Component login_button = ft::Button("Login", [&] { /* a function to send credentials*/ }, button_style());
+        ft::Component login_button = ft::Button("Login", [&] { authorization::authorize(email, password, login_failed); return true; }, button_style());
+        ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
+            return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
+        }), &login_failed);
 
         email_box |= ft::CatchEvent([&](ft::Event event) {
             if(event == ft::Event::Return) { password_box->TakeFocus(); return true; }
@@ -63,14 +67,15 @@ void login::ui() {
         }); 
 
         password_box |= ft::CatchEvent([&](ft::Event event) {
-            if(event == ft::Event::Return) { /* a function to send credentials*/; return true; }
+            if(event == ft::Event::Return) { authorization::authorize(email, password, login_failed); return true; }
             return false;
         });
 
         auto component = ft::Container::Vertical({
             email_box,
             password_box,
-            login_button
+            login_button,
+            error_msg
         });
 
         auto renderer = ft::Renderer(component, [&] {
@@ -81,7 +86,9 @@ void login::ui() {
                         ft::window(ft::text("Password"), password_box->Render()),
                         ft::separatorEmpty()
                     })  | ft::size(ft::WIDTH, ft::EQUAL, 40) | ft::hcenter,
-                    login_button->Render() | ft::hcenter
+                    login_button->Render() | ft::hcenter,
+                    ft::separatorEmpty(),
+                    error_msg->Render() | ft::color(ft::Color::Red) | ft::hcenter
                 })  |
                 ft::vcenter;
         });
