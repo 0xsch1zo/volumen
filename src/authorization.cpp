@@ -8,63 +8,63 @@
 #include <sstream>
 #include <regex>
 
-const std::string authorization::LIBRUS_AUTHORIZE_URL    = "https://portal.librus.pl/konto-librus/redirect/dru";
-const std::string authorization::LIBRUS_LOGIN_URL        = "https://portal.librus.pl/konto-librus/login/action";
-const std::string authorization::LIBRUS_APP_URL          = "app://librus";
-const std::string authorization::LIBRUS_OAUTH_URL        = "https://portal.librus.pl/oauth2/access_token";
-const std::string authorization::LIBRUS_CLIENT_ID        = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
-const std::string authorization::redirectTo              = "/konto-librus/redirect/dru";
-const std::string authorization::redirectCrc             = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
+const std::string authorization::LIBRUS_AUTHORIZE_URL           = "https://portal.librus.pl/konto-librus/redirect/dru";
+const std::string authorization::LIBRUS_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
+const std::string authorization::LIBRUS_APP_URL                 = "app://librus";
+const std::string authorization::LIBRUS_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
+const std::string authorization::LIBRUS_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
+const std::string authorization::redirectTo                     = "/konto-librus/redirect/dru";
+const std::string authorization::redirectCrc                    = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
+cl::Easy authorization::request;
+authorization::oauth_data_t authorization::oauth_data;
 
 // Cleanup after execution else segfault wiil occur becuase os goes out of scope
-void authorization::write_func_cleanup(cl::Easy* request) {
-    request->setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
+void authorization::write_func_cleanup() {
+    request.setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
         return size * nmemb;
     }));
 }
 
-authorization::oauth_data_t* authorization::get_access_token(std::string authcode, cl::Easy* request, authorization::oauth_data_t* oauth_data) {
+void authorization::get_access_token(std::string authcode) {
     std::ostringstream os;
-    request->setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
+    request.setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
     cl::Forms access_token_data; 
     access_token_data.push_back(new cl::FormParts::Content("grant_type", "authorization_code"));
     access_token_data.push_back(new cl::FormParts::Content("client_id", LIBRUS_CLIENT_ID));
     access_token_data.push_back(new cl::FormParts::Content("redirect_uri", LIBRUS_APP_URL));
     access_token_data.push_back(new cl::FormParts::Content("code", authcode));
-    request->setOpt(cl::options::HttpPost(access_token_data));
-    request->setOpt<cl::options::WriteStream>(&os);
-    request->perform();
+    request.setOpt(cl::options::HttpPost(access_token_data));
+    request.setOpt<cl::options::WriteStream>(&os);
+    request.perform();
 
     json data = json::parse(os.str());
     try {
-        oauth_data->token_type     = data["token_type"];
-        oauth_data->expires_in     = data["expires_in"];
-        oauth_data->access_token   = data["access_token"];
-        oauth_data->refresh_token  = data["refresh_token"];
+        oauth_data = { 
+            .token_type     = data["token_type"],
+            .expires_in     = data["expires_in"],
+            .access_token   = data["access_token"],
+            .refresh_token  = data["refresh_token"]
+        };
     }
     catch (json::type_error &e) {
         // Add some diagnostics on top of the thrown exception
         // If this fails authorization::authorize() will catch it
-        spd::critical(R"(
-            error: {}
-            error_description: {}
-            hint: {}
-            message: {})", 
-            data["error"], 
-            data["error_description"], 
-            data["hint"],
-            data["message"]
+        spd::critical(
+            "error: {}\nerror_description: {}\nhint: {}\nmessage: {}", 
+            std::string(data["error"]), 
+            std::string(data["error_description"]), 
+            std::string(data["hint"]),
+            std::string(data["message"])
         );
         throw;
     }
 
-    write_func_cleanup(request);
-    return oauth_data;
+    write_func_cleanup();
 }
 
 // TODO: make custom exception type for login
+// TODO: make shared_request_opt_setup
 void authorization::authorize(std::string email, std::string password, bool& login_failed) {
-    cl::Easy request;
     std::string authcode;
     request.setOpt<cl::options::CookieFile>("");
     request.setOpt<cl::options::FollowLocation>(true);
@@ -73,8 +73,8 @@ void authorization::authorize(std::string email, std::string password, bool& log
 
     try {
         // if login failed return
-        authcode = get_authcode(email, password, &request);
-        get_access_token(authcode, &request, &oauth_data);
+        authcode = get_authcode(email, password);
+        get_access_token(authcode);
     }
     catch(cl::RuntimeError &e) {
 		spd::error("Request failed with exception: {}", e.what());
@@ -93,21 +93,19 @@ void authorization::authorize(std::string email, std::string password, bool& log
         goto common_err_stub;
     }
 
-    cl::Cleanup();
     return;
 
 common_err_stub:
     login_failed = true;
-    cl::Cleanup();
     return;
 }
 
-std::string authorization::find_token(cl::Easy* request) {
+std::string authorization::find_token() {
     const int TOKEN_SIZE = 40; 
     std::ostringstream os;
-    request->setOpt<cl::options::Url>(LIBRUS_AUTHORIZE_URL);
-    request->setOpt<cl::options::WriteStream>(&os);
-    request->perform();
+    request.setOpt<cl::options::Url>(LIBRUS_AUTHORIZE_URL);
+    request.setOpt<cl::options::WriteStream>(&os);
+    request.perform();
 
     std::string resp = os.str();
 
@@ -120,14 +118,14 @@ std::string authorization::find_token(cl::Easy* request) {
     std::string token_suffix = token_match.suffix();
 
     // Cleanup after execution else segfault wiil occur becuase os goes out of scope
-    write_func_cleanup(request);
+    write_func_cleanup();
 
     return token_suffix.substr(0,TOKEN_SIZE);
 }
 
 // TODO: Limit allowed protocols because of redirects
-std::string authorization::get_authcode(std::string email, std::string password, cl::Easy *request) {
-    std::string _token = find_token(request);
+std::string authorization::get_authcode(std::string email, std::string password) {
+    std::string _token = find_token();
 
     // Fomrs takes ownership of the pointers
     cl::Forms authcode_data;
@@ -140,9 +138,9 @@ std::string authorization::get_authcode(std::string email, std::string password,
     // Get the headers
     std::string authcode;
 
-    request->setOpt<cl::options::Url>(LIBRUS_LOGIN_URL);
-    request->setOpt(cl::options::HttpPost(authcode_data));
-    request->setOpt(cl::options::HeaderFunction([&authcode] (char* buffer, size_t size, size_t items) {
+    request.setOpt<cl::options::Url>(LIBRUS_LOGIN_URL);
+    request.setOpt(cl::options::HttpPost(authcode_data));
+    request.setOpt(cl::options::HeaderFunction([&authcode] (char* buffer, size_t size, size_t items) {
         size_t incoming_size = size * items;
         std::string header(buffer, incoming_size); // buffer is not null terminated
 
@@ -156,7 +154,7 @@ std::string authorization::get_authcode(std::string email, std::string password,
     }));
 
     try {
-        request->perform();
+        request.perform();
     } catch (cl::RuntimeError &e) {
         const std::string desired_execption = "The redirect target URL could not be parsed: Unsupported URL scheme";
         const std::string what_was_thrown = e.what();
