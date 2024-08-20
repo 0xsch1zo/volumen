@@ -12,17 +12,42 @@ const std::string authorization::LIBRUS_AUTHORIZE_URL           = "https://porta
 const std::string authorization::LIBRUS_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
 const std::string authorization::LIBRUS_APP_URL                 = "app://librus";
 const std::string authorization::LIBRUS_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
+const std::string authorization::LIBRUS_API_ACCESS_TOKEN_URL    = "https://portal.librus.pl/api/v3/SynergiaAccounts";
 const std::string authorization::LIBRUS_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
 const std::string authorization::redirectTo                     = "/konto-librus/redirect/dru";
 const std::string authorization::redirectCrc                    = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
+bool authorization::auth_completed;
 cl::Easy authorization::request;
+std::vector<authorization::synergia_account_t> authorization::synergia_accounts;
 authorization::oauth_data_t authorization::oauth_data;
 
 // Cleanup after execution else segfault wiil occur becuase os goes out of scope
 void authorization::write_func_cleanup() {
+    // Setting up the write function saves us from segfault when cl::WriteStream goes out of scope
     request.setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
         return size * nmemb;
     }));
+}
+
+// After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
+void authorization::get_accounts() {
+    std::ostringstream os;
+    request.setOpt<cl::options::WriteStream>(&os);
+    request.setOpt<cl::options::Url>(LIBRUS_API_ACCESS_TOKEN_URL);
+    std::list<std::string> auth = {"Authorization: Bearer " + oauth_data.access_token};
+    request.setOpt<cl::options::HttpHeader>(auth);
+    request.perform();
+    json data = json::parse(os.str());
+    
+    // TODO: If fails log where it happened
+    for(auto& account : data["accounts"].items()) {
+        synergia_account_t acc;
+        acc.group = account.value()["group"];
+        acc.access_token = account.value()["accessToken"];
+        acc.student_name = account.value()["studentName"];
+        acc.login = account.value()["login"];
+        synergia_accounts.push_back(acc);
+    }
 }
 
 void authorization::get_access_token(std::string authcode) {
@@ -47,6 +72,7 @@ void authorization::get_access_token(std::string authcode) {
         };
     }
     catch (json::type_error &e) {
+        // TODO: handle properly json fail
         // Add some diagnostics on top of the thrown exception
         // If this fails authorization::authorize() will catch it
         spd::critical(
@@ -59,22 +85,25 @@ void authorization::get_access_token(std::string authcode) {
         throw;
     }
 
+    // Cleanup
+    request.setOpt<cl::options::HttpGet>(true);
     write_func_cleanup();
 }
 
 // TODO: make custom exception type for login
 // TODO: make shared_request_opt_setup
-void authorization::authorize(std::string email, std::string password, bool& login_failed) {
+void authorization::authorize(std::string email, std::string password, bool& auth_failed) {
     std::string authcode;
     request.setOpt<cl::options::CookieFile>("");
     request.setOpt<cl::options::FollowLocation>(true);
-    request.setOpt(cl::options::Verbose(true));
+    request.setOpt(cl::options::Verbose(false));
     request.setOpt<cl::options::AutoReferer>(false);
 
     try {
         // if login failed return
         authcode = get_authcode(email, password);
         get_access_token(authcode);
+        get_accounts();
     }
     catch(cl::RuntimeError &e) {
 		spd::error("Request failed with exception: {}", e.what());
@@ -92,11 +121,23 @@ void authorization::authorize(std::string email, std::string password, bool& log
         spd::error(e.what());
         goto common_err_stub;
     }
-
+    catch (json::type_error &e) {
+        spd::error(e.what());
+        goto common_err_stub;
+    }
+    catch (json::parse_error &e) {
+        spd::error(e.what());
+        goto common_err_stub;
+    }
+    catch (json::other_error &e) {
+        spd::error(e.what());
+        goto common_err_stub;
+    }
+    auth_completed = true;
     return;
 
 common_err_stub:
-    login_failed = true;
+    auth_failed = true;
     return;
 }
 
@@ -163,6 +204,6 @@ std::string authorization::get_authcode(std::string email, std::string password)
             throw;
     }
 
-    if(authcode == "") throw std::runtime_error("Couldn't find authorization code");
+    if(authcode == "") throw std::runtime_error("LOGIN FAILURE: Couldn't find authorization code(most likely wrong email or passoword)");
     return authcode;
 }
