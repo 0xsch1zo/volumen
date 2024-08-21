@@ -48,7 +48,7 @@ ft::ButtonOption login::button_style() {
 
 // Function that displays login interface and gets email and password
 void login::login_screen(){
-    bool auth_failed{};
+    bool auth_failure{};
     std::string email;
     std::string password;
         
@@ -58,17 +58,14 @@ void login::login_screen(){
     password_opt.password = true;
     ft::Component password_box = ft::Input(&password, password_opt);
     ft::Component login_button = ft::Button("Login", [&] { 
-        authorization::authorize(email, password, auth_failed);
-        // Wait until auth has been complited so that authorization::synergia_accounts is populated
-        while(!authorization::auth_completed)
-            ;;
+        auth_failure = !authorization::authorize(email, password); 
         screen.Exit();
         return true; 
     }, button_style());
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
-    }), &auth_failed);
+    }), &auth_failure);
 
     email_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { password_box->TakeFocus(); return true; }
@@ -77,9 +74,7 @@ void login::login_screen(){
 
     password_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { 
-            authorization::authorize(email, password, auth_failed); 
-            while(!authorization::auth_completed)
-                ;;
+            auth_failure = !authorization::authorize(email, password); 
             screen.Exit();
             return true;
         }
@@ -111,29 +106,27 @@ void login::login_screen(){
     });
      
     screen.Loop(login_screen);
-    if(!authorization::auth_completed) return;
+    if(auth_failure) return;
     choose_account_screen();
 }
 
 void login::choose_account_screen() {
     // Choose synergia account
+    int account_i = 0;
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [](){ screen.Exit(); }, button_style());
+    ft::Component continue_button = ft::Button("Continue", [&account_i](){ screen.Exit(); }, button_style());
     std::vector<std::string> names;
-    // TODO: handle exception
-    if(authorization::synergia_accounts.empty()) throw std::runtime_error("Vector with synergia accounts is empty");
 
-    for(auto account : authorization::synergia_accounts) {
+    for(auto account : authorization::get_synergia_accounts()) {
         names.push_back(account.student_name);
     }
 
-    int entry_i = 0;
     auto account_menu = ft::Dropdown({
         .radiobox =
         {
             .entries = &names,
-            .selected = &entry_i,
+            .selected = &account_i,
             .transform =
             [](const ft::EntryState& s) {
                 auto t = ft::text(s.label) | ft::borderEmpty;

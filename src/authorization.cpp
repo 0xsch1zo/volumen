@@ -16,84 +16,12 @@ const std::string authorization::LIBRUS_API_ACCESS_TOKEN_URL    = "https://porta
 const std::string authorization::LIBRUS_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
 const std::string authorization::redirectTo                     = "/konto-librus/redirect/dru";
 const std::string authorization::redirectCrc                    = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
-bool authorization::auth_completed;
-cl::Easy authorization::request;
-std::vector<authorization::synergia_account_t> authorization::synergia_accounts;
-authorization::oauth_data_t authorization::oauth_data;
-
-// Cleanup after execution else segfault wiil occur becuase os goes out of scope
-void authorization::write_func_cleanup() {
-    // Setting up the write function saves us from segfault when cl::WriteStream goes out of scope
-    request.setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
-        return size * nmemb;
-    }));
-}
-
-// After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
-void authorization::get_accounts() {
-    std::ostringstream os;
-    request.setOpt<cl::options::WriteStream>(&os);
-    request.setOpt<cl::options::Url>(LIBRUS_API_ACCESS_TOKEN_URL);
-    std::list<std::string> auth = {"Authorization: Bearer " + oauth_data.access_token};
-    request.setOpt<cl::options::HttpHeader>(auth);
-    request.perform();
-    json data = json::parse(os.str());
-    
-    // TODO: If fails log where it happened
-    for(auto& account : data["accounts"].items()) {
-        synergia_account_t acc;
-        acc.group = account.value()["group"];
-        acc.access_token = account.value()["accessToken"];
-        acc.student_name = account.value()["studentName"];
-        acc.login = account.value()["login"];
-        synergia_accounts.push_back(acc);
-    }
-}
-
-void authorization::get_access_token(std::string authcode) {
-    std::ostringstream os;
-    request.setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
-    cl::Forms access_token_data; 
-    access_token_data.push_back(new cl::FormParts::Content("grant_type", "authorization_code"));
-    access_token_data.push_back(new cl::FormParts::Content("client_id", LIBRUS_CLIENT_ID));
-    access_token_data.push_back(new cl::FormParts::Content("redirect_uri", LIBRUS_APP_URL));
-    access_token_data.push_back(new cl::FormParts::Content("code", authcode));
-    request.setOpt(cl::options::HttpPost(access_token_data));
-    request.setOpt<cl::options::WriteStream>(&os);
-    request.perform();
-
-    json data = json::parse(os.str());
-    try {
-        oauth_data = { 
-            .token_type     = data["token_type"],
-            .expires_in     = data["expires_in"],
-            .access_token   = data["access_token"],
-            .refresh_token  = data["refresh_token"]
-        };
-    }
-    catch (json::type_error &e) {
-        // TODO: handle properly json fail
-        // Add some diagnostics on top of the thrown exception
-        // If this fails authorization::authorize() will catch it
-        spd::critical(
-            "error: {}\nerror_description: {}\nhint: {}\nmessage: {}", 
-            std::string(data["error"]), 
-            std::string(data["error_description"]), 
-            std::string(data["hint"]),
-            std::string(data["message"])
-        );
-        throw;
-    }
-
-    // Cleanup
-    request.setOpt<cl::options::HttpGet>(true);
-    write_func_cleanup();
-}
 
 // TODO: make custom exception type for login
 // TODO: make shared_request_opt_setup
-void authorization::authorize(std::string email, std::string password, bool& auth_failed) {
+bool authorization::authorize(std::string email, std::string password) {
     std::string authcode;
+    cl::Easy request;
     request.setOpt<cl::options::CookieFile>("");
     request.setOpt<cl::options::FollowLocation>(true);
     request.setOpt(cl::options::Verbose(false));
@@ -101,9 +29,9 @@ void authorization::authorize(std::string email, std::string password, bool& aut
 
     try {
         // if login failed return
-        authcode = get_authcode(email, password);
-        get_access_token(authcode);
-        get_accounts();
+        authcode = get_authcode(email, password, request);
+        oauth_data_t oauth_data = std::move(get_portal_access_token(authcode, request));
+        get_synergia_accounts(&oauth_data, &request);
     }
     catch(cl::RuntimeError &e) {
 		spd::error("Request failed with exception: {}", e.what());
@@ -133,15 +61,94 @@ void authorization::authorize(std::string email, std::string password, bool& aut
         spd::error(e.what());
         goto common_err_stub;
     }
-    auth_completed = true;
-    return;
+    return true;
 
 common_err_stub:
-    auth_failed = true;
-    return;
+    return false;
 }
 
-std::string authorization::find_token() {
+// Cleanup after execution else segfault wiil occur becuase os goes out of scope
+void authorization::write_func_cleanup(cl::Easy& request) {
+    // Setting up the write function saves us from segfault when cl::WriteStream goes out of scope
+    request.setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
+        return size * nmemb;
+    }));
+}
+
+// After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
+// ARGUMENTS CAN BE NULLPTRS ONLY AFTER FIRST CALL
+std::vector<authorization::synergia_account_t>& authorization::get_synergia_accounts(oauth_data_t* oauth_data, cl::Easy* request) {
+    static std::vector<synergia_account_t> synergia_accounts; 
+    // If we already have populated synergia_accounts just return reference. Works because static
+    if(!synergia_accounts.empty()) {
+        spd::debug("Worked");
+        return synergia_accounts;
+    }
+
+    assert(oauth_data == nullptr || request == nullptr); // Arguments can't be nullptrs on first call
+    std::ostringstream os;
+    request->setOpt<cl::options::WriteStream>(&os);
+    request->setOpt<cl::options::Url>(LIBRUS_API_ACCESS_TOKEN_URL);
+    std::list<std::string> auth = {"Authorization: Bearer " + oauth_data->access_token};
+    request->setOpt<cl::options::HttpHeader>(auth);
+    request->perform();
+    json data = json::parse(os.str());
+    // TODO: If fails log where it happened
+    for(auto& account : data["accounts"].items()) {
+        synergia_account_t acc;
+        acc.group = account.value()["group"];
+        acc.access_token = account.value()["accessToken"];
+        acc.student_name = account.value()["studentName"];
+        acc.login = account.value()["login"];
+        synergia_accounts.push_back(acc);
+    }
+    
+    return synergia_accounts;
+}
+
+authorization::oauth_data_t authorization::get_portal_access_token(std::string authcode, cl::Easy& request) {
+    std::ostringstream os;
+    request.setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
+    cl::Forms access_token_data; 
+    access_token_data.push_back(new cl::FormParts::Content("grant_type", "authorization_code"));
+    access_token_data.push_back(new cl::FormParts::Content("client_id", LIBRUS_CLIENT_ID));
+    access_token_data.push_back(new cl::FormParts::Content("redirect_uri", LIBRUS_APP_URL));
+    access_token_data.push_back(new cl::FormParts::Content("code", authcode));
+    request.setOpt(cl::options::HttpPost(access_token_data));
+    request.setOpt<cl::options::WriteStream>(&os);
+    request.perform();
+
+    oauth_data_t oauth_data;
+    json data = json::parse(os.str());
+    try {
+        oauth_data = { 
+            .token_type     = data["token_type"],
+            .expires_in     = data["expires_in"],
+            .access_token   = data["access_token"],
+            .refresh_token  = data["refresh_token"]
+        };
+    }
+    catch (json::type_error &e) {
+        // TODO: handle properly json fail
+        // Add some diagnostics on top of the thrown exception
+        // If this fails authorization::authorize() will catch it
+        spd::critical(
+            "error: {}\nerror_description: {}\nhint: {}\nmessage: {}", 
+            std::string(data["error"]), 
+            std::string(data["error_description"]), 
+            std::string(data["hint"]),
+            std::string(data["message"])
+        );
+        throw;
+    }
+
+    // Cleanup
+    request.setOpt<cl::options::HttpGet>(true);
+    write_func_cleanup(request);
+    return oauth_data;
+}
+
+std::string authorization::find_token(cl::Easy& request) {
     const int TOKEN_SIZE = 40; 
     std::ostringstream os;
     request.setOpt<cl::options::Url>(LIBRUS_AUTHORIZE_URL);
@@ -159,14 +166,14 @@ std::string authorization::find_token() {
     std::string token_suffix = token_match.suffix();
 
     // Cleanup after execution else segfault wiil occur becuase os goes out of scope
-    write_func_cleanup();
+    write_func_cleanup(request);
 
     return token_suffix.substr(0,TOKEN_SIZE);
 }
 
 // TODO: Limit allowed protocols because of redirects
-std::string authorization::get_authcode(std::string email, std::string password) {
-    std::string _token = find_token();
+std::string authorization::get_authcode(std::string email, std::string password, cl::Easy& request) {
+    std::string _token = find_token(request);
 
     // Fomrs takes ownership of the pointers
     cl::Forms authcode_data;
