@@ -1,4 +1,5 @@
 #include "authorization.hpp"
+#include "utils.hpp"
 #include <curlpp/Easy.hpp>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Options.hpp>
@@ -8,12 +9,12 @@
 #include <sstream>
 #include <regex>
 
-const std::string authorization::LIBRUS_AUTHORIZE_URL           = "https://portal.librus.pl/konto-librus/redirect/dru";
-const std::string authorization::LIBRUS_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
-const std::string authorization::LIBRUS_APP_URL                 = "app://librus";
-const std::string authorization::LIBRUS_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
+const std::string authorization::LIBRUS_PORTAL_AUTHORIZE_URL           = "https://portal.librus.pl/konto-librus/redirect/dru";
+const std::string authorization::LIBRUS_PORTAL_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
+const std::string authorization::LIBRUS_PORTAL_APP_URL                 = "app://librus";
+const std::string authorization::LIBRUS_PORTAL_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
 const std::string authorization::LIBRUS_API_ACCESS_TOKEN_URL    = "https://portal.librus.pl/api/v3/SynergiaAccounts";
-const std::string authorization::LIBRUS_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
+const std::string authorization::LIBRUS_PORTAL_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
 const std::string authorization::redirectTo                     = "/konto-librus/redirect/dru";
 const std::string authorization::redirectCrc                    = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
 
@@ -67,21 +68,12 @@ common_err_stub:
     return false;
 }
 
-// Cleanup after execution else segfault wiil occur becuase os goes out of scope
-void authorization::write_func_cleanup(cl::Easy& request) {
-    // Setting up the write function saves us from segfault when cl::WriteStream goes out of scope
-    request.setOpt(cl::options::WriteFunction([](char* data, size_t size, size_t nmemb) {
-        return size * nmemb;
-    }));
-}
-
 // After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
 // ARGUMENTS CAN BE NULLPTRS ONLY AFTER FIRST CALL
 std::vector<authorization::synergia_account_t>& authorization::get_synergia_accounts(oauth_data_t* oauth_data, cl::Easy* request) {
     static std::vector<synergia_account_t> synergia_accounts; 
     // If we already have populated synergia_accounts just return reference. Works because static
     if(!synergia_accounts.empty()) {
-        spd::debug("Worked");
         return synergia_accounts;
     }
 
@@ -108,11 +100,11 @@ std::vector<authorization::synergia_account_t>& authorization::get_synergia_acco
 
 authorization::oauth_data_t authorization::get_portal_access_token(std::string authcode, cl::Easy& request) {
     std::ostringstream os;
-    request.setOpt<cl::options::Url>(LIBRUS_OAUTH_URL);
+    request.setOpt<cl::options::Url>(LIBRUS_PORTAL_OAUTH_URL);
     cl::Forms access_token_data; 
     access_token_data.push_back(new cl::FormParts::Content("grant_type", "authorization_code"));
-    access_token_data.push_back(new cl::FormParts::Content("client_id", LIBRUS_CLIENT_ID));
-    access_token_data.push_back(new cl::FormParts::Content("redirect_uri", LIBRUS_APP_URL));
+    access_token_data.push_back(new cl::FormParts::Content("client_id", LIBRUS_PORTAL_CLIENT_ID));
+    access_token_data.push_back(new cl::FormParts::Content("redirect_uri", LIBRUS_PORTAL_APP_URL));
     access_token_data.push_back(new cl::FormParts::Content("code", authcode));
     request.setOpt(cl::options::HttpPost(access_token_data));
     request.setOpt<cl::options::WriteStream>(&os);
@@ -151,7 +143,7 @@ authorization::oauth_data_t authorization::get_portal_access_token(std::string a
 std::string authorization::find_token(cl::Easy& request) {
     const int TOKEN_SIZE = 40; 
     std::ostringstream os;
-    request.setOpt<cl::options::Url>(LIBRUS_AUTHORIZE_URL);
+    request.setOpt<cl::options::Url>(LIBRUS_PORTAL_AUTHORIZE_URL);
     request.setOpt<cl::options::WriteStream>(&os);
     request.perform();
 
@@ -186,13 +178,13 @@ std::string authorization::get_authcode(std::string email, std::string password,
     // Get the headers
     std::string authcode;
 
-    request.setOpt<cl::options::Url>(LIBRUS_LOGIN_URL);
+    request.setOpt<cl::options::Url>(LIBRUS_PORTAL_LOGIN_URL);
     request.setOpt(cl::options::HttpPost(authcode_data));
     request.setOpt(cl::options::HeaderFunction([&authcode] (char* buffer, size_t size, size_t items) {
         size_t incoming_size = size * items;
         std::string header(buffer, incoming_size); // buffer is not null terminated
 
-        std::regex authcode_regex("location:.*" + LIBRUS_APP_URL + "?code=", std::regex::grep);
+        std::regex authcode_regex("location:.*" + LIBRUS_PORTAL_APP_URL + "?code=", std::regex::grep);
         std::smatch authcode_match;
         if(!std::regex_search(header, authcode_match, authcode_regex)) return incoming_size;
 

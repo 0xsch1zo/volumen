@@ -10,11 +10,11 @@ namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class authorization {
-    static const std::string LIBRUS_AUTHORIZE_URL;
-    static const std::string LIBRUS_LOGIN_URL;
-    static const std::string LIBRUS_APP_URL;
-    static const std::string LIBRUS_OAUTH_URL;
-    static const std::string LIBRUS_CLIENT_ID;
+    static const std::string LIBRUS_PORTAL_AUTHORIZE_URL;
+    static const std::string LIBRUS_PORTAL_LOGIN_URL;
+    static const std::string LIBRUS_PORTAL_APP_URL;
+    static const std::string LIBRUS_PORTAL_OAUTH_URL;
+    static const std::string LIBRUS_PORTAL_CLIENT_ID;
     static const std::string LIBRUS_API_ACCESS_TOKEN_URL;
     static const std::string redirectTo;
     static const std::string redirectCrc;
@@ -39,7 +39,6 @@ public:
 private:
     static std::string get_authcode(std::string email, std::string password, cl::Easy& request);
     static std::string find_token(cl::Easy& request);
-    static void write_func_cleanup(cl::Easy& request);
     static oauth_data_t get_portal_access_token(std::string authcode, cl::Easy& request);
 public:
     static bool authorize(std::string email, std::string password);
