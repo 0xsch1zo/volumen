@@ -112,10 +112,10 @@ void login::login_screen(){
 
 void login::choose_account_screen() {
     // Choose synergia account
-    int account_i = 0;
+    int synergia_account_i = 0;
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [&account_i](){ screen.Exit(); }, button_style());
+    ft::Component continue_button = ft::Button("Continue", [](){ screen.Exit(); }, button_style());
     std::vector<std::string> names;
 
     for(auto account : authorization::get_synergia_accounts()) {
@@ -126,7 +126,7 @@ void login::choose_account_screen() {
         .radiobox =
         {
             .entries = &names,
-            .selected = &account_i,
+            .selected = &synergia_account_i,
             .transform =
             [](const ft::EntryState& s) {
                 auto t = ft::text(s.label) | ft::borderEmpty;
