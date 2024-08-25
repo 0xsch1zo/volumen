@@ -41,7 +41,7 @@ private:
     static std::string find_token(cl::Easy& request);
     static oauth_data_t get_portal_access_token(std::string authcode, cl::Easy& request);
 public:
-    static bool authorize(std::string email, std::string password);
+    static int authorize(std::string email, std::string password);
     static std::vector<synergia_account_t>& get_synergia_accounts(oauth_data_t* oauth_data = nullptr, cl::Easy* request = nullptr);
 };
 

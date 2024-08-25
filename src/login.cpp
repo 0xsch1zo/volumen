@@ -1,5 +1,6 @@
 #include "login.hpp"
 #include "authorization.hpp"
+#include "tab.hpp"
 #include <sstream>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -48,7 +49,7 @@ ft::ButtonOption login::button_style() {
 
 // Function that displays login interface and gets email and password
 void login::login_screen(){
-    bool auth_failure{};
+    int auth_status{};
     std::string email;
     std::string password;
         
@@ -58,14 +59,14 @@ void login::login_screen(){
     password_opt.password = true;
     ft::Component password_box = ft::Input(&password, password_opt);
     ft::Component login_button = ft::Button("Login", [&] { 
-        auth_failure = !authorization::authorize(email, password); 
+        if((auth_status = authorization::authorize(email, password)) == -1) return true;; 
         screen.Exit();
         return true; 
     }, button_style());
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
-    }), &auth_failure);
+    }), [&]{ if(auth_status == -1) return true; else return false; });
 
     email_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { password_box->TakeFocus(); return true; }
@@ -74,7 +75,7 @@ void login::login_screen(){
 
     password_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { 
-            auth_failure = !authorization::authorize(email, password); 
+            if((auth_status = authorization::authorize(email, password)) == -1) return true; 
             screen.Exit();
             return true;
         }
@@ -106,7 +107,7 @@ void login::login_screen(){
     });
      
     screen.Loop(login_screen);
-    if(auth_failure) return;
+    if(auth_status == 0 || auth_status == -1) return;
     choose_account_screen();
 }
 
@@ -165,4 +166,5 @@ void login::choose_account_screen() {
     });
 
     screen.Loop(choose_synergia_account);
+    tab::display_interface(synergia_account_i);
 }

@@ -20,7 +20,7 @@ const std::string authorization::redirectCrc                    = "3b77fc51101d5
 
 // TODO: make custom exception type for login
 // TODO: make shared_request_opt_setup
-bool authorization::authorize(std::string email, std::string password) {
+int authorization::authorize(std::string email, std::string password) {
     std::string authcode;
     cl::Easy request;
     request.setOpt<cl::options::CookieFile>("");
@@ -62,10 +62,10 @@ bool authorization::authorize(std::string email, std::string password) {
         spd::error(e.what());
         goto common_err_stub;
     }
-    return true;
+    return 1;
 
 common_err_stub:
-    return false;
+    return -1;
 }
 
 // After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
