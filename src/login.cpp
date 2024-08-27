@@ -1,6 +1,7 @@
 #include "login.hpp"
 #include "authorization.hpp"
 #include "tab.hpp"
+#include "utils.hpp"
 #include <sstream>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -21,16 +22,6 @@ const std::string login::splash = R"(
      ░                                                          
 )";
 ft::ScreenInteractive login::screen = ft::ScreenInteractive::FullscreenAlternateScreen();
-
-// Split text to individual lines. This helps to display ascii art properly
-ft::Elements login::split(std::string text) {
-        ft::Elements output;
-        std::stringstream ss(text);
-        std::string line;
-        while (std::getline(ss, line, '\n'))
-            output.push_back(ft::text(line));
-        return output;
-}
 
 // This provides a button with centered text and rounded corners, yeah ...
 ft::ButtonOption login::button_style() {
@@ -93,7 +84,7 @@ void login::login_screen(){
     auto login_screen = ft::Renderer(login_components, [&] {
         return ft::vbox({
                 // Could make splash a component but there will be focus issues caused by that if it's a static global
-                ft::vbox(split(splash)) | ft::hcenter,
+                ft::vbox(utils::split(splash)) | ft::hcenter,
                 ft::vbox({
                     ft::window(ft::text("Email"), email_box->Render()),
                     ft::window(ft::text("Password"), password_box->Render()),
@@ -153,7 +144,7 @@ void login::choose_account_screen() {
 
     auto choose_synergia_account = ft::Renderer(choose_synergia_account_components, [&] {
         return ft::vbox({
-            ft::vbox(split(splash)) | ft::hcenter,
+            ft::vbox(utils::split(splash)) | ft::hcenter,
             ft::separatorEmpty(),
             ft::vbox({
                 info->Render() | ft::color(ft::Color::Green),

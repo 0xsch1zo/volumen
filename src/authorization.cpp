@@ -136,7 +136,7 @@ authorization::oauth_data_t authorization::get_portal_access_token(std::string a
 
     // Cleanup
     request.setOpt<cl::options::HttpGet>(true);
-    write_func_cleanup(request);
+    utils::write_func_cleanup(request);
     return oauth_data;
 }
 
@@ -158,7 +158,7 @@ std::string authorization::find_token(cl::Easy& request) {
     std::string token_suffix = token_match.suffix();
 
     // Cleanup after execution else segfault wiil occur becuase os goes out of scope
-    write_func_cleanup(request);
+    utils::write_func_cleanup(request);
 
     return token_suffix.substr(0,TOKEN_SIZE);
 }
