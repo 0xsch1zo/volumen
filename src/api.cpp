@@ -18,11 +18,10 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
-    spd::debug(synergia_account.access_token);
 }
 
 // Sets up common options for the request
-void api::request_setup(cl::Easy& request, std::ostringstream& stream, std::string&& endpoint) {
+void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& endpoint) {
     request.setOpt<cl::options::WriteStream>(&stream);
     request.setOpt<cl::options::Url>(endpoint);
     request.setOpt<cl::options::Verbose>(false);
@@ -61,14 +60,23 @@ std::shared_ptr<std::string> api::fetch_id(const std::string& url_id, cl::Easy& 
     return std::make_shared<std::string>((std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"]);
 }
 
-std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[]>
-api::get_timetable(std::string week_start){
+std::shared_ptr<api::timetable_t>
+api::get_timetable(std::string next_or_prev_url){
     std::ostringstream os;
     cl::Easy request;
     const int DAY_NUM = 7;
-    request_setup(request, os, LIBRUS_API_URL + TIMETABLE_ENDPOINT + "?weekStart=" + week_start);
+
+    // If url is empty  it will query for the current week
+    if(next_or_prev_url.empty())
+        request_setup(request, os, LIBRUS_API_URL + TIMETABLE_ENDPOINT);
+    else
+        request_setup(request, os, next_or_prev_url);
+
     request.perform();
+
     json data = json::parse(os.str());
+
+    std::shared_ptr timetable_struct_p = std::make_shared<timetable_t>();
 
     std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]> 
     timetable(new std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]);
@@ -76,6 +84,9 @@ api::get_timetable(std::string week_start){
     for(int i{}; i< DAY_NUM; i++) {
         timetable[i] = std::make_shared<std::vector<api::lesson_t>>();
     }
+
+    timetable_struct_p->prev_url = data["Pages"]["Prev"];
+    timetable_struct_p->next_url = data["Pages"]["Next"];
 
     int i{};
     for(const auto& day : data["Timetable"].items()) {
@@ -111,6 +122,8 @@ api::get_timetable(std::string week_start){
         }
         i++;
     }
+    
+    timetable_struct_p->timetable = timetable;
 
-    return timetable;
+    return timetable_struct_p;
 }

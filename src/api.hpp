@@ -34,13 +34,18 @@ public:
         bool is_canceled;
         bool is_empty;
     };
+    struct timetable_t {
+        std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[]> timetable;
+        std::string prev_url;
+        std::string next_url;
+    };
     api(authorization::synergia_account_t& account);
 
-    static void request_setup(cl::Easy& request, std::ostringstream& stream, std::string&& endpoint);
+    static void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& endpoint);
 
     std::shared_ptr<std::vector<event_t>> get_events();
 
-    std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[]>
+    std::shared_ptr<timetable_t>
     get_timetable(std::string week_start = "");
 };
 
