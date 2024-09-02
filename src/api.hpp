@@ -36,10 +36,10 @@ public:
     };
     api(authorization::synergia_account_t& account);
 
+    static void request_setup(cl::Easy& request, std::ostringstream& stream, std::string&& endpoint);
+
     std::shared_ptr<std::vector<event_t>> get_events();
 
-    //std::shared_ptr<std::vector<std::shared_ptr<std::vector<api::lesson_t>>>>
-    //std::array<std::shared_ptr<std::vector<api::lesson_t>>, 7>
     std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[]>
     get_timetable(std::string week_start = "");
 };

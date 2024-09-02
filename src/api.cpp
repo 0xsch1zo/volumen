@@ -18,20 +18,25 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
+    spd::debug(synergia_account.access_token);
+}
+
+// Sets up common options for the request
+void api::request_setup(cl::Easy& request, std::ostringstream& stream, std::string&& endpoint) {
+    request.setOpt<cl::options::WriteStream>(&stream);
+    request.setOpt<cl::options::Url>(endpoint);
+    request.setOpt<cl::options::Verbose>(false);
+    request.setOpt<cl::options::HttpHeader>(auth_header);
 }
 
 std::shared_ptr<std::vector<api::event_t>> api::get_events() {
     std::ostringstream os;
     cl::Easy request;
-    request.setOpt<cl::options::WriteStream>(&os);
-    request.setOpt<cl::options::Url>(LIBRUS_API_URL + EVENT_ENDPOINT);
-    request.setOpt<cl::options::Verbose>(false);
-    request.setOpt<cl::options::HttpHeader>(auth_header);
+    request_setup(request, os, LIBRUS_API_URL + EVENT_ENDPOINT);
     request.perform();
     json data = json::parse(os.str());
     std::shared_ptr<std::vector<api::event_t>> events = std::make_shared<std::vector<api::event_t>>();
 
-    //spd::info(os.str());
     for(const auto& event : data["SchoolNotices"]){
         events->push_back({
             .start_date     = event["StartDate"],
@@ -57,15 +62,11 @@ std::shared_ptr<std::string> api::fetch_id(const std::string& url_id, cl::Easy& 
 }
 
 std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[]>
-// std::array<std::shared_ptr<std::vector<api::lesson_t>>, 7>
 api::get_timetable(std::string week_start){
     std::ostringstream os;
     cl::Easy request;
     const int DAY_NUM = 7;
-    request.setOpt<cl::options::WriteStream>(&os);
-    request.setOpt<cl::options::Url>(LIBRUS_API_URL + TIMETABLE_ENDPOINT + "?weekStart=" + week_start);
-    request.setOpt<cl::options::Verbose>(false);
-    request.setOpt<cl::options::HttpHeader>(auth_header);
+    request_setup(request, os, LIBRUS_API_URL + TIMETABLE_ENDPOINT + "?weekStart=" + week_start);
     request.perform();
     json data = json::parse(os.str());
 
