@@ -20,6 +20,6 @@ ft::Elements utils::split(std::string text) {
         std::stringstream ss(text);
         std::string line;
         while (std::getline(ss, line, '\n'))
-            output.push_back(ft::text(line));
+            output.push_back(ft::paragraph(line));
         return output;
 }
