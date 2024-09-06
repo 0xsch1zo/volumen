@@ -11,6 +11,7 @@ class api {
     static const std::string LIBRUS_API_URL;
     static const std::string EVENT_ENDPOINT;
     static const std::string TIMETABLE_ENDPOINT;
+    static const std::string TODAY_ENDPOINT;
     static authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
     static std::list<std::string> auth_header;
     static std::shared_ptr<std::string> fetch_id(const std::string& url_id, cl::Easy& request);
@@ -41,12 +42,14 @@ public:
     };
     api(authorization::synergia_account_t& account);
 
-    static void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& endpoint);
+    static void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
 
     std::shared_ptr<std::vector<event_t>> get_events();
 
     std::shared_ptr<timetable_t>
     get_timetable(std::string week_start = "");
+
+    std::string get_today();
 };
 
 

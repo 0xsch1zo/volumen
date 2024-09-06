@@ -9,6 +9,7 @@
 const std::string api::LIBRUS_API_URL       = "https://api.librus.pl";
 const std::string api::EVENT_ENDPOINT       = "/3.0/SchoolNotices";
 const std::string api::TIMETABLE_ENDPOINT   = "/3.0/Timetables";
+const std::string api::TODAY_ENDPOINT       = "/3.0/SystemData";
 authorization::synergia_account_t api::synergia_account;
 std::list<std::string> api::auth_header;
 
@@ -21,9 +22,9 @@ api::api(authorization::synergia_account_t& account) {
 }
 
 // Sets up common options for the request
-void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& endpoint) {
+void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url) {
     request.setOpt<cl::options::WriteStream>(&stream);
-    request.setOpt<cl::options::Url>(endpoint);
+    request.setOpt<cl::options::Url>(url);
     request.setOpt<cl::options::Verbose>(false);
     request.setOpt<cl::options::HttpHeader>(auth_header);
 }
@@ -126,4 +127,15 @@ api::get_timetable(std::string next_or_prev_url){
     timetable_struct_p->timetable = timetable;
 
     return timetable_struct_p;
+}
+
+std::string api::get_today() {
+    std::ostringstream os;
+    cl::Easy request;
+
+    request_setup(request, os, LIBRUS_API_URL + TODAY_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+    return (std::string)data["Date"];
 }
