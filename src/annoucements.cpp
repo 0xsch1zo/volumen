@@ -1,38 +1,30 @@
-#include "messages.hpp"
-#include "utils.hpp"
+#include "annoucements.hpp"
 #include "tab.hpp"
-#include <string>
-#include <vector>
-#include <chrono>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/table.hpp>
-#include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/captured_mouse.hpp>
+#include "utils.hpp"
+#include <thread>
+#include <future>
+#include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/component/captured_mouse.hpp>
+#include <ftxui/component/component.hpp>
 
-// TODO: make variable for accent color
-messages::messages(ft::ScreenInteractive* main_screen) {
+// takes in main screen as pointer and content type enum
+annoucements::annoucements(ft::ScreenInteractive* main_screen) {
     main_screen_p = main_screen;
 }
 
-ft::Component messages::content_view() {
-    auto message = messages_p->messages->at(selected);
+ft::Component annoucements::content_view() {
+    auto annoucements = annoucements_p->at(selected);
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
-    const int DATE_SIZE = 10;
-    char date_s[DATE_SIZE];
-    std::time_t t = message.send_date;
-    std::tm* date = std::localtime(&t);
-    strftime(date_s, sizeof(date), "%Y-%m-%d", date);
-    return ft::Renderer([=]{
+    return ft::Renderer([=]{ 
         return ft::vbox({
-            ft::text("Author: " + message.sender + deliminator + "Date:" + date_s),
+            ft::text("Author: " + annoucements.author + deliminator + "Start date: " + annoucements.start_date + deliminator + "End date: " + annoucements.end_date),
             ft::separator(),
             ft::separatorEmpty(),
-            ft::text(message.subject) | ft::bold,
+            ft::text(annoucements.subject) | ft::bold,
             ft::separatorEmpty(),
-            ft::vbox({utils::split(message.content)}) | ft::yframe,
+            ft::vbox({utils::split(annoucements.content)}) | ft::yframe,
             ft::filler(),
             ft::separator(),
             ft::text(quit_message)
@@ -40,12 +32,12 @@ ft::Component messages::content_view() {
     });
 }
 
-void messages::content_display(
+void annoucements::content_display(
 ft::Component content_component,
 api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
-    messages_p = api->get_messages();
+    annoucements_p= api->get_events();
 
     const size_t PREVIEW_SIZE = 300;
 
@@ -53,17 +45,17 @@ std::mutex* redirect_mutex) {
     auto menu_entries = ft::Container::Vertical({});
 
     
-    for(int i{}; i < messages_p->messages->size(); i++) {
+    for(int i{}; i < annoucements_p->size(); i++) {
         menu_entries->Add(ft::MenuEntry({
-            .label = messages_p->messages->at(i).content.substr(0, PREVIEW_SIZE) + "...",
+            .label = annoucements_p->at(i).content.substr(0, PREVIEW_SIZE) + "...",
             .transform = [=](const ft::EntryState &s) {
                 ft::Element entry = ft::paragraph(s.label);
                 if(s.focused) {
                     selected = i;
                     entry = ft::window(
                         ft::hbox({
-                            ft::text(messages_p->messages->at(i).subject) | ft::bold, 
-                            ft::text(deliminator + messages_p->messages->at(i).sender)
+                            ft::text(annoucements_p->at(i).subject) | ft::bold, 
+                            ft::text(deliminator + annoucements_p->at(i).author)
                         }), 
                         entry | ft::color(ft::Color::White) | ft::dim
                     ) | ft::color(ft::Color::Green);
@@ -71,8 +63,8 @@ std::mutex* redirect_mutex) {
                 else
                     entry = ft::window(
                         ft::hbox({
-                            ft::text(messages_p->messages->at(i).subject) | ft::bold,
-                            ft::text(deliminator + messages_p->messages->at(i).sender
+                            ft::text(annoucements_p->at(i).subject) | ft::bold,
+                            ft::text(deliminator + annoucements_p->at(i).author
                         )}), entry);
                 return entry;
             }
@@ -87,7 +79,7 @@ std::mutex* redirect_mutex) {
             main_screen_p->Exit();
             //std::lock_guard<std::mutex> lock(*redirect_mutex);
             redirect_mutex->lock();
-            *redirect = tab::MESSAGE_VIEW; 
+            *redirect = tab::ANNOUCEMENT_VIEW; 
             redirect_mutex->unlock();
             return true;
         }
