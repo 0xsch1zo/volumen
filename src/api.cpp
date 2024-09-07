@@ -10,6 +10,7 @@ const std::string api::LIBRUS_API_URL       = "https://api.librus.pl";
 const std::string api::EVENT_ENDPOINT       = "/3.0/SchoolNotices";
 const std::string api::TIMETABLE_ENDPOINT   = "/3.0/Timetables";
 const std::string api::TODAY_ENDPOINT       = "/3.0/SystemData";
+const std::string api::MESSAGE_ENDPOINT     = "/3.0/Messages";
 authorization::synergia_account_t api::synergia_account;
 std::list<std::string> api::auth_header;
 
@@ -138,4 +139,26 @@ std::string api::get_today() {
 
     json data = json::parse(os.str());
     return (std::string)data["Date"];
+}
+
+std::shared_ptr<api::messages_t>
+api::get_messages() {
+    std::ostringstream os;
+    cl::Easy request;
+    request_setup(request, os, LIBRUS_API_URL + MESSAGE_ENDPOINT);
+    request.perform();
+    json data = json::parse(os.str());
+
+    messages_t msgs;
+    msgs.messages = std::make_shared<std::vector<message_t>>();
+    for(auto message : data["Messages"]) {
+        msgs.messages->push_back({
+            .subject    = message["Subject"],
+            .content    = message["Body"],
+            .sender     = *fetch_id(message["Sender"]["Url"], request),
+            .send_date  = message["SendDate"]
+        });
+    }
+
+    return std::make_shared<messages_t>(msgs);
 }
