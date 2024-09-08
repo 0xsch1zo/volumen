@@ -1,5 +1,6 @@
 #include "api.hpp"
 #include "utils.hpp"
+#include <unordered_map>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Options.hpp>
 #include <iostream>
@@ -151,10 +152,12 @@ api::get_messages() {
 
     messages_t msgs;
     msgs.messages = std::make_shared<std::vector<message_t>>();
+
     for(auto message : data["Messages"]) {
         msgs.messages->push_back({
-            .subject    = message["Subject"],
-            .content    = message["Body"],
+            // Subject and content need to be parsed again because these are double escaped
+            .subject    = json::parse((std::string)message["Subject"]),
+            .content    = json::parse((std::string)message["Body"]),
             .sender     = *fetch_id(message["Sender"]["Url"], request),
             .send_date  = message["SendDate"]
         });
