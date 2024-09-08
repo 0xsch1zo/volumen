@@ -65,15 +65,16 @@ std::mutex* redirect_mutex) {
                             ft::text(messages_p->messages->at(i).subject) | ft::bold, 
                             ft::text(deliminator + messages_p->messages->at(i).sender)
                         }), 
-                        entry | ft::color(ft::Color::White) | ft::dim
+                        entry | ft::color(ft::Color::White)
                     ) | ft::color(ft::Color::Green);
                 }
                 else
                     entry = ft::window(
                         ft::hbox({
                             ft::text(messages_p->messages->at(i).subject) | ft::bold,
-                            ft::text(deliminator + messages_p->messages->at(i).sender
-                        )}), entry);
+                            ft::text(deliminator + messages_p->messages->at(i).sender)
+                        }), 
+                        entry | ft::color(ft::Color::GrayLight));
                 return entry;
             }
         }));

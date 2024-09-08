@@ -57,15 +57,16 @@ std::mutex* redirect_mutex) {
                             ft::text(annoucements_p->at(i).subject) | ft::bold, 
                             ft::text(deliminator + annoucements_p->at(i).author)
                         }), 
-                        entry | ft::color(ft::Color::White) | ft::dim
+                        entry | ft::color(ft::Color::White)
                     ) | ft::color(ft::Color::Green);
                 }
                 else
                     entry = ft::window(
                         ft::hbox({
                             ft::text(annoucements_p->at(i).subject) | ft::bold,
-                            ft::text(deliminator + annoucements_p->at(i).author
-                        )}), entry);
+                            ft::text(deliminator + annoucements_p->at(i).author)
+                        }), 
+                        entry | ft::color(ft::Color::GrayLight));
                 return entry;
             }
         }));
