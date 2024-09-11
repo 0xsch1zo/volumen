@@ -1,5 +1,5 @@
 #include "tab.hpp"
-#include "homescreen.hpp"
+#include "dashboard/dashboard.hpp"
 #include "messages.hpp"
 #include "annoucements.hpp"
 #include "authorization.hpp"
@@ -26,7 +26,6 @@ using namespace std::chrono_literals;
     api api(authorization::get_synergia_accounts().at(synergia_account_i));
     std::unique_ptr<content> annoucements_p = std::make_unique<annoucements>(&main_screen);
     std::unique_ptr<content> messages_p = std::make_unique<messages>(&main_screen);
-    //events e(&main_screen);
     timetable t;
 
     int tab_selected{};
@@ -56,7 +55,7 @@ using namespace std::chrono_literals;
     int sle{};
     ft::Component tab_menu = ft::Menu(&menu, &tab_selected, ft::MenuOption::HorizontalAnimated());
     ft::Component tab_container = ft::Container::Tab({
-        homescreen::homescreen_tab(menu, menu, sle, []{}),
+        dashboard::dashboard_tab(menu, menu, sle, []{}),
         messages_component,
         annoucements_component,
         timetable_component

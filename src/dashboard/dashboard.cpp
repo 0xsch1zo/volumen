@@ -1,4 +1,4 @@
-#include "homescreen.hpp"
+#include "dashboard.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -7,7 +7,7 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <spdlog/spdlog.h>
 
-ft::Component homescreen::get_timetable_widget(std::vector<std::string>& lessons, std::function<void()> on_change) {
+ft::Component dashboard::get_timetable_widget(std::vector<std::string>& lessons, std::function<void()> on_change) {
     int selected{};
     return ft::Radiobox({
         .entries = lessons,
@@ -24,7 +24,7 @@ ft::Component homescreen::get_timetable_widget(std::vector<std::string>& lessons
     });
 }
 
-ft::Component homescreen::get_timeline_widget(std::vector<std::string>& timeline) {
+ft::Component dashboard::get_timeline_widget(std::vector<std::string>& timeline) {
     std::vector<ft::Element> entries;
     for(auto entry : timeline)
         entries.push_back(ft::text(entry));
@@ -32,7 +32,7 @@ ft::Component homescreen::get_timeline_widget(std::vector<std::string>& timeline
     return ft::Renderer([=]{ return ft::vbox({entries}); });
 }
 
-ft::Component homescreen::homescreen_tab(std::vector<std::string>& timeline, std::vector<std::string>& lessons, int& selected, std::function<void()> on_enter) {
+ft::Component dashboard::dashboard_tab(std::vector<std::string>& timeline, std::vector<std::string>& lessons, int& selected, std::function<void()> on_enter) {
 
     auto timeline_widget = get_timeline_widget(timeline);
     auto timetable_widget = get_timetable_widget(lessons, on_enter);
@@ -49,9 +49,9 @@ ft::Component homescreen::homescreen_tab(std::vector<std::string>& timeline, std
             timetable_widget->Render(),
         });
         if(timetable_widget->Focused()) 
-            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable, ft::Color::Green);
+            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable | ft::color(ft::Color::White)) | ft::color(ft::Color::Green);
         else
-            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable);
+            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable );
 
         return timetable;
     }));
