@@ -54,8 +54,9 @@ std::mutex* redirect_mutex) {
 
     
     for(int i{}; i < messages_p->messages->size(); i++) {
+        const std::string content = messages_p->messages->at(i).content;
         menu_entries->Add(ft::MenuEntry({
-            .label = messages_p->messages->at(i).content.substr(0, PREVIEW_SIZE) + "...",
+            .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
             .transform = [=](const ft::EntryState &s) {
                 ft::Element entry = ft::paragraph(s.label);
                 if(s.focused) {
