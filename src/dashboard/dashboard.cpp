@@ -7,6 +7,6 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <spdlog/spdlog.h>
 
-ft::Component dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
+ft::Component dashboard::dashboard_display(api* api) {
     return timetable_dashboard::get_timetable_widget(api);
 }

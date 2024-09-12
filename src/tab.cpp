@@ -30,11 +30,11 @@ using namespace std::chrono_literals;
 
     int tab_selected{};
     std::vector<std::string> menu = {
-                                    "Dashboard",
-                                    "Messages",
-                                    "Events",
-                                    "Timetable"
-                                    };
+        "Dashboard",
+        "Messages",
+        "Events",
+        "Timetable"
+    };
 
 
     const size_t SPINNER_TYPE = 20;    
@@ -52,10 +52,9 @@ using namespace std::chrono_literals;
     ft::Component annoucements_component = ft::Container::Vertical({loading_screen()});
     ft::Component timetable_component = ft::Container::Vertical({loading_screen()});
 
-    int sle{};
     ft::Component tab_menu = ft::Menu(&menu, &tab_selected, ft::MenuOption::HorizontalAnimated());
     ft::Component tab_container = ft::Container::Tab({
-        dashboard::dashboard_display(ft::Container::Vertical({}), &api),
+        dashboard::dashboard_display(&api),
         messages_component,
         annoucements_component,
         timetable_component
