@@ -43,18 +43,20 @@ using namespace std::chrono_literals;
         return ft::Renderer([&load_state]{ return ft::spinner(SPINNER_TYPE, load_state) | ft::center; });
     };
 
+    std::future<void> dashboard_load_handle;
     std::future<void> messages_load_handle;
     std::future<void> annoucements_load_handle;
     std::future<void> timetable_load_handle;
 
     int selsd{};
-    ft::Component messages_component = ft::Container::Vertical({loading_screen()});
-    ft::Component annoucements_component = ft::Container::Vertical({loading_screen()});
-    ft::Component timetable_component = ft::Container::Vertical({loading_screen()});
+    ft::Component dashboard_component = ft::Container::Vertical({       loading_screen()    });
+    ft::Component messages_component = ft::Container::Vertical({        loading_screen()    });
+    ft::Component annoucements_component = ft::Container::Vertical({    loading_screen()    });
+    ft::Component timetable_component = ft::Container::Vertical({       loading_screen()    });
 
     ft::Component tab_menu = ft::Menu(&menu, &tab_selected, ft::MenuOption::HorizontalAnimated());
     ft::Component tab_container = ft::Container::Tab({
-        dashboard::dashboard_display(&api),
+        dashboard_component,
         messages_component,
         annoucements_component,
         timetable_component
@@ -69,7 +71,7 @@ using namespace std::chrono_literals;
     size_t redirect{EXIT};
     std::mutex redirect_mutex;
 
-    const size_t TO_LAZY_LOAD = 3;
+    const size_t TO_LAZY_LOAD = 4;
     const auto ANIMATION_WAIT = 70ms;
     std::bitset<TO_LAZY_LOAD> envoked_lazy_load{};
 
@@ -80,6 +82,7 @@ using namespace std::chrono_literals;
     auto loading_animation = std::async(std::launch::async, ([&]{ 
         // Run until all things have been loaded
         while(!envoked_lazy_load.all()
+        || dashboard_load_handle.wait_for(0ms)      != std::future_status::ready
         || messages_load_handle.wait_for(0ms)       != std::future_status::ready
         || annoucements_load_handle.wait_for(0ms)   != std::future_status::ready
         || timetable_load_handle.wait_for(0ms)      != std::future_status::ready) {
@@ -99,24 +102,32 @@ using namespace std::chrono_literals;
         // Gets executed on first launch of a component and reload
         if(!envoked_lazy_load.all()) {
             switch(tab_selected) {
-                case MESSAGES:
+                case DASHBOARD:
                     GUARD(0);
 
-                    messages_load_handle = std::async(std::launch::async, [&]{ messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); });
+                    dashboard_load_handle = std::async(std::launch::async, [&]{ dashboard::dashboard_display(dashboard_component, &api); });
                     envoked_lazy_load[0] = true;
                     break;
-                case ANNOUCEMENTS: 
+
+                case MESSAGES:
                     GUARD(1);
 
-                    annoucements_load_handle = std::async(std::launch::async, [&]{ annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); });
+                    messages_load_handle = std::async(std::launch::async, [&]{ messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); });
                     envoked_lazy_load[1] = true;
                     break;
 
-                case TIMETABLE:
+                case ANNOUCEMENTS: 
                     GUARD(2);
 
-                    timetable_load_handle = std::async(std::launch::async, &timetable::timetable_display, &t, timetable_component, &api, &selsd, "");
+                    annoucements_load_handle = std::async(std::launch::async, [&]{ annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); });
                     envoked_lazy_load[2] = true;
+                    break;
+
+                case TIMETABLE:
+                    GUARD(3);
+
+                    timetable_load_handle = std::async(std::launch::async, &timetable::timetable_display, &t, timetable_component, &api, &selsd, "");
+                    envoked_lazy_load[3] = true;
                     break;
             }
         }

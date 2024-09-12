@@ -2,7 +2,7 @@
 
 class tab {
     enum tabs {
-        HOMESCREEN,
+        DASHBOARD,
         MESSAGES,
         ANNOUCEMENTS,
         TIMETABLE

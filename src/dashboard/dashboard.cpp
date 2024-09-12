@@ -7,6 +7,12 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <spdlog/spdlog.h>
 
-ft::Component dashboard::dashboard_display(api* api) {
-    return timetable_dashboard::get_timetable_widget(api);
+void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
+    auto dashboard_components = ft::Container::Vertical({
+        timetable_dashboard::get_timetable_widget(api)
+    });
+
+    // Remove loading screen
+    dashboard_component->ChildAt(0)->Detach();
+    dashboard_component->Add(dashboard_components);
 }

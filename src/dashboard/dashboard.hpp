@@ -14,5 +14,5 @@ class dashboard {
     };
 
 public:
-    static ft::Component dashboard_display(api* api);
+    static void dashboard_display(ft::Component dashboard_component, api* api);
 };
