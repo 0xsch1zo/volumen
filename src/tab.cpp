@@ -30,7 +30,7 @@ using namespace std::chrono_literals;
 
     int tab_selected{};
     std::vector<std::string> menu = {
-                                    "Homescreen",
+                                    "Dashboard",
                                     "Messages",
                                     "Events",
                                     "Timetable"
@@ -55,7 +55,7 @@ using namespace std::chrono_literals;
     int sle{};
     ft::Component tab_menu = ft::Menu(&menu, &tab_selected, ft::MenuOption::HorizontalAnimated());
     ft::Component tab_container = ft::Container::Tab({
-        dashboard::dashboard_display(menu, menu, sle, []{}),
+        dashboard::dashboard_display(ft::Container::Vertical({}), &api),
         messages_component,
         annoucements_component,
         timetable_component

@@ -1,4 +1,6 @@
 #include "dashboard.hpp"
+#include "../api.hpp"
+#include "../timetable.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -7,27 +9,48 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <spdlog/spdlog.h>
 
-ft::Component dashboard::timetable::get_timetable_widget(std::vector<std::string>& lessons, std::function<void()> on_change) {
-    int selected{};
-    return ft::Radiobox({
-        .entries = lessons,
-        .selected = &selected,
-        .transform = [](const ft::EntryState &s){
-            auto element = ft::text(s.label);
-            if(s.focused) {
-                element |= ft::bold;
-                element |= ft::inverted;
-            }
-            return element;
-        },
-        .on_change = on_change
+// TODO: implement caching 
+ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
+
+    const std::shared_ptr<api::timetable_t> timetable_p = api->get_timetable();
+    int today = timetable::get_day_of_week(api);
+    static int selector{};
+
+    auto timetable_widget = ft::Container::Vertical({});
+    for(const auto& lesson : *timetable_p->timetable[today]) {
+        if(lesson.is_empty)
+            continue;
+        timetable_widget->Add(ft::MenuEntry(lesson.subject));
+    }
+    
+    auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_p->timetable[today]);
+
+    return ft::Renderer(timetable_widget, [=] {
+        auto timetable = ft::hbox({
+            timeline_widget,
+            ft::separator(),
+            timetable_widget->Render(),
+        });
+        if(timetable_widget->Focused()) 
+            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable | ft::color(ft::Color::White)) | ft::color(ft::Color::Green);
+        else
+            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable );
+
+        return timetable;
     });
+    
 }
 
-ft::Component dashboard::timetable::get_timeline_widget(std::vector<std::string>& timeline) {
+ft::Element dashboard::timetable_dashboard::get_timeline_widget(std::shared_ptr<std::vector<api::lesson_t>> day) {
+    const std::string deliminator = " - ";
     std::vector<ft::Element> entries;
-    for(auto entry : timeline)
-        entries.push_back(ft::text(entry));
+    ft::Element el;
+
+    for(const auto& lesson: *day) {
+        if(lesson.is_empty)
+            continue;
+        entries.push_back(ft::text(lesson.start + deliminator + lesson.end));
+    }
     
-    return ft::Renderer([=]{ return ft::vbox({entries}); });
+    return ft::vbox({entries});
 }

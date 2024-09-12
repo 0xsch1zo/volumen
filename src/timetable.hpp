@@ -7,6 +7,7 @@ namespace ft = ftxui;
 
 class timetable {
     static ft::Component lessons(std::shared_ptr<std::vector<api::lesson_t>> day);
+protected:
     static int get_day_of_week(api* api);
 public:
     // Public because std::async can't handle default arguments
