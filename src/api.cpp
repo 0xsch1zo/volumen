@@ -6,14 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
-
-const std::string api::LIBRUS_API_URL       = "https://api.librus.pl";
-const std::string api::EVENT_ENDPOINT       = "/3.0/SchoolNotices";
-const std::string api::TIMETABLE_ENDPOINT   = "/3.0/Timetables";
-const std::string api::TODAY_ENDPOINT       = "/3.0/SystemData";
-const std::string api::MESSAGE_ENDPOINT     = "/3.0/Messages";
-authorization::synergia_account_t api::synergia_account;
-std::list<std::string> api::auth_header;
+#include <unordered_map>
 
 api::api(authorization::synergia_account_t& account) {
     assert(account.access_token.empty() || account.student_name.empty());
@@ -37,7 +30,7 @@ std::shared_ptr<std::vector<api::event_t>> api::get_events() {
     request_setup(request, os, LIBRUS_API_URL + EVENT_ENDPOINT);
     request.perform();
     json data = json::parse(os.str());
-    std::shared_ptr<std::vector<api::event_t>> events = std::make_shared<std::vector<api::event_t>>();
+    std::shared_ptr<std::vector<api::event_t>> events = std::make_shared<std::vector<event_t>>();
 
     for(const auto& event : data["SchoolNotices"]){
         events->push_back({
@@ -45,14 +38,15 @@ std::shared_ptr<std::vector<api::event_t>> api::get_events() {
             .end_date       = event["EndDate"],
             .subject        = event["Subject"],
             .content        = event["Content"],
-            .author         = *fetch_id(event["AddedBy"]["Url"], request)
+            .author         = *get_username_by_id(event["AddedBy"]["Id"])
         });
     }
-    request.reset();
+
     return events;
 }
 
-std::shared_ptr<std::string> api::fetch_id(const std::string& url_id, cl::Easy& request) {
+// TODO: Fetch necessary ids in bulk
+std::shared_ptr<std::string> api::fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request) {
     // Handle reuse
     std::ostringstream os;
     request.setOpt<cl::options::WriteStream>(&os);
@@ -158,10 +152,144 @@ api::get_messages() {
             // Subject and content need to be parsed again because these are double escaped
             .subject    = json::parse((std::string)message["Subject"]),
             .content    = json::parse((std::string)message["Body"]),
-            .sender     = *fetch_id(message["Sender"]["Url"], request),
+            .sender     = *fetch_username_by_message_user_id(message["Sender"]["Url"], request),
             .send_date  = message["SendDate"]
         });
     }
 
     return std::make_shared<messages_t>(msgs);
+}
+
+std::string api::get_subject_by_id(const int& id) {
+    std::unordered_map<int, const std::string>* subject_map_p = get_subjects();
+    return (*subject_map_p)[id];
+}
+
+std::unordered_map<int, const std::string>* api::get_subjects() {
+    static std::unordered_map<int, const std::string> ids_and_subjects;
+
+    if(!ids_and_subjects.empty())
+        return &ids_and_subjects;
+
+    std::ostringstream os;
+    cl::Easy request;
+
+    request_setup(request, os, LIBRUS_API_URL + SUBJECTS_ENDPOINT + "");
+
+    request.perform();
+
+    json data = json::parse(os.str());
+    for(const auto& subject : data["Subjects"].items()) {
+        ids_and_subjects.insert({
+            (int)subject.value()["Id"],
+            subject.value()["Name"]
+        });
+    }
+    return &ids_and_subjects;
+}
+
+std::string api::get_grade_category_by_id(const int& id) {
+    static std::unordered_map<int, const std::string> ids_and_categories;
+
+    if(!ids_and_categories.empty())
+        return ids_and_categories[id];
+
+    std::ostringstream os;
+    cl::Easy request;
+
+    request_setup(request, os, LIBRUS_API_URL + CATEGORIES_ENDPOINT);
+
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    for(const auto& category : data["Categories"].items()) {
+        ids_and_categories.insert({
+            (int)category.value()["Id"],
+            category.value()["Name"]
+        });
+    }
+
+    return ids_and_categories[id];
+}
+
+std::shared_ptr<std::string> api::get_username_by_id(const int& id) {
+    static std::unordered_map<int, const std::string> ids_and_usernames;
+    if(!ids_and_usernames.empty())
+        return std::make_shared<std::string>(ids_and_usernames[id]);
+
+    std::ostringstream os;
+    cl::Easy request;
+    const std::string delimiter = " ";
+
+    request_setup(request, os, LIBRUS_API_URL + USERS_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    for(const auto& username : data["Users"].items()) {
+        ids_and_usernames.emplace(
+            username.value()["Id"],
+            (std::string)username.value()["FirstName"] + delimiter + (std::string)username.value()["LastName"]
+        );
+    }
+
+    return std::make_shared<std::string>(ids_and_usernames[id]);
+}
+
+std::string api::get_comment_by_id(const int& id) {
+    static std::unordered_map<int, const std::string> ids_and_comments;
+    if(!ids_and_comments.empty())
+        return ids_and_comments[id];
+
+    std::ostringstream os;
+    cl::Easy request;
+
+    request_setup(request, os, LIBRUS_API_URL + USERS_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    for(const auto& comment : data["Comments"].items()) {
+        ids_and_comments.insert({
+            (int)comment.value()["Id"],
+            (std::string)comment.value()["Text"]
+        });
+    }
+
+    return ids_and_comments[id];
+}
+
+std::shared_ptr<api::grades_t> api::get_grades() {
+    std::ostringstream os;
+    cl::Easy request;
+
+    request_setup(request, os, LIBRUS_API_URL + GRADES_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    std::shared_ptr<grades_t> grades = std::make_shared<grades_t>();
+
+    for(const auto subject : *get_subjects())
+        grades->emplace(subject.first, subject_with_grades_t { .grades = std::vector<grade_t>(), .subject = subject.second });
+
+    for(const auto& grade : data["Grades"].items()) {
+        (*grades)[grade.value()["Subject"]["Id"]].grades.push_back({
+            //.subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
+            .grade                      = grade.value()["Grade"],
+            .category                   = get_grade_category_by_id(grade.value()["Category"]["Id"]),
+            .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
+            .date                       = grade.value()["Date"],
+            // Why would a grade have multiple comments
+            .comment                    = get_comment_by_id(grade.value()["Comments"][0]["Id"]),
+            .semester                   = grade.value()["Semester"],
+            .is_semester                = grade.value()["IsSemester"],
+            .is_semester_proposition    = grade.value()["IsSemesterProposition"],
+            .is_final                   = grade.value()["IsFinal"],
+            .is_final_proposition       = grade.value()["IsFinalProposition"]
+        });
+    }
+
+    return grades;
 }

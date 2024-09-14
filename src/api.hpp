@@ -8,15 +8,23 @@ namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class api {
-    static const std::string LIBRUS_API_URL;
-    static const std::string EVENT_ENDPOINT;
-    static const std::string TIMETABLE_ENDPOINT;
-    static const std::string TODAY_ENDPOINT;
-    static const std::string MESSAGE_ENDPOINT;
-    static authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
-    static std::list<std::string> auth_header;
-    static std::shared_ptr<std::string> fetch_id(const std::string& url_id, cl::Easy& request);
-
+    const std::string LIBRUS_API_URL       = "https://api.librus.pl";
+    const std::string EVENT_ENDPOINT       = "/3.0/SchoolNotices";
+    const std::string TIMETABLE_ENDPOINT   = "/3.0/Timetables";
+    const std::string TODAY_ENDPOINT       = "/3.0/SystemData";
+    const std::string MESSAGE_ENDPOINT     = "/3.0/Messages";
+    const std::string SUBJECTS_ENDPOINT    = "/3.0/Subjects";
+    const std::string GRADES_ENDPOINT      = "/3.0/Grades";
+    const std::string CATEGORIES_ENDPOINT  = "/3.0/Grades/Categories";
+    const std::string USERS_ENDPOINT       = "/3.0/Users";
+    authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
+    std::list<std::string> auth_header;
+    std::string get_subject_by_id(const int& id);
+    std::string get_grade_category_by_id(const int& id);
+    std::string get_comment_by_id(const int& id);
+    std::shared_ptr<std::string> get_username_by_id(const int& id);
+    std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
+    std::unordered_map<int, const std::string>* get_subjects();
 public:
     // TODO: return const
     struct event_t {
@@ -56,9 +64,30 @@ public:
         std::shared_ptr<std::vector<message_t>> messages;
     };
 
+    struct grade_t {
+        std::string subject;
+        std::string grade;
+        std::string category;
+        std::string added_by;
+        std::string date;
+        std::string comment;
+        int semester;
+        bool is_semester;
+        bool is_semester_proposition;
+        bool is_final;
+        bool is_final_proposition;
+    };
+
+    struct subject_with_grades_t {
+        std::vector<grade_t> grades;
+        std::string subject;
+    };
+
+    typedef std::unordered_map<int, subject_with_grades_t> grades_t;
+
     api(authorization::synergia_account_t& account);
 
-    static void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
+    void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
 
     std::shared_ptr<std::vector<event_t>> get_events();
 
@@ -69,6 +98,8 @@ public:
 
     std::shared_ptr<api::messages_t>
     get_messages();
+
+    std::shared_ptr<grades_t> get_grades();
 };
 
 
