@@ -29,7 +29,20 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(ftxui curlpp spdlog json)
 
 project(volumen)
-add_executable(volumen src/main.cpp src/login.cpp src/authorization.cpp src/dashboard/dashboard.cpp src/dashboard/timetable-dashboard.cpp src/utils.cpp src/messages.cpp src/tab.cpp src/api.cpp src/annoucements.cpp src/timetable.cpp)
+add_executable(volumen
+  src/main.cpp
+  src/login.cpp
+  src/authorization.cpp
+  src/dashboard/dashboard.cpp
+  src/dashboard/timetable-dashboard.cpp 
+  src/utils.cpp 
+  src/messages.cpp 
+  src/tab.cpp 
+  src/api.cpp 
+  src/annoucements.cpp 
+  src/timetable.cpp
+  src/grades.cpp
+)
 
 target_link_libraries(volumen
   PRIVATE ftxui::screen

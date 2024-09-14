@@ -5,7 +5,8 @@ class tab {
         DASHBOARD,
         MESSAGES,
         ANNOUCEMENTS,
-        TIMETABLE
+        TIMETABLE,
+        GRADES
     };
 
 public:

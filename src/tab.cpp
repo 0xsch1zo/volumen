@@ -5,6 +5,7 @@
 #include "authorization.hpp"
 #include "timetable.hpp"
 #include "content.hpp"
+#include "grades.hpp"
 #include <future>
 #include <chrono>
 #include <bitset>
@@ -27,13 +28,15 @@ using namespace std::chrono_literals;
     std::unique_ptr<content> annoucements_p = std::make_unique<annoucements>(&main_screen);
     std::unique_ptr<content> messages_p = std::make_unique<messages>(&main_screen);
     timetable t;
+    grades g;
 
     int tab_selected{};
     std::vector<std::string> menu = {
         "Dashboard",
         "Messages",
         "Events",
-        "Timetable"
+        "Timetable",
+        "Grades"
     };
 
 
@@ -47,19 +50,22 @@ using namespace std::chrono_literals;
     std::future<void> messages_load_handle;
     std::future<void> annoucements_load_handle;
     std::future<void> timetable_load_handle;
+    std::future<void> grades_load_handle;
 
     int selsd{};
-    ft::Component dashboard_component = ft::Container::Vertical({       loading_screen()    });
-    ft::Component messages_component = ft::Container::Vertical({        loading_screen()    });
-    ft::Component annoucements_component = ft::Container::Vertical({    loading_screen()    });
-    ft::Component timetable_component = ft::Container::Vertical({       loading_screen()    });
+    ft::Component dashboard_component       = ft::Container::Vertical({ loading_screen() });
+    ft::Component messages_component        = ft::Container::Vertical({ loading_screen() });
+    ft::Component annoucements_component    = ft::Container::Vertical({ loading_screen() });
+    ft::Component timetable_component       = ft::Container::Vertical({ loading_screen() });
+    ft::Component grades_component          = ft::Container::Vertical({ loading_screen() });
 
     ft::Component tab_menu = ft::Menu(&menu, &tab_selected, ft::MenuOption::HorizontalAnimated());
     ft::Component tab_container = ft::Container::Tab({
         dashboard_component,
         messages_component,
         annoucements_component,
-        timetable_component
+        timetable_component,
+        grades_component
     }, 
     &tab_selected);
     
@@ -71,7 +77,7 @@ using namespace std::chrono_literals;
     size_t redirect{EXIT};
     std::mutex redirect_mutex;
 
-    const size_t TO_LAZY_LOAD = 4;
+    const size_t TO_LAZY_LOAD = 5;
     const auto ANIMATION_WAIT = 70ms;
     std::bitset<TO_LAZY_LOAD> envoked_lazy_load{};
 
@@ -85,7 +91,8 @@ using namespace std::chrono_literals;
         || dashboard_load_handle.wait_for(0ms)      != std::future_status::ready
         || messages_load_handle.wait_for(0ms)       != std::future_status::ready
         || annoucements_load_handle.wait_for(0ms)   != std::future_status::ready
-        || timetable_load_handle.wait_for(0ms)      != std::future_status::ready) {
+        || timetable_load_handle.wait_for(0ms)      != std::future_status::ready
+        || grades_load_handle.wait_for(0ms)         != std::future_status::ready) {
             std::this_thread::sleep_for(ANIMATION_WAIT);
             if(load_state >= 8)
                 load_state = 0;
@@ -126,8 +133,15 @@ using namespace std::chrono_literals;
                 case TIMETABLE:
                     GUARD(3);
 
-                    timetable_load_handle = std::async(std::launch::async, &timetable::timetable_display, &t, timetable_component, &api, &selsd, "");
+                    timetable_load_handle = std::async(std::launch::async, [&]{ t.timetable_display(timetable_component, &api, &selsd, ""); });
                     envoked_lazy_load[3] = true;
+                    break;
+                
+                case GRADES:
+                    GUARD(4);
+
+                    grades_load_handle = std::async(std::launch::async, [&]{ g.grades_display(grades_component, &api); });
+                    envoked_lazy_load[4] = true;
                     break;
             }
         }
