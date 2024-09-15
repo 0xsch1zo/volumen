@@ -12,55 +12,62 @@ void grades::grades_display(ft::Component grades_component, api* api) {
             grades_menu->Add(ft::MenuEntry({
             .label = subject.second.subject,
             .transform = [=](const ft::EntryState& s) {
-                ft::Element subject_with_placeholder_for_empty = ft::window(
-                    ft::text(s.label)
-                    | ft::bold,
-                    ft::separator()
-                    | ft::color(ft::Color::White)
-                    | empty_placeholder_size 
-                    | ft::hcenter);
+                auto subject_with_placeholder_for_empty = [&](ft::Color color){
+                    return ft::window(
+                        ft::text(s.label)
+                        | ft::bold,
+                        ft::separator()
+                        | ft::color(color)
+                        | empty_placeholder_size
+                        | ft::hcenter
+                    );
+                };
 
                 if(s.focused)
-                    return subject_with_placeholder_for_empty
-                    | ft::color(ft::Color::Green);
+                    return subject_with_placeholder_for_empty(ft::Color::Green);
 
                 if(s.active)
-                    return subject_with_placeholder_for_empty
-                    | ft::color(ft::Color::Red);
+                    return subject_with_placeholder_for_empty(ft::Color::Red);
 
-                return subject_with_placeholder_for_empty;
+                return subject_with_placeholder_for_empty(ft::Color::White);
             }
             }));
             continue;
         }
-        grades_menu->Add(ft::MenuEntry({
-            .label = subject.second.subject,
-            .transform = [=](const ft::EntryState& s) {
-                std::vector<ft::Element> grade_boxes;
 
-                for(const auto& grade : subject.second.grades) {
-                    grade_boxes.push_back(
-                        ft::text(grade.grade)
+        auto grade_box = [&](const std::string& grade){
+            return ft::MenuEntry({
+                .label = grade,
+                .transform = [=](const ft::EntryState& s) {
+                    auto base = [&](ft::Color color){
+                        return ft::text(s.label)
                         | ft::hcenter
+                        | ft::color(ft::Color::White)
                         | grade_box_size
-                        | ft::border
-                    );
+                        | ft::borderStyled(color);    
+                    };
+
+                    if(s.focused)
+                        return base(ft::Color::Green);
+
+                    if(s.active)
+                        return base(ft::Color::Red);
+
+                    return base(ft::Color::White);
                 }
+            });
+        };
 
-                ft::Element subject_element = ft::window(
-                    ft::text(s.label)
-                    | ft::bold,
-                    ft::hbox(grade_boxes) | ft::color(ft::Color::White)
-                );
+        auto subject_component = ft::Container::Horizontal({});
 
-                if(s.focused)
-                    return subject_element | ft::color(ft::Color::Green);
+        for(const auto& grade : subject.second.grades)
+            subject_component->Add( grade_box(grade.grade) );
 
-                if(s.active)
-                    return subject_element | ft::color(ft::Color::Red);
-
-                return subject_element;
-            }
+        grades_menu->Add(ft::Renderer(subject_component, [=]{ 
+                return ft::window(
+                    ft::text(subject.second.subject), 
+                    subject_component->Render()
+                ); 
         }));
     }
 
