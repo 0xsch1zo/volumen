@@ -15,29 +15,25 @@ int timetable::get_day_of_week(api* api) {
     std::string date_unformated = api->get_today();
     const std::string delimiter = "-";
 
-    int temp_i = date_unformated.find(delimiter);
-    int year = std::stoi(date_unformated.substr(0, temp_i));
-    date_unformated.erase(0, temp_i + delimiter.length());
+    int date[3] = { 0, 0, 0 };
 
-    temp_i = date_unformated.find(delimiter);
-    int month = std::stoi(date_unformated.substr(0, temp_i));
-    date_unformated.erase(0, temp_i + delimiter.length());
-
-    temp_i = date_unformated.find(delimiter);
-    int day = std::stoi(date_unformated.substr(0, temp_i));
-    date_unformated.erase(0, temp_i + delimiter.length());
+    for(int i{ sizeof(date) / sizeof(int) }; i >= 0; i--) {
+        int temp_i = date_unformated.find(delimiter);
+        date[i] = std::stoi(date_unformated.substr(0, temp_i));
+        date_unformated.erase(0, temp_i + delimiter.length());
+    }
 
     std::tm date_in = { 0, 0, 0,
-        day,
-        month - 1,
-        year - 1900
+        date[0],
+        date[1] - 1,
+        date[2] - 1900
     };
 
     std::time_t date_temp = std::mktime(&date_in);
     const std::tm* date_out = std::localtime(&date_temp);
     // if sunday return 6
     if(date_out->tm_wday == 0)
-        return 7;
+        return 6;
     else
         return date_out->tm_wday - 1;
 }
