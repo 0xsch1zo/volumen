@@ -6,7 +6,6 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
-#include <unordered_map>
 
 api::api(authorization::synergia_account_t& account) {
     assert(account.access_token.empty() || account.student_name.empty());
@@ -276,7 +275,7 @@ std::shared_ptr<api::grades_t> api::get_grades() {
 
     for(const auto& grade : data["Grades"].items()) {
         (*grades)[grade.value()["Subject"]["Id"]].grades.push_back({
-            //.subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
+            .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
             .grade                      = grade.value()["Grade"],
             .category                   = get_grade_category_by_id(grade.value()["Category"]["Id"]),
             .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
