@@ -13,6 +13,7 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
+    spd::debug(synergia_account.access_token);
 }
 
 // Sets up common options for the request
@@ -196,7 +197,7 @@ std::string api::get_grade_category_by_id(const int& id) {
     std::ostringstream os;
     cl::Easy request;
 
-    request_setup(request, os, LIBRUS_API_URL + CATEGORIES_ENDPOINT);
+    request_setup(request, os, LIBRUS_API_URL + GRADE_CATEGORIES_ENDPOINT);
 
     request.perform();
 
@@ -244,7 +245,7 @@ std::string api::get_comment_by_id(const int& id) {
     std::ostringstream os;
     cl::Easy request;
 
-    request_setup(request, os, LIBRUS_API_URL + USERS_ENDPOINT);
+    request_setup(request, os, LIBRUS_API_URL + GRADE_COMMENTS_ENDPOINT);
     request.perform();
 
     json data = json::parse(os.str());

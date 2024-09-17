@@ -8,15 +8,16 @@ namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class api {
-    const std::string LIBRUS_API_URL       = "https://api.librus.pl";
-    const std::string EVENT_ENDPOINT       = "/3.0/SchoolNotices";
-    const std::string TIMETABLE_ENDPOINT   = "/3.0/Timetables";
-    const std::string TODAY_ENDPOINT       = "/3.0/SystemData";
-    const std::string MESSAGE_ENDPOINT     = "/3.0/Messages";
-    const std::string SUBJECTS_ENDPOINT    = "/3.0/Subjects";
-    const std::string GRADES_ENDPOINT      = "/3.0/Grades";
-    const std::string CATEGORIES_ENDPOINT  = "/3.0/Grades/Categories";
-    const std::string USERS_ENDPOINT       = "/3.0/Users";
+    const std::string LIBRUS_API_URL                = "https://api.librus.pl";
+    const std::string EVENT_ENDPOINT                = "/3.0/SchoolNotices";
+    const std::string TIMETABLE_ENDPOINT            = "/3.0/Timetables";
+    const std::string TODAY_ENDPOINT                = "/3.0/SystemData";
+    const std::string MESSAGE_ENDPOINT              = "/3.0/Messages";
+    const std::string SUBJECTS_ENDPOINT             = "/3.0/Subjects";
+    const std::string GRADES_ENDPOINT               = "/3.0/Grades";
+    const std::string GRADE_COMMENTS_ENDPOINT       = "/3.0/Grades/Comments";
+    const std::string GRADE_CATEGORIES_ENDPOINT     = "/3.0/Grades/Categories";
+    const std::string USERS_ENDPOINT                = "/3.0/Users";
     authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
     std::list<std::string> auth_header;
     std::string get_subject_by_id(const int& id);
