@@ -5,8 +5,8 @@
 namespace ft = ftxui;
 
 class grades {
-    std::vector<char> grade_details_shown; // Treated as bool
-    ft::Component modal_grade_details(const api::grade_t& grades_p);
+    ft::Component grade_box(const api::grade_t& grades_p);
+    ft::Component empty_subject(const std::string& subject);
 public:
     void grades_display(ft::Component grades_component, api* api);
 };
