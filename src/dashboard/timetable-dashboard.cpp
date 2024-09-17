@@ -11,17 +11,24 @@
 
 // TODO: implement caching 
 ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
-
+    const std::string weekend_prompt = "No lessons today!";
     const std::shared_ptr<api::timetable_t> timetable_p = api->get_timetable();
     int today = timetable::get_day_of_week(api);
     static int selector{};
 
     auto timetable_widget = ft::Container::Vertical({});
+
+    int empty_counter{};
     for(const auto& lesson : *timetable_p->timetable[today]) {
-        if(lesson.is_empty)
+        if(lesson.is_empty) {
+            empty_counter++;
             continue;
+        }
         timetable_widget->Add(ft::MenuEntry(lesson.subject));
     }
+
+    if(empty_counter == timetable_p->timetable[today]->size())
+        timetable_widget->Add(ft::MenuEntry(weekend_prompt));
     
     auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_p->timetable[today]);
 
@@ -43,14 +50,22 @@ ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
 
 ft::Element dashboard::timetable_dashboard::get_timeline_widget(std::shared_ptr<std::vector<api::lesson_t>> day) {
     const std::string deliminator = " - ";
+    const std::string empty_placeholder = "-- - --";
     std::vector<ft::Element> entries;
     ft::Element el;
 
+    int empty_counter{};
+
     for(const auto& lesson: *day) {
-        if(lesson.is_empty)
+        if(lesson.is_empty) {
+            empty_counter++;
             continue;
+        }
         entries.push_back(ft::text(lesson.start + deliminator + lesson.end));
     }
+    
+    if(empty_counter == day->size())
+        return ft::text(empty_placeholder);
     
     return ft::vbox({entries});
 }
