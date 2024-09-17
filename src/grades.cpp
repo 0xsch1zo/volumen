@@ -1,9 +1,9 @@
 #include "grades.hpp"
+#include "utils.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
 void grades::grades_display(ft::Component grades_component, api* api) {
-    const auto grade_box_size = ft::size(ft::WIDTH, ft::EQUAL, 3);
     std::shared_ptr<api::grades_t> grades_p = api->get_grades();
     ft::Component grades_menu = ft::Container::Vertical({});
 
@@ -21,7 +21,7 @@ void grades::grades_display(ft::Component grades_component, api* api) {
         grades_menu->Add(ft::Renderer(subject_component, [=]{ 
                 return ft::window(
                     ft::text(subject.second.subject), 
-                    subject_component->Render()
+                    subject_component->Render() | ft::xframe
                 ); 
         }));
     }
@@ -34,20 +34,23 @@ ft::Component grades::grade_box(const api::grade_t& grade) {
     return ft::MenuEntry({
                 .label = grade.grade,
                 .transform = [=](const ft::EntryState& s) {
+                    const auto max_grade_box_size = ft::size(ft::WIDTH, ft::LESS_THAN, 30);
                     auto base = [&](ft::Color color){
                         return ft::vbox({
                             ft::text(grade.category),
                             ft::vbox({
                                 ft::separator(),
                                 ft::text("Grade: " + grade.grade),
-                                ft::text("Comment: " + grade.comment),
+                                ft::vbox({
+                                    utils::split("Comment: " + grade.comment),
+                                }),
                                 ft::text("Added by: " + grade.added_by),
                                 ft::text("Date: " + grade.date),
-                            }) | ft::color(ft::Color::White)
+                            }) 
+                            | ft::color(ft::Color::White)
                         })
-                        | ft::borderStyled(color);    
-                        
-
+                        | ft::borderStyled(color)
+                        | max_grade_box_size;
                     };
 
                     if(s.focused)
