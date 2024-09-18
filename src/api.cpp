@@ -13,7 +13,6 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
-    spd::debug(synergia_account.access_token);
 }
 
 // Sets up common options for the request
@@ -269,11 +268,19 @@ std::shared_ptr<api::grades_t> api::get_grades() {
 
     json data = json::parse(os.str());
 
+    // Init
     std::shared_ptr<grades_t> grades = std::make_shared<grades_t>();
 
     for(const auto subject : *get_subjects())
-        grades->emplace(subject.first, subject_with_grades_t { .grades = std::vector<grade_t>(), .subject = subject.second });
+        grades->emplace(
+			subject.first, 
+			subject_with_grades_t { 
+				.grades = std::vector<grade_t>(), 
+				.subject = subject.second
+			}
+		);
 
+    // Populate
     for(const auto& grade : data["Grades"].items()) {
         (*grades)[grade.value()["Subject"]["Id"]].grades.push_back({
             .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
@@ -282,13 +289,49 @@ std::shared_ptr<api::grades_t> api::get_grades() {
             .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
             .date                       = grade.value()["Date"],
             // Why would a grade have multiple comments
-            .comment                    = get_comment_by_id(grade.value()["Comments"][0]["Id"]),
+            .comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
             .semester                   = grade.value()["Semester"],
             .is_semester                = grade.value()["IsSemester"],
             .is_semester_proposition    = grade.value()["IsSemesterProposition"],
             .is_final                   = grade.value()["IsFinal"],
             .is_final_proposition       = grade.value()["IsFinalProposition"]
         });
+    }
+
+    return grades;
+}
+
+std::shared_ptr<std::vector<api::grade_t>> 
+api::get_recent_grades() {
+    std::ostringstream os;
+    cl::Easy request;
+	const int MAX_VECTOR_SIZE = 4;
+	
+    request_setup(request, os, LIBRUS_API_URL + GRADES_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    auto grades = std::make_shared<std::vector<grade_t>>();
+
+    int i{};
+    for(const auto& grade : data["Grades"].items()) {
+        grades->push_back({
+            .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
+            .grade                      = grade.value()["Grade"],
+            .category                   = get_grade_category_by_id(grade.value()["Category"]["Id"]),
+            .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
+            .date                       = grade.value()["Date"],
+            .comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
+            .semester                   = grade.value()["Semester"],
+            .is_semester                = grade.value()["IsSemester"],
+            .is_semester_proposition    = grade.value()["IsSemesterProposition"],
+            .is_final                   = grade.value()["IsFinal"],
+            .is_final_proposition       = grade.value()["IsFinalProposition"]
+        });
+
+        if(i >= MAX_VECTOR_SIZE)
+            break;
     }
 
     return grades;

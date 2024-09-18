@@ -3,7 +3,7 @@
 #include <string>
 #include <curlpp/Easy.hpp>
 
-namespace spd = spdlog;
+//namespace spd = spdlog;
 namespace cl = cURLpp;
 using json = nlohmann::json;
 
@@ -26,6 +26,9 @@ class api {
     std::shared_ptr<std::string> get_username_by_id(const int& id);
     std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
     std::unordered_map<int, const std::string>* get_subjects();
+
+public:
+    static const int RECENT_GRADES_SIZE             = 10;
 public:
     // TODO: return const
     struct event_t {
@@ -97,10 +100,13 @@ public:
 
     std::string get_today();
 
-    std::shared_ptr<api::messages_t>
+    std::shared_ptr<messages_t>
     get_messages();
 
     std::shared_ptr<grades_t> get_grades();
+
+    std::shared_ptr<std::vector<grade_t>>
+    get_recent_grades();
 };
 
 
