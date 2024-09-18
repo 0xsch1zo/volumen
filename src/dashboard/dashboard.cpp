@@ -9,10 +9,11 @@
 
 void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     auto dashboard_components = ft::Container::Vertical({
+		grades_dashboard::get_grades_widget(api),
         timetable_dashboard::get_timetable_widget(api)
     });
 
     // Remove loading screen
-    dashboard_component->ChildAt(0)->Detach();
+    dashboard_component->DetachAllChildren();
     dashboard_component->Add(dashboard_components);
 }

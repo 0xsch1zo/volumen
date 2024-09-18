@@ -34,7 +34,8 @@ add_executable(volumen
   src/login.cpp
   src/authorization.cpp
   src/dashboard/dashboard.cpp
-  src/dashboard/timetable-dashboard.cpp 
+  src/dashboard/timetable_dashboard.cpp 
+  src/dashboard/grades_dashboard.cpp
   src/utils.cpp 
   src/messages.cpp 
   src/tab.cpp 
