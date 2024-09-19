@@ -39,7 +39,12 @@ int timetable::get_day_of_week(api* api) {
         return date_out->tm_wday - 1;
 }
 
-void timetable::timetable_display(ft::Component timetable_component, api* api, int* selector, std::string url) {
+void timetable::timetable_display(
+    ft::Component timetable_component, 
+    api* api, 
+    int* selector, 
+    std::string url
+) {
     
     // get_timetable will handle empty url
     std::shared_ptr<api::timetable_t> timetable_p = api->get_timetable(url);
@@ -69,29 +74,30 @@ void timetable::timetable_display(ft::Component timetable_component, api* api, i
     // Add dummy contianer for '>' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
 
-    ft::Component menu = ft::Menu(*weekdays, selector, ft::MenuOption::HorizontalAnimated())
-    // TODO: properly visualise switching weeks
-    | ft::CatchEvent([=](ft::Event event) {
-        if(*selector == 0) {
-            //*selector = weekdays->size() - 2;
-            //main_screen_p->RequestAnimationFrame();
-            //timetable_display(timetable_component, api, selector, timetable_p->prev_url);
-        }
-        else if(*selector == weekdays->size() - 1) {
-            //*selector = 1;
-            //timetable_display(timetable_component, api, selector, timetable_p->next_url);
-        }
-        return false;
-    });
+    // On first run
+    if(url.empty()) {
+        timetable_component->DetachAllChildren();
+        ft::Component menu = ft::Menu(*weekdays, selector, ft::MenuOption::HorizontalAnimated())
+        | ft::CatchEvent([=](ft::Event event) {
+            const int TIMETABLE_POSITION = 1;
+            if(*selector == 0) {
+                *selector = weekdays->size() - 2;
+                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                timetable_display(timetable_component, api, selector, timetable_p->prev_url);
+            }
+            else if(*selector == weekdays->size() - 1) {
+                *selector = 1;
+                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                timetable_display(timetable_component, api, selector, timetable_p->next_url);
+            }
+            return false;
+        });
+        timetable_contents->Add(menu);
+    }
 
-    // On first run: Detatch loading screen
-    // After first run: Detatch the currently displayed timetable
-    timetable_component->ChildAt(0)->Detach();
+    timetable_contents->Add(timetable_container);
 
-    timetable_component->Add(ft::Container::Vertical({
-        menu,
-        timetable_container
-    }));
+    timetable_component->Add(timetable_contents);
 
     const int ACTION_PREV_ENTRY_OFFSET = 1;
     if(url.empty())
