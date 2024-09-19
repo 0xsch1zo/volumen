@@ -15,9 +15,10 @@ int timetable::get_day_of_week(api* api) {
     std::string date_unformated = api->get_today();
     const std::string delimiter = "-";
 
-    int date[3] = { 0, 0, 0 };
+    const int DAY_MONTH_YEAR = 3;
+    int date[DAY_MONTH_YEAR] = { 0, 0, 0 };
 
-    for(int i{ sizeof(date) / sizeof(int) }; i >= 0; i--) {
+    for(int i{ DAY_MONTH_YEAR - 1 }; i >= 0; i--) {
         int temp_i = date_unformated.find(delimiter);
         date[i] = std::stoi(date_unformated.substr(0, temp_i));
         date_unformated.erase(0, temp_i + delimiter.length());
