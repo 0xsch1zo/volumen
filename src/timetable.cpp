@@ -1,5 +1,6 @@
 #include "api.hpp"
 #include "timetable.hpp"
+#include "utils.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/captured_mouse.hpp>
@@ -9,35 +10,6 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 
-
-// The format is DD-MM-YYYY
-int timetable::get_day_of_week(api* api) {
-    std::string date_unformated = api->get_today();
-    const std::string delimiter = "-";
-
-    const int DAY_MONTH_YEAR = 3;
-    int date[DAY_MONTH_YEAR] = { 0, 0, 0 };
-
-    for(int i{ DAY_MONTH_YEAR - 1 }; i >= 0; i--) {
-        int temp_i = date_unformated.find(delimiter);
-        date[i] = std::stoi(date_unformated.substr(0, temp_i));
-        date_unformated.erase(0, temp_i + delimiter.length());
-    }
-
-    std::tm date_in = { 0, 0, 0,
-        date[0],
-        date[1] - 1,
-        date[2] - 1900
-    };
-
-    std::time_t date_temp = std::mktime(&date_in);
-    const std::tm* date_out = std::localtime(&date_temp);
-    // if sunday return 6
-    if(date_out->tm_wday == 0)
-        return 6;
-    else
-        return date_out->tm_wday - 1;
-}
 
 void timetable::timetable_display(
     ft::Component timetable_component, 
@@ -101,7 +73,7 @@ void timetable::timetable_display(
 
     const int ACTION_PREV_ENTRY_OFFSET = 1;
     if(url.empty())
-        *selector = get_day_of_week(api) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
+        *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
 }
 
 ft::Component timetable::lessons(std::shared_ptr<std::vector<api::lesson_t>> day) {

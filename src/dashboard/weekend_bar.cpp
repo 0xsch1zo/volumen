@@ -1,4 +1,5 @@
 #include "dashboard.hpp"
+#include "../utils.hpp"
 
 namespace ft = ftxui;
 
@@ -8,7 +9,7 @@ ft::Component dashboard::weekend_bar::get_weekend_bar(api* api) {
     const int SUNDAY = 7;
     std::string weekend_text;
     const int SCHOOL_DAY_COUNT = 5;
-    int day_of_week = timetable::get_day_of_week(api) + 1;
+    int day_of_week = utils::get_day_of_week(api->get_today()) + 1;
 
     if(day_of_week == SATURDAY || day_of_week == SUNDAY)
         weekend_text = "WEEKEND!!!";

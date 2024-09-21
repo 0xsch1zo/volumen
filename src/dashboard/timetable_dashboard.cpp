@@ -1,6 +1,7 @@
 #include "dashboard.hpp"
 #include "../api.hpp"
 #include "../timetable.hpp"
+#include "../utils.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -13,7 +14,7 @@
 ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
     const std::string weekend_prompt = "No lessons today!";
     const std::shared_ptr<api::timetable_t> timetable_p = api->get_timetable();
-    int today = timetable::get_day_of_week(api);
+    int today = utils::get_day_of_week(api->get_today());
     static int selector{};
 
     auto timetable_widget = ft::Container::Vertical({});

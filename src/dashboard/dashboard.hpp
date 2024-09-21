@@ -6,7 +6,7 @@
 namespace ft = ftxui;
 
 class dashboard {
-    class timetable_dashboard : timetable {
+    class timetable_dashboard {
         static ft::Element get_timeline_widget(std::shared_ptr<std::vector<api::lesson_t>> day);
     public:
         static ft::Component get_timetable_widget(api* api);
@@ -17,7 +17,7 @@ class dashboard {
         static ft::Component get_grades_widget(api* api);
     };
 
-    class weekend_bar : timetable {
+    class weekend_bar {
     public:
         static ft::Component get_weekend_bar(api* api);
     };
