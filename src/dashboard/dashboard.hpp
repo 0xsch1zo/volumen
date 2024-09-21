@@ -17,6 +17,11 @@ class dashboard {
         static ft::Component get_grades_widget(api* api);
     };
 
+    class weekend_bar : timetable {
+    public:
+        static ft::Component get_weekend_bar(api* api);
+    };
+
 public:
     static void dashboard_display(ft::Component dashboard_component, api* api);
 };

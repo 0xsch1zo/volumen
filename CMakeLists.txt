@@ -36,6 +36,7 @@ add_executable(volumen
   src/dashboard/dashboard.cpp
   src/dashboard/timetable_dashboard.cpp 
   src/dashboard/grades_dashboard.cpp
+  src/dashboard/weekend_bar.cpp
   src/utils.cpp 
   src/messages.cpp 
   src/tab.cpp 
