@@ -9,7 +9,7 @@ using json = nlohmann::json;
 
 class api {
     const std::string LIBRUS_API_URL                = "https://api.librus.pl";
-    const std::string EVENT_ENDPOINT                = "/3.0/SchoolNotices";
+    const std::string ANNOUCMENT_ENDPOINT           = "/3.0/SchoolNotices";
     const std::string TIMETABLE_ENDPOINT            = "/3.0/Timetables";
     const std::string TODAY_ENDPOINT                = "/3.0/SystemData";
     const std::string MESSAGE_ENDPOINT              = "/3.0/Messages";
@@ -31,7 +31,7 @@ public:
     static const int RECENT_GRADES_SIZE             = 10;
 public:
     // TODO: return const
-    struct event_t {
+    struct annoucment_t {
         std::string start_date;
         std::string end_date;
         std::string subject;
@@ -93,7 +93,7 @@ public:
 
     void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
 
-    std::shared_ptr<std::vector<event_t>> get_events();
+    std::shared_ptr<std::vector<annoucment_t>> get_annoucments();
 
     std::shared_ptr<timetable_t>
     get_timetable(std::string week_start = "");

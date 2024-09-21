@@ -9,7 +9,7 @@ namespace ft = ftxui;
 
 class annoucements : public content { 
     size_t selected{};
-    std::shared_ptr<std::vector<api::event_t>> annoucements_p;
+    std::shared_ptr<std::vector<api::annoucment_t>> annoucements_p;
 public:
     annoucements(ftxui::ScreenInteractive* main_screen);
     void content_display(ft::Component content_component, api* api, size_t* redirect, std::mutex* redirect_mutex) override;

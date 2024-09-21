@@ -13,6 +13,7 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
+    spd::debug(synergia_account.access_token);
 }
 
 // Sets up common options for the request
@@ -23,25 +24,25 @@ void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std
     request.setOpt<cl::options::HttpHeader>(auth_header);
 }
 
-std::shared_ptr<std::vector<api::event_t>> api::get_events() {
+std::shared_ptr<std::vector<api::annoucment_t>> api::get_annoucments() {
     std::ostringstream os;
     cl::Easy request;
-    request_setup(request, os, LIBRUS_API_URL + EVENT_ENDPOINT);
+    request_setup(request, os, LIBRUS_API_URL + ANNOUCMENT_ENDPOINT);
     request.perform();
     json data = json::parse(os.str());
-    std::shared_ptr<std::vector<api::event_t>> events = std::make_shared<std::vector<event_t>>();
+    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
 
-    for(const auto& event : data["SchoolNotices"]){
-        events->push_back({
-            .start_date     = event["StartDate"],
-            .end_date       = event["EndDate"],
-            .subject        = event["Subject"],
-            .content        = event["Content"],
-            .author         = *get_username_by_id(event["AddedBy"]["Id"])
+    for(const auto& annoucment : data["SchoolNotices"]){
+        annoucments->push_back({
+            .start_date     = annoucment["StartDate"],
+            .end_date       = annoucment["EndDate"],
+            .subject        = annoucment["Subject"],
+            .content        = annoucment["Content"],
+            .author         = *get_username_by_id(annoucment["AddedBy"]["Id"])
         });
     }
 
-    return events;
+    return annoucments;
 }
 
 // TODO: Fetch necessary ids in bulk

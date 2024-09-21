@@ -37,7 +37,7 @@ ft::Component content_component,
 api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
-    annoucements_p= api->get_events();
+    annoucements_p = api->get_annoucments();
 
     const size_t PREVIEW_SIZE = 300;
 
