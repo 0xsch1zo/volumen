@@ -13,7 +13,6 @@ api::api(authorization::synergia_account_t& account) {
     synergia_account.student_name = account.student_name;
     synergia_account.access_token = account.access_token;
     auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
-    spd::debug(synergia_account.access_token);
 }
 
 // Sets up common options for the request
@@ -188,29 +187,41 @@ std::unordered_map<int, const std::string>* api::get_subjects() {
     return &ids_and_subjects;
 }
 
-std::string api::get_grade_category_by_id(const int& id) {
-    static std::unordered_map<int, const std::string> ids_and_categories;
+std::string api::get_category_by_id(const int& id, api::category_types type) {
+    typedef std::unordered_map<int, const std::string> id_cateogry_map;
+    static std::vector<id_cateogry_map> ids_and_categories {
+        id_cateogry_map(),
+        id_cateogry_map()
+    };
 
-    if(!ids_and_categories.empty())
-        return ids_and_categories[id];
+    if(!ids_and_categories[type].empty())
+        return ids_and_categories[type][id];
 
     std::ostringstream os;
     cl::Easy request;
+    
+    switch(type) {
+        case GRADE:
+            request_setup(request, os, LIBRUS_API_URL + GRADE_CATEGORIES_ENDPOINT);
+            break;
 
-    request_setup(request, os, LIBRUS_API_URL + GRADE_CATEGORIES_ENDPOINT);
+        case EVENT:
+            request_setup(request, os, LIBRUS_API_URL + EVENT_CATEGORIES_ENDPOINT);
+            break;
+    }
 
     request.perform();
 
     json data = json::parse(os.str());
 
     for(const auto& category : data["Categories"].items()) {
-        ids_and_categories.insert({
+        ids_and_categories[type].insert({
             (int)category.value()["Id"],
             category.value()["Name"]
         });
     }
 
-    return ids_and_categories[id];
+    return ids_and_categories[type][id];
 }
 
 std::shared_ptr<std::string> api::get_username_by_id(const int& id) {
@@ -286,7 +297,7 @@ std::shared_ptr<api::grades_t> api::get_grades() {
         (*grades)[grade.value()["Subject"]["Id"]].grades.push_back({
             .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
             .grade                      = grade.value()["Grade"],
-            .category                   = get_grade_category_by_id(grade.value()["Category"]["Id"]),
+            .category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
             .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
             .date                       = grade.value()["Date"],
             // Why would a grade have multiple comments
@@ -320,7 +331,7 @@ api::get_recent_grades() {
         grades->push_back({
             .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
             .grade                      = grade.value()["Grade"],
-            .category                   = get_grade_category_by_id(grade.value()["Category"]["Id"]),
+            .category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
             .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
             .date                       = grade.value()["Date"],
             .comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
@@ -336,4 +347,30 @@ api::get_recent_grades() {
     }
 
     return grades;
+}
+
+std::shared_ptr<api::events_t> api::get_events() {
+    std::ostringstream os;
+    cl::Easy request;
+	
+    request_setup(request, os, LIBRUS_API_URL + EVENT_ENDPOINT);
+    request.perform();
+
+    json data = json::parse(os.str());
+
+    std::shared_ptr<events_t> events = std::make_shared<events_t>();
+
+    for(const auto& event : data["HomeWorks"].items()) {
+        const std::string date = event.value()["Date"];
+        events->try_emplace(date, std::vector<event_t>());
+        events->at(date).push_back({
+            .description = event.value()["Content"],
+            .category = get_category_by_id(event.value()["Category"]["Id"], EVENT),
+            .date = event.value()["Date"],
+            .created_by = *get_username_by_id(event.value()["CreatedBy"]["Id"]),
+            .lesson_offset = event.value()["LessonNo"].is_null() ? 0 : std::stoi((std::string)event.value()["LessonNo"])
+        });
+    }
+
+    return events;
 }

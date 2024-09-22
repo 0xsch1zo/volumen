@@ -8,6 +8,10 @@ namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class api {
+    enum category_types {
+        GRADE,
+        EVENT
+    };
     const std::string LIBRUS_API_URL                = "https://api.librus.pl";
     const std::string ANNOUCMENT_ENDPOINT           = "/3.0/SchoolNotices";
     const std::string TIMETABLE_ENDPOINT            = "/3.0/Timetables";
@@ -15,13 +19,15 @@ class api {
     const std::string MESSAGE_ENDPOINT              = "/3.0/Messages";
     const std::string SUBJECTS_ENDPOINT             = "/3.0/Subjects";
     const std::string GRADES_ENDPOINT               = "/3.0/Grades";
-    const std::string GRADE_COMMENTS_ENDPOINT       = "/3.0/Grades/Comments";
-    const std::string GRADE_CATEGORIES_ENDPOINT     = "/3.0/Grades/Categories";
+    const std::string GRADE_COMMENTS_ENDPOINT       = GRADES_ENDPOINT + "/Comments";
+    const std::string GRADE_CATEGORIES_ENDPOINT     = GRADES_ENDPOINT +"/Categories";
     const std::string USERS_ENDPOINT                = "/3.0/Users";
+    const std::string EVENT_ENDPOINT                = "/3.0/HomeWorks"; // Why for fucks...
+    const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
     authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
     std::list<std::string> auth_header;
     std::string get_subject_by_id(const int& id);
-    std::string get_grade_category_by_id(const int& id);
+    std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
     std::shared_ptr<std::string> get_username_by_id(const int& id);
     std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
@@ -89,6 +95,16 @@ public:
 
     typedef std::unordered_map<int, subject_with_grades_t> grades_t;
 
+    struct event_t {
+        std::string description;
+        std::string category;
+        std::string date;
+        std::string created_by;
+        int lesson_offset;
+    };
+
+    typedef std::unordered_map<std::string, std::vector<api::event_t>> events_t;
+
     api(authorization::synergia_account_t& account);
 
     void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
@@ -107,6 +123,8 @@ public:
 
     std::shared_ptr<std::vector<grade_t>>
     get_recent_grades();
+
+    std::shared_ptr<events_t> get_events();
 };
 
 
