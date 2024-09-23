@@ -133,7 +133,7 @@ using namespace std::chrono_literals;
                 case TIMETABLE:
                     GUARD(3);
 
-                    timetable_load_handle = std::async(std::launch::async, [&]{ t.timetable_display(timetable_component, &api, &selsd, ""); });
+                    timetable_load_handle = std::async(std::launch::async, [&]{ t.timetable_display(timetable_component, &api, &selsd, nullptr); });
                     envoked_lazy_load[3] = true;
                     break;
                 

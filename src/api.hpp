@@ -59,8 +59,8 @@ public:
 
     struct timetable_t {
         std::shared_ptr<std::shared_ptr<std::vector<lesson_t>>[]> timetable;
-        std::string prev_url;
-        std::string next_url;
+        std::shared_ptr<std::string> prev_url;
+        std::shared_ptr<std::string> next_url;
     };
 
     struct message_t {

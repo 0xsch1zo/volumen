@@ -81,8 +81,8 @@ api::get_timetable(std::string next_or_prev_url){
         timetable[i] = std::make_shared<std::vector<api::lesson_t>>();
     }
 
-    timetable_struct_p->prev_url = data["Pages"]["Prev"];
-    timetable_struct_p->next_url = data["Pages"]["Next"];
+    timetable_struct_p->prev_url = std::make_shared<std::string>(data["Pages"]["Prev"]);
+    timetable_struct_p->next_url = std::make_shared<std::string>(data["Pages"]["Next"]);
 
     int i{};
     for(const auto& day : data["Timetable"].items()) {
