@@ -5,6 +5,7 @@
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Options.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp>
 
 // Cleanup after execution else segfault wiil occur becuase os goes out of scope
 void utils::write_func_cleanup(curlpp::Easy& request) {
@@ -49,4 +50,18 @@ int utils::get_day_of_week(std::string&& date_unformated) {
         return 6;
     else
         return date_out->tm_wday - 1;
+}
+// This provides a button with centered text and rounded corners, yeah ...
+ft::ButtonOption utils::button_rounded() {
+    auto option = ft::ButtonOption::Border();
+    option.transform = [](const ft::EntryState& s) {
+        auto element = ft::text(s.label) | ft::center | ft::borderRounded | ft::size(ft::WIDTH, ft::EQUAL, 40);
+        if (s.focused) {
+            element |= ft::bold;
+            element |= ft::bgcolor(ft::Color::White);
+            element |= ft::color(ft::Color::Black);
+        }
+        return element;
+    };
+    return option;
 }

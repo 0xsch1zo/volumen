@@ -9,7 +9,6 @@ class login {
     login();
     static const std::string splash;
     static ft::ScreenInteractive screen;
-    static ft::ButtonOption button_style();
 
 public:
     static void login_screen();

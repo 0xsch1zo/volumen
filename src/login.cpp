@@ -23,21 +23,6 @@ const std::string login::splash = R"(
 )";
 ft::ScreenInteractive login::screen = ft::ScreenInteractive::FullscreenAlternateScreen();
 
-// This provides a button with centered text and rounded corners, yeah ...
-ft::ButtonOption login::button_style() {
-    auto option = ft::ButtonOption::Border();
-    option.transform = [](const ft::EntryState& s) {
-        auto element = ft::text(s.label) | ft::center | ft::borderRounded | ft::size(ft::WIDTH, ft::EQUAL, 40);
-        if (s.focused) {
-            element |= ft::bold;
-            element |= ft::bgcolor(ft::Color::White);
-            element |= ft::color(ft::Color::Black);
-        }
-        return element;
-    };
-    return option;
-}
-
 // Function that displays login interface and gets email and password
 void login::login_screen(){
     int auth_status{};
@@ -53,7 +38,7 @@ void login::login_screen(){
         if((auth_status = authorization::authorize(email, password)) == -1) return true;; 
         screen.Exit();
         return true; 
-    }, button_style());
+    }, utils::button_rounded());
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
@@ -107,7 +92,7 @@ void login::choose_account_screen() {
     int synergia_account_i = 0;
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [](){ screen.Exit(); }, button_style());
+    ft::Component continue_button = ft::Button("Continue", [](){ screen.Exit(); }, utils::button_rounded());
     std::vector<std::string> names;
 
     for(auto account : authorization::get_synergia_accounts()) {
@@ -115,8 +100,7 @@ void login::choose_account_screen() {
     }
 
     auto account_menu = ft::Dropdown({
-        .radiobox =
-        {
+        .radiobox = {
             .entries = &names,
             .selected = &synergia_account_i,
             .transform =
@@ -130,7 +114,7 @@ void login::choose_account_screen() {
                 }
                 return t;
             },
-        },
+        }
     });
 
     auto choose_synergia_account_components = ft::Container::Vertical({
