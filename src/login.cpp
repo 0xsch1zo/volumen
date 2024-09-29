@@ -30,10 +30,19 @@ void login::login_screen(){
     std::string password;
         
     // Login screen
-    ft::Component email_box = ft::Input(&email);
-    ft::InputOption password_opt;
+    ft::Component email_box = utils::custom_component_window(
+        ft::text("Email"),
+        ft::Input(&email, utils::plain_input())
+    );
+
+    ft::InputOption password_opt = utils::plain_input();
     password_opt.password = true;
-    ft::Component password_box = ft::Input(&password, password_opt);
+
+    ft::Component password_box = utils::custom_component_window(
+        ft::text("Password"),
+        ft::Input(&password, password_opt)
+    );
+
     ft::Component login_button = ft::Button("Login", [&] { 
         if((auth_status = authorization::authorize(email, password)) == -1) return true;; 
         screen.Exit();
@@ -51,6 +60,7 @@ void login::login_screen(){
 
     password_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { 
+            login_button->TakeFocus();
             if((auth_status = authorization::authorize(email, password)) == -1) return true; 
             screen.Exit();
             return true;
@@ -68,18 +78,23 @@ void login::login_screen(){
     const auto LOGIN_INTERFACE_SIZE = ft::size(ft::WIDTH, ft::EQUAL, 40);
     auto login_screen = ft::Renderer(login_components, [&] {
         return ft::vbox({
-                // Could make splash a component but there will be focus issues caused by that if it's a static global
-                ft::vbox(utils::split(splash)) | ft::hcenter,
-                ft::vbox({
-                    ft::window(ft::text("Email"), email_box->Render()),
-                    ft::window(ft::text("Password"), password_box->Render()),
-                        ft::separatorEmpty()
-                    })  | LOGIN_INTERFACE_SIZE | ft::hcenter,
-                    login_button->Render() | ft::hcenter,
-                    ft::separatorEmpty(),
-                    error_msg->Render() | ft::color(ft::Color::Red) | ft::hcenter
-                })  |
-                ft::vcenter;
+            // Could make splash a component but there will be focus issues caused by that if it's a static global
+            ft::vbox(utils::split(splash)) | ft::hcenter,
+            ft::vbox({
+                email_box->Render(),
+                password_box->Render(),
+                ft::separatorEmpty()
+            }) 
+            | LOGIN_INTERFACE_SIZE 
+            | ft::hcenter,
+            login_button->Render() 
+            | ft::hcenter,
+            ft::separatorEmpty(),
+            error_msg->Render() 
+            | ft::color(ft::Color::Red)
+            | ft::hcenter
+        })
+        | ft::vcenter;
     });
      
     screen.Loop(login_screen);
@@ -99,23 +114,7 @@ void login::choose_account_screen() {
         names.push_back(account.student_name);
     }
 
-    auto account_menu = ft::Dropdown({
-        .radiobox = {
-            .entries = &names,
-            .selected = &synergia_account_i,
-            .transform =
-            [](const ft::EntryState& s) {
-                auto t = ft::text(s.label) | ft::borderEmpty;
-                if (s.active) {
-                    t |= ft::bold;
-                }
-                if (s.focused) {
-                    t |= ft::inverted;
-                }
-                return t;
-            },
-        }
-    });
+    auto account_menu = utils::custom_dropdown(&names, &synergia_account_i);
 
     auto choose_synergia_account_components = ft::Container::Vertical({
         info,
@@ -134,10 +133,14 @@ void login::choose_account_screen() {
                 info->Render() | ft::color(ft::Color::Green),
                 ft::separatorEmpty(),
                 account_menu->Render(), 
-                continue_button->Render() | BUTTON_SIZE | ft::hcenter
-            }) | DMENU_SIZE | ft::hcenter
-        })  |
-        ft::vcenter;
+                continue_button->Render() 
+                | BUTTON_SIZE 
+                | ft::hcenter
+            }) 
+            | DMENU_SIZE 
+            | ft::hcenter
+        })
+        | ft::vcenter;
     });
 
     screen.Loop(choose_synergia_account);
