@@ -56,7 +56,7 @@ using namespace std::chrono_literals;
     std::vector<std::string> menu = {
         "Dashboard",
         "Messages",
-        "Events",
+        "Annoucements",
         "Timetable",
         "Grades"
     };
@@ -132,53 +132,53 @@ using namespace std::chrono_literals;
         if(!envoked_lazy_load.all()) {
             switch(tab_selected) {
                 case DASHBOARD:
-                    GUARD(0);
+                    GUARD(DASHBOARD);
 
                     dashboard_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
                         dashboard::dashboard_display(dashboard_component, &api); 
                     }, tab_container, DASHBOARD);
 
-                    envoked_lazy_load[0] = true;
+                    envoked_lazy_load[DASHBOARD] = true;
                     break;
 
                 case MESSAGES:
-                    GUARD(1);
+                    GUARD(MESSAGES);
 
                     messages_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
                         messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, MESSAGES);
 
-                    envoked_lazy_load[1] = true;
+                    envoked_lazy_load[MESSAGES] = true;
                     break;
 
                 case ANNOUCEMENTS: 
-                    GUARD(2);
+                    GUARD(ANNOUCEMENTS);
 
                     annoucements_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
                         annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, ANNOUCEMENTS);
 
-                    envoked_lazy_load[2] = true;
+                    envoked_lazy_load[ANNOUCEMENTS] = true;
                     break;
 
                 case TIMETABLE:
-                    GUARD(3);
+                    GUARD(TIMETABLE);
 
                     timetable_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
                         t.timetable_display(timetable_component, &api, &selsd, nullptr);
                     }, tab_container, TIMETABLE);
 
-                    envoked_lazy_load[3] = true;
+                    envoked_lazy_load[TIMETABLE] = true;
                     break;
                 
                 case GRADES:
-                    GUARD(4);
+                    GUARD(GRADES);
 
                     grades_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
                         g.grades_display(grades_component, &api);
                     }, tab_container, GRADES);
 
-                    envoked_lazy_load[4] = true;
+                    envoked_lazy_load[GRADES] = true;
                     break;
             }
         }
