@@ -23,6 +23,7 @@ public:
         ft::Component timetable_component, 
         api* api, 
         int* selector,
-        std::shared_ptr<std::string> url
+        std::shared_ptr<std::string> url,
+        ft::ScreenInteractive* screen_p
     );
 };

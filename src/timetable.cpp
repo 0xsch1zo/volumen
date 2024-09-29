@@ -15,8 +15,10 @@ void timetable::timetable_display(
     ft::Component timetable_component, 
     api* api, 
     int* selector,
-    std::shared_ptr<std::string> url
+    std::shared_ptr<std::string> url,
+    ft::ScreenInteractive* screen_p
 ) {
+    const int TIMETABLE_POSITION = 1;
     
     if(url == nullptr)
         url = std::make_shared<std::string>("");
@@ -57,18 +59,30 @@ void timetable::timetable_display(
     // On first run
     if(url->empty()) {
         timetable_component->DetachAllChildren();
+        
+        // If youre seeing this you might ask:
+        // "Why the hell did you put those CatchEvents in there, this looks awful!?" well, 
+        // this is the only hacky way I found to predictably update the menu selector and have it work
+        // Enjoy :)
         ft::Component menu = ft::Menu(*weekdays, selector, ft::MenuOption::HorizontalAnimated())
         | ft::CatchEvent([=](ft::Event event) {
-            const int TIMETABLE_POSITION = 1;
-            if(*selector == 0) {
-                *selector = weekdays->size() - ACTION_COUNT;
-                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                timetable_display(timetable_component, api, selector, prev_url);
-            }
-            else if(*selector == weekdays->size() - 1) {
-                *selector = ACTION_PREV_ENTRY_OFFSET;
-                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                timetable_display(timetable_component, api, selector, next_url);
+            screen_p->PostEvent(ft::Event::Special("Why"));
+            return false;
+        })
+        | ft::CatchEvent([=](ft::Event e){
+            if(e == ft::Event::Special("Why")) {
+                if(*selector == 0) {
+                    *selector = weekdays->size() - ACTION_COUNT;
+                    timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                    timetable_display(timetable_component, api, selector, prev_url, screen_p);
+                    return true;
+                }
+                else if(*selector == weekdays->size() - 1) {
+                    *selector = ACTION_PREV_ENTRY_OFFSET;
+                    timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                    timetable_display(timetable_component, api, selector, next_url, screen_p);
+                }
+                return true;
             }
             return false;
         });
