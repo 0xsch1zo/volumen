@@ -40,14 +40,6 @@ ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
 				| ft::color(ft::Color::White)
 			) | ft::color(ft::Color::Green);
         
-        if(grade_component->Active())
-        	return ft::window(
-				ft::text(grade_window_name) 
-				| ft::hcenter,
-				grade_component->Render()
-				| ft::color(ft::Color::White)
-			) | ft::color(ft::Color::Red);
-
         return ft::window(
 			ft::text(grade_window_name)
 			| ft::hcenter,
