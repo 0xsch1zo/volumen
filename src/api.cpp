@@ -41,7 +41,8 @@ std::shared_ptr<std::vector<api::annoucment_t>> api::get_annoucments() {
 
     std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
 
-    for(const auto& annoucment : data[target_data_structure]){
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--){
+        const auto& annoucment = data[target_data_structure].at(i);
         annoucments->push_back({
             .start_date     = annoucment["StartDate"],
             .end_date       = annoucment["EndDate"],
@@ -162,7 +163,8 @@ api::get_messages() {
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
-    for(auto message : data["Messages"]) {
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+        const auto& message = data[target_data_structure].at(i);
         msgs.messages->push_back({
             // Subject and content need to be parsed again because these are double escaped
             .subject    = json::parse((std::string)message["Subject"]),
@@ -362,23 +364,23 @@ api::get_recent_grades() {
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
-    int i{};
-    for(const auto& grade : data[target_data_structure].items()) {
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+        const auto& grade = data[target_data_structure].at(i);
         grades->push_back({
-            .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
-            .grade                      = grade.value()["Grade"],
-            .category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
-            .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
-            .date                       = grade.value()["Date"],
-            .comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
-            .semester                   = grade.value()["Semester"],
-            .is_semester                = grade.value()["IsSemester"],
-            .is_semester_proposition    = grade.value()["IsSemesterProposition"],
-            .is_final                   = grade.value()["IsFinal"],
-            .is_final_proposition       = grade.value()["IsFinalProposition"]
+            .subject                    = get_subject_by_id(grade["Subject"]["Id"]),
+            .grade                      = grade["Grade"],
+            .category                   = get_category_by_id(grade["Category"]["Id"], GRADE),
+            .added_by                   = *get_username_by_id(grade["AddedBy"]["Id"]),
+            .date                       = grade["Date"],
+            .comment                    = grade.contains("Comments") ? get_comment_by_id(grade["Comments"][0]["Id"]) : "N/A",
+            .semester                   = grade["Semester"],
+            .is_semester                = grade["IsSemester"],
+            .is_semester_proposition    = grade["IsSemesterProposition"],
+            .is_final                   = grade["IsFinal"],
+            .is_final_proposition       = grade["IsFinalProposition"]
         });
 
-        if(i >= MAX_VECTOR_SIZE)
+        if(grades->size() >= MAX_VECTOR_SIZE)
             break;
     }
 
@@ -399,15 +401,17 @@ std::shared_ptr<api::events_t> api::get_events() {
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
-    for(const auto& event : data[target_data_structure].items()) {
-        const std::string date = event.value()["Date"];
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+        const auto& event = data[target_data_structure].at(i);
+        const std::string date = event["Date"];
+
         events->try_emplace(date, std::vector<event_t>());
         events->at(date).push_back({
-            .description = event.value()["Content"],
-            .category = get_category_by_id(event.value()["Category"]["Id"], EVENT),
-            .date = event.value()["Date"],
-            .created_by = *get_username_by_id(event.value()["CreatedBy"]["Id"]),
-            .lesson_offset = event.value()["LessonNo"].is_null() ? 0 : std::stoi((std::string)event.value()["LessonNo"])
+            .description = event["Content"],
+            .category = get_category_by_id(event["Category"]["Id"], EVENT),
+            .date = event["Date"],
+            .created_by = *get_username_by_id(event["CreatedBy"]["Id"]),
+            .lesson_offset = event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         });
     }
 
