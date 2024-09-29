@@ -6,6 +6,7 @@
 #include "timetable.hpp"
 #include "content.hpp"
 #include "grades.hpp"
+#include "error_handler.hpp"
 #include <future>
 #include <chrono>
 #include <bitset>
@@ -17,13 +18,34 @@
 #include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
+void tab::tab_error_wrapper(
+    error* e, 
+    std::function<void()> caller_lambda,  
+    ft::Component tab_container, 
+    tab::tabs_t tabs
+) {
+    try {
+        caller_lambda();
+    } 
+    catch(error::volumen_exception& ex) {
+        e->handler(ex);
+        // ChildAt(0) Because it's not only container but also modal
+        tab_container->ChildAt(0)->ChildAt(0)->ChildAt(tabs)->DetachAllChildren();
+    }
+    catch(std::exception& ex) {
+        e->handler(ex);
+        // ChildAt(0) Because it's not only container but also modal
+        tab_container->ChildAt(0)->ChildAt(0)->ChildAt(tabs)->DetachAllChildren();
+    }
+    
+}
 
-// TODO: api error handling
 // TODO: remove unnecessary includes
 void tab::display_interface(int synergia_account_i) {
 using namespace std::chrono_literals;
     auto main_screen = ft::ScreenInteractive::FullscreenAlternateScreen();
     
+    error e;
     api api(authorization::get_synergia_accounts().at(synergia_account_i));
     std::unique_ptr<content> annoucements_p = std::make_unique<annoucements>(&main_screen);
     std::unique_ptr<content> messages_p = std::make_unique<messages>(&main_screen);
@@ -67,7 +89,7 @@ using namespace std::chrono_literals;
         timetable_component,
         grades_component
     }, 
-    &tab_selected);
+    &tab_selected) | ft::Modal(e.get_component(), e.get_show());
     
     ft::Component container = ft::Container::Vertical({
         tab_menu,
@@ -81,10 +103,10 @@ using namespace std::chrono_literals;
     const auto ANIMATION_WAIT = 70ms;
     std::bitset<TO_LAZY_LOAD> envoked_lazy_load{};
 
-    // When something is needs to be loaded reload is set to a number of ui elements to load.
-    // When the relevant function for loading the content was invoked reload is decremented.
-    // This continues until reload hits 0
-    
+    // Waits for all the threads for loading content to finish.
+    // While they're working increment counter for loading spinner
+    // And update the screen    
+
     auto loading_animation = std::async(std::launch::async, ([&]{ 
         // Run until all things have been loaded
         while(!envoked_lazy_load.all()
@@ -112,35 +134,50 @@ using namespace std::chrono_literals;
                 case DASHBOARD:
                     GUARD(0);
 
-                    dashboard_load_handle = std::async(std::launch::async, [&]{ dashboard::dashboard_display(dashboard_component, &api); });
+                    dashboard_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                        dashboard::dashboard_display(dashboard_component, &api); 
+                    }, tab_container, DASHBOARD);
+
                     envoked_lazy_load[0] = true;
                     break;
 
                 case MESSAGES:
                     GUARD(1);
 
-                    messages_load_handle = std::async(std::launch::async, [&]{ messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); });
+                    messages_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                        messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); 
+                    }, tab_container, MESSAGES);
+
                     envoked_lazy_load[1] = true;
                     break;
 
                 case ANNOUCEMENTS: 
                     GUARD(2);
 
-                    annoucements_load_handle = std::async(std::launch::async, [&]{ annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); });
+                    annoucements_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                        annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); 
+                    }, tab_container, ANNOUCEMENTS);
+
                     envoked_lazy_load[2] = true;
                     break;
 
                 case TIMETABLE:
                     GUARD(3);
 
-                    timetable_load_handle = std::async(std::launch::async, [&]{ t.timetable_display(timetable_component, &api, &selsd, nullptr); });
+                    timetable_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                        t.timetable_display(timetable_component, &api, &selsd, nullptr);
+                    }, tab_container, TIMETABLE);
+
                     envoked_lazy_load[3] = true;
                     break;
                 
                 case GRADES:
                     GUARD(4);
 
-                    grades_load_handle = std::async(std::launch::async, [&]{ g.grades_display(grades_component, &api); });
+                    grades_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                        g.grades_display(grades_component, &api);
+                    }, tab_container, GRADES);
+
                     envoked_lazy_load[4] = true;
                     break;
             }
@@ -151,9 +188,6 @@ using namespace std::chrono_literals;
             tab_container->Render()
         });
     });
-
-
-    
 
 main_loop:
     main_screen.Loop(renderer);

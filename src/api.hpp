@@ -1,5 +1,6 @@
 #pragma once
 #include "authorization.hpp"
+#include "error_handler.hpp"
 #include <string>
 #include <curlpp/Easy.hpp>
 
@@ -32,6 +33,7 @@ class api {
     std::shared_ptr<std::string> get_username_by_id(const int& id);
     std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
     std::unordered_map<int, const std::string>* get_subjects();
+    static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
 
 public:
     static const int RECENT_GRADES_SIZE             = 10;
