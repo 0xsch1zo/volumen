@@ -26,33 +26,34 @@ void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
     static const std::string target_does_not_exist_message = "Target json structure not found: \"";
     if(!data.contains(target_json_data_structure))
-        throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
+        spd::debug("{} in {}", target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
+        //throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
 }
 
-std::shared_ptr<std::vector<api::annoucment_t>> api::get_annoucments() {
-    std::ostringstream os;
+// Fetches from an api endpoint
+void api::fetch(const std::string& endpoint, std::ostringstream& os) {
     cl::Easy request;
-    const std::string target_data_structure = "SchoolNotices";
-    request_setup(request, os, LIBRUS_API_URL + ANNOUCMENT_ENDPOINT);
+    request_setup(request, os, LIBRUS_API_URL + endpoint);
     request.perform();
+}
+
+void api::fetch_url(const std::string& url, std::ostringstream& os) {
+    cl::Easy request;
+    request_setup(request, os, url);
+    request.perform();
+}
+
+void api::parse_generic_info_by_id(const std::ostringstream& os, const std::string& target, generic_info_id_map& generic_info_id_map_p) {
     json data = json::parse(os.str());
 
-    check_if_target_contains(__FUNCTION__, data, target_data_structure);
+    check_if_target_contains(__FUNCTION__, data, target);
 
-    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
-
-    for(int i = data[target_data_structure].size() - 1; i >= 0; i--){
-        const auto& annoucment = data[target_data_structure].at(i);
-        annoucments->push_back({
-            .start_date     = annoucment["StartDate"],
-            .end_date       = annoucment["EndDate"],
-            .subject        = annoucment["Subject"],
-            .content        = annoucment["Content"],
-            .author         = *get_username_by_id(annoucment["AddedBy"]["Id"])
-        });
+    for(const auto& element : data[target].items()) {
+        generic_info_id_map_p.emplace(
+            (int)element.value()["Id"],
+            element.value()["Name"]
+        );
     }
-
-    return annoucments;
 }
 
 std::shared_ptr<std::string> api::fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request) {
@@ -66,36 +67,70 @@ std::shared_ptr<std::string> api::fetch_username_by_message_user_id(const std::s
     return std::make_shared<std::string>((std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"]);
 }
 
-std::shared_ptr<api::timetable_t>
-api::get_timetable(std::string next_or_prev_url){
+std::shared_ptr<std::vector<api::annoucment_t>> api::get_annoucments() {
     std::ostringstream os;
-    cl::Easy request;
-    const int DAY_NUM = 7;
-    const std::string target_data_structure = "Timetable";
+    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
+    fetch(ANNOUCMENT_ENDPOINT, os);
+    parse_annoucments(os, annoucments);
+    return annoucments;
+}
 
-    // If url is empty  it will query for the current week
-    if(next_or_prev_url.empty())
-        request_setup(request, os, LIBRUS_API_URL + TIMETABLE_ENDPOINT);
-    else
-        request_setup(request, os, next_or_prev_url);
-
-    request.perform();
-
+void api::parse_annoucments(const std::ostringstream& os, std::shared_ptr<std::vector<api::annoucment_t>> annoucments_p) {
+    const std::string target_data_structure = "SchoolNotices";
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
+    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
+
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--){
+        const auto& annoucment = data[target_data_structure].at(i);
+        annoucments_p->push_back({
+            .start_date     = annoucment["StartDate"],
+            .end_date       = annoucment["EndDate"],
+            .subject        = annoucment["Subject"],
+            .content        = annoucment["Content"],
+            .author         = *get_username_by_id(annoucment["AddedBy"]["Id"])
+        });
+    }
+}
+
+std::shared_ptr<api::timetable_t> api::get_timetable(std::string week_start_url){
+    std::ostringstream os;
+    const int DAY_NUM = 7;
+
+    // If url is empty  it will query for the current week
+    if(week_start_url.empty())
+        fetch(TIMETABLE_ENDPOINT, os);
+    else {
+        fetch_url(week_start_url, os);
+    }
+    // This shit should not exist
     std::shared_ptr timetable_struct_p = std::make_shared<timetable_t>();
 
     std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]> 
     timetable(new std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]);
 
-    for(int i{}; i< DAY_NUM; i++) {
+    for(int i{}; i < DAY_NUM; i++) {
         timetable[i] = std::make_shared<std::vector<api::lesson_t>>();
     }
 
-    timetable_struct_p->prev_url = std::make_shared<std::string>(data["Pages"]["Prev"]);
-    timetable_struct_p->next_url = std::make_shared<std::string>(data["Pages"]["Next"]);
+    timetable_struct_p->timetable = timetable;
+
+    parse_timetable(os, timetable_struct_p);
+
+    return timetable_struct_p;
+}
+
+void api::parse_timetable(const std::ostringstream &os, std::shared_ptr<api::timetable_t> timetable_p) {
+    const std::string target_data_structure = "Timetable";
+
+    json data = json::parse(os.str());
+
+    check_if_target_contains(__FUNCTION__, data, target_data_structure);
+
+    timetable_p->prev_url = std::make_shared<std::string>(data["Pages"]["Prev"]);
+    timetable_p->next_url = std::make_shared<std::string>(data["Pages"]["Next"]);
 
     int i{};
     for(const auto& day : data[target_data_structure].items()) {
@@ -103,7 +138,7 @@ api::get_timetable(std::string next_or_prev_url){
 
         for(const auto& lesson : day.value()) {
             if(lesson.empty()) {
-                timetable[i]->push_back({
+                timetable_p->timetable[i]->push_back({
                     .subject            = "",
                     .teacher            = "",
                     .start              = "",
@@ -117,7 +152,7 @@ api::get_timetable(std::string next_or_prev_url){
                 continue;
             }
 
-            timetable[i]->push_back({
+            timetable_p->timetable[i]->push_back({
                 .subject            = lesson[0]["Subject"]["Name"],
                 .teacher            = (std::string)lesson[0]["Teacher"]["FirstName"] + (std::string)lesson[0]["Teacher"]["LastName"],
                 .start              = lesson[0]["HourFrom"],
@@ -131,10 +166,6 @@ api::get_timetable(std::string next_or_prev_url){
         }
         i++;
     }
-    
-    timetable_struct_p->timetable = timetable;
-
-    return timetable_struct_p;
 }
 
 std::string api::get_today() {
@@ -148,55 +179,59 @@ std::string api::get_today() {
     return (std::string)data["Date"];
 }
 
-std::shared_ptr<api::messages_t>
-api::get_messages() {
+std::shared_ptr<api::messages_t> api::get_messages() {
     std::ostringstream os;
-    cl::Easy request;
-    const std::string target_data_structure = "Messages";
-
-    request_setup(request, os, LIBRUS_API_URL + MESSAGE_ENDPOINT);
-    request.perform();
-    json data = json::parse(os.str());
-
     messages_t msgs;
     msgs.messages = std::make_shared<std::vector<message_t>>();
+
+    fetch(MESSAGE_ENDPOINT, os);
+    parse_messages(os, msgs.messages);
+    return std::make_shared<messages_t>(msgs);
+}
+
+void api::parse_messages(const std::ostringstream& os, std::shared_ptr<std::vector<api::message_t>> messages_p) {
+    cl::Easy get_user_request;
+    const std::string target_data_structure = "Messages";
+    json data = json::parse(os.str());
+
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& message = data[target_data_structure].at(i);
-        msgs.messages->push_back({
+        messages_p->push_back({
             // Subject and content need to be parsed again because these are double escaped
             .subject    = json::parse((std::string)message["Subject"]),
             .content    = json::parse((std::string)message["Body"]),
-            .sender     = *fetch_username_by_message_user_id(message["Sender"]["Url"], request),
+            .sender     = *fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
             .send_date  = message["SendDate"]
         });
     }
-
-    return std::make_shared<messages_t>(msgs);
 }
 
 std::string api::get_subject_by_id(const int& id) {
-    std::unordered_map<int, const std::string>* subject_map_p = get_subjects();
-    return (*subject_map_p)[id];
+    const std::unordered_map<int, const std::string>* subject_map_p = get_subjects();
+    return subject_map_p->at(id);
 }
 
-std::unordered_map<int, const std::string>* api::get_subjects() {
-    const std::string target_data_structure = "Subjects";
+const std::unordered_map<int, const std::string>* api::get_subjects() {
     static std::unordered_map<int, const std::string> ids_and_subjects;
-
+    const std::string target_data_structure = "Subjects";
     if(!ids_and_subjects.empty())
         return &ids_and_subjects;
 
     std::ostringstream os;
-    cl::Easy request;
 
-    request_setup(request, os, LIBRUS_API_URL + SUBJECTS_ENDPOINT + "");
+    fetch(SUBJECTS_ENDPOINT, os);
+    // Populate
+    parse_generic_info_by_id(os, target_data_structure, ids_and_subjects);
 
-    request.perform();
+    return &ids_and_subjects;
+}
 
-    json data = json::parse(os.str());
+/*const std::unordered_map<int, const std::string>* api::parse_subjects(std::ostringstream* os) {
+    static std::unordered_map<int, const std::string> ids_and_subjects;
+    json data = json::parse(os->str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
@@ -207,35 +242,34 @@ std::unordered_map<int, const std::string>* api::get_subjects() {
         });
     }
     return &ids_and_subjects;
-}
+}*/
 
 std::string api::get_category_by_id(const int& id, api::category_types type) {
     const std::string target_data_structure = "Categories";
-    typedef std::unordered_map<int, const std::string> id_cateogry_map;
-    static std::vector<id_cateogry_map> ids_and_categories {
-        id_cateogry_map(),
-        id_cateogry_map()
+    
+    static std::vector<generic_info_id_map> ids_and_categories {
+        generic_info_id_map(),
+        generic_info_id_map()
     };
 
     if(!ids_and_categories[type].empty())
         return ids_and_categories[type][id];
 
+    
     std::ostringstream os;
-    cl::Easy request;
     
     switch(type) {
         case GRADE:
-            request_setup(request, os, LIBRUS_API_URL + GRADE_CATEGORIES_ENDPOINT);
+            fetch(GRADE_CATEGORIES_ENDPOINT, os);
             break;
 
         case EVENT:
-            request_setup(request, os, LIBRUS_API_URL + EVENT_CATEGORIES_ENDPOINT);
+            fetch(EVENT_CATEGORIES_ENDPOINT, os);
             break;
     }
 
-    request.perform();
-
-    json data = json::parse(os.str());
+    parse_generic_info_by_id(os, target_data_structure, ids_and_categories[type]);
+    /*json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
@@ -244,7 +278,7 @@ std::string api::get_category_by_id(const int& id, api::category_types type) {
             (int)category.value()["Id"],
             category.value()["Name"]
         });
-    }
+    }*/
 
     return ids_and_categories[type][id];
 }
@@ -256,11 +290,15 @@ std::shared_ptr<std::string> api::get_username_by_id(const int& id) {
 
     std::ostringstream os;
     cl::Easy request;
+
+    fetch(USERS_ENDPOINT, os);
+    parse_username_by_id(os, ids_and_usernames);
+    return std::make_shared<std::string>(ids_and_usernames[id]);
+}
+
+void api::parse_username_by_id(const std::ostringstream& os, api::generic_info_id_map& ids_and_usernames) {
     const std::string delimiter = " ";
     const std::string target_data_structure = "Users";
-
-    request_setup(request, os, LIBRUS_API_URL + USERS_ENDPOINT);
-    request.perform();
 
     json data = json::parse(os.str());
 
@@ -272,54 +310,48 @@ std::shared_ptr<std::string> api::get_username_by_id(const int& id) {
             (std::string)username.value()["FirstName"] + delimiter + (std::string)username.value()["LastName"]
         );
     }
-
-    return std::make_shared<std::string>(ids_and_usernames[id]);
 }
 
 std::string api::get_comment_by_id(const int& id) {
     static std::unordered_map<int, const std::string> ids_and_comments;
-    const std::string target_data_structure = "Comments";
 
     if(!ids_and_comments.empty())
         return ids_and_comments[id];
 
     std::ostringstream os;
-    cl::Easy request;
+    fetch(GRADE_COMMENTS_ENDPOINT, os);
+    parse_comment_by_id(os, ids_and_comments);
+    return ids_and_comments[id];
+}
 
-    request_setup(request, os, LIBRUS_API_URL + GRADE_COMMENTS_ENDPOINT);
-    request.perform();
+void api::parse_comment_by_id(const std::ostringstream& os, generic_info_id_map& ids_and_comments) {
+    const std::string target_data_structure = "Comments";
 
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
-    for(const auto& comment : data[target_data_structure].items()) {
-        ids_and_comments.insert({
-            (int)comment.value()["Id"],
-            (std::string)comment.value()["Text"]
-        });
-    }
-
-    return ids_and_comments[id];
+    for(const auto& comment : data[target_data_structure].items())
+        ids_and_comments.emplace( comment.value()["Id"], comment.value()["Text"] );
 }
 
 std::shared_ptr<api::grades_t> api::get_grades() {
     std::ostringstream os;
-    cl::Easy request;
+    std::shared_ptr<grades_t> grades = std::make_shared<grades_t>();
+
+    fetch(GRADES_ENDPOINT, os);
+    parse_grades(os, grades);
+    return grades;
+}
+
+void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> grades_p) {
     const std::string target_data_structure = "Grades";
-
-    request_setup(request, os, LIBRUS_API_URL + GRADES_ENDPOINT);
-    request.perform();
-
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
-    // Init
-    std::shared_ptr<grades_t> grades = std::make_shared<grades_t>();
-
     for(const auto subject : *get_subjects())
-        grades->emplace(
+        grades_p->emplace(
 			subject.first, 
 			subject_with_grades_t { 
 				.grades = std::vector<grade_t>(), 
@@ -329,7 +361,7 @@ std::shared_ptr<api::grades_t> api::get_grades() {
 
     // Populate
     for(const auto& grade : data[target_data_structure].items()) {
-        (*grades)[grade.value()["Subject"]["Id"]].grades.push_back({
+        (*grades_p)[grade.value()["Subject"]["Id"]].grades.push_back({
             .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
             .grade                      = grade.value()["Grade"],
             .category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
@@ -344,29 +376,29 @@ std::shared_ptr<api::grades_t> api::get_grades() {
             .is_final_proposition       = grade.value()["IsFinalProposition"]
         });
     }
-
-    return grades;
 }
 
 std::shared_ptr<std::vector<api::grade_t>> 
 api::get_recent_grades() {
     std::ostringstream os;
-    cl::Easy request;
-	const int MAX_VECTOR_SIZE = 4;
-    const std::string target_data_structure = "Grades";
-	
-    request_setup(request, os, LIBRUS_API_URL + GRADES_ENDPOINT);
-    request.perform();
-
-    json data = json::parse(os.str());
-
     auto grades = std::make_shared<std::vector<grade_t>>();
+	
+    fetch(GRADES_ENDPOINT, os);
+    parse_recent_grades(os, grades);
+    return grades;
+}
+
+void api::parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std::vector<api::grade_t>> grades_p) {
+    const std::string target_data_structure = "Grades";
+	const int MAX_VECTOR_SIZE = 4;
+ 
+    json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& grade = data[target_data_structure].at(i);
-        grades->push_back({
+        grades_p->push_back({
             .subject                    = get_subject_by_id(grade["Subject"]["Id"]),
             .grade                      = grade["Grade"],
             .category                   = get_category_by_id(grade["Category"]["Id"], GRADE),
@@ -380,24 +412,24 @@ api::get_recent_grades() {
             .is_final_proposition       = grade["IsFinalProposition"]
         });
 
-        if(grades->size() >= MAX_VECTOR_SIZE)
+        if(grades_p->size() >= MAX_VECTOR_SIZE)
             break;
-    }
-
-    return grades;
+    }   
 }
 
 std::shared_ptr<api::events_t> api::get_events() {
     std::ostringstream os;
-    cl::Easy request;
-    const std::string target_data_structure = "HomeWorks";
+    std::shared_ptr<events_t> events = std::make_shared<events_t>();
 	
-    request_setup(request, os, LIBRUS_API_URL + EVENT_ENDPOINT);
-    request.perform();
+    fetch(EVENT_ENDPOINT, os);
+    parse_events(os, events);
+    return events;
+}
+
+void api::parse_events(const std::ostringstream& os, std::shared_ptr<api::events_t> events) {
+    const std::string target_data_structure = "HomeWorks";
 
     json data = json::parse(os.str());
-
-    std::shared_ptr<events_t> events = std::make_shared<events_t>();
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
@@ -414,6 +446,4 @@ std::shared_ptr<api::events_t> api::get_events() {
             .lesson_offset = event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         });
     }
-
-    return events;
 }

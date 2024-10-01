@@ -9,6 +9,10 @@ namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class api {
+#ifdef VOLUMEN_TESTING
+    #include "../benchmarks/benchmarks.hpp"
+    friend class benchmarks;
+#endif
     enum category_types {
         GRADE,
         EVENT
@@ -27,17 +31,10 @@ class api {
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
     authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
     std::list<std::string> auth_header;
-    std::string get_subject_by_id(const int& id);
-    std::string get_category_by_id(const int& id, category_types);
-    std::string get_comment_by_id(const int& id);
-    std::shared_ptr<std::string> get_username_by_id(const int& id);
-    std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
-    std::unordered_map<int, const std::string>* get_subjects();
-    static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
 
 public:
     static const int RECENT_GRADES_SIZE             = 10;
-public:
+
     // TODO: return const
     struct annoucment_t {
         std::string start_date;
@@ -107,6 +104,31 @@ public:
 
     typedef std::unordered_map<std::string, std::vector<api::event_t>> events_t;
 
+    typedef std::unordered_map<int, const std::string> generic_info_id_map;
+private:
+
+    std::string get_subject_by_id(const int& id);
+    std::string get_category_by_id(const int& id, category_types);
+    std::string get_comment_by_id(const int& id);
+    void parse_generic_info_by_id(const std::ostringstream& os, const std::string& target, generic_info_id_map& generic_info_id_map_p);
+    std::shared_ptr<std::string> get_username_by_id(const int& id);
+    std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
+    const std::unordered_map<int, const std::string>* get_subjects();
+    static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
+    void fetch(const std::string& endpoint, std::ostringstream& os);
+    void fetch_url(const std::string& url, std::ostringstream& os);
+
+    void parse_username_by_id(const std::ostringstream& os, api::generic_info_id_map& ids_and_usernames);
+    void parse_comment_by_id(const std::ostringstream& os, generic_info_id_map& ids_and_comments);
+    void parse_annoucments(const std::ostringstream& os, std::shared_ptr<std::vector<api::annoucment_t>> annoucments_p);
+    void parse_timetable(const std::ostringstream& os, std::shared_ptr<api::timetable_t> timetable_p);
+    void parse_messages(const std::ostringstream& os, std::shared_ptr<std::vector<api::message_t>> messages_p);
+    void parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> grades_p);
+    void parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std::vector<api::grade_t>> grades_p);
+    void parse_events(const std::ostringstream& os, std::shared_ptr<api::events_t> events);
+public:
+
+
     api(authorization::synergia_account_t& account);
 
     void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
@@ -114,7 +136,7 @@ public:
     std::shared_ptr<std::vector<annoucment_t>> get_annoucments();
 
     std::shared_ptr<timetable_t>
-    get_timetable(std::string week_start = "");
+    get_timetable(std::string week_start_url = "");
 
     std::string get_today();
 
