@@ -4,15 +4,13 @@
 #include <string>
 #include <curlpp/Easy.hpp>
 
-//namespace spd = spdlog;
+#ifdef VOLUMEN_TESTING
+class benchmarks;
+#endif
 namespace cl = cURLpp;
 using json = nlohmann::json;
 
 class api {
-#ifdef VOLUMEN_TESTING
-    #include "../benchmarks/benchmarks.hpp"
-    friend class benchmarks;
-#endif
     enum category_types {
         GRADE,
         EVENT
@@ -106,7 +104,9 @@ public:
 
     typedef std::unordered_map<int, const std::string> generic_info_id_map;
 private:
-
+#ifdef VOLUMEN_TESTING
+    friend class benchmarks;
+#endif
     std::string get_subject_by_id(const int& id);
     std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
