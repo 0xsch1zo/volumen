@@ -1,0 +1,108 @@
+diff --git a/src/api.cpp b/src/api.cpp
+index b6bfa38..a5d78e8 100644
+--- a/src/api.cpp
++++ b/src/api.cpp
+@@ -26,14 +26,14 @@ void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std
+ void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
+     static const std::string target_does_not_exist_message = "Target json structure not found: \"";
+     if(!data.contains(target_json_data_structure))
+-        spd::debug("{} in {}", target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
+-        //throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
++        throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
+ }
+ 
+ // Fetches from an api endpoint
+ void api::fetch(const std::string& endpoint, std::ostringstream& os) {
+     cl::Easy request;
+     request_setup(request, os, LIBRUS_API_URL + endpoint);
++    spd::debug(endpoint);
+     request.perform();
+ }
+ 
+@@ -90,7 +90,7 @@ void api::parse_annoucments(const std::ostringstream& os, std::shared_ptr<std::v
+             .end_date       = annoucment["EndDate"],
+             .subject        = annoucment["Subject"],
+             .content        = annoucment["Content"],
+-            .author         = *get_username_by_id(annoucment["AddedBy"]["Id"])
++            //.author         = *get_username_by_id(annoucment["AddedBy"]["Id"])
+         });
+     }
+ }
+@@ -203,7 +203,7 @@ void api::parse_messages(const std::ostringstream& os, std::shared_ptr<std::vect
+             // Subject and content need to be parsed again because these are double escaped
+             .subject    = json::parse((std::string)message["Subject"]),
+             .content    = json::parse((std::string)message["Body"]),
+-            .sender     = *fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
++            //.sender     = *fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
+             .send_date  = message["SendDate"]
+         });
+     }
+@@ -350,25 +350,33 @@ void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> g
+ 
+     check_if_target_contains(__FUNCTION__, data, target_data_structure);
+ 
+-    for(const auto subject : *get_subjects())
++    /*for(const auto subject : *get_subjects())
+         grades_p->emplace(
+ 			subject.first, 
+ 			subject_with_grades_t { 
+ 				.grades = std::vector<grade_t>(), 
+ 				.subject = subject.second
+ 			}
+-		);
++		);*/
+ 
+     // Populate
+     for(const auto& grade : data[target_data_structure].items()) {
++        grades_p->try_emplace(
++			grade.value()["Subject"]["Id"], 
++			subject_with_grades_t { 
++				.grades = std::vector<grade_t>(), 
++				.subject = ""
++			}
++        );
++
+         (*grades_p)[grade.value()["Subject"]["Id"]].grades.push_back({
+-            .subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
++            //.subject                    = get_subject_by_id(grade.value()["Subject"]["Id"]),
+             .grade                      = grade.value()["Grade"],
+-            .category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
+-            .added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
++            //.category                   = get_category_by_id(grade.value()["Category"]["Id"], GRADE),
++            //.added_by                   = *get_username_by_id(grade.value()["AddedBy"]["Id"]),
+             .date                       = grade.value()["Date"],
+             // Why would a grade have multiple comments
+-            .comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
++            //.comment                    = grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
+             .semester                   = grade.value()["Semester"],
+             .is_semester                = grade.value()["IsSemester"],
+             .is_semester_proposition    = grade.value()["IsSemesterProposition"],
+@@ -399,12 +407,12 @@ void api::parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std:
+     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+         const auto& grade = data[target_data_structure].at(i);
+         grades_p->push_back({
+-            .subject                    = get_subject_by_id(grade["Subject"]["Id"]),
++            //.subject                    = get_subject_by_id(grade["Subject"]["Id"]),
+             .grade                      = grade["Grade"],
+-            .category                   = get_category_by_id(grade["Category"]["Id"], GRADE),
+-            .added_by                   = *get_username_by_id(grade["AddedBy"]["Id"]),
++            //.category                   = get_category_by_id(grade["Category"]["Id"], GRADE),
++            //.added_by                   = *get_username_by_id(grade["AddedBy"]["Id"]),
+             .date                       = grade["Date"],
+-            .comment                    = grade.contains("Comments") ? get_comment_by_id(grade["Comments"][0]["Id"]) : "N/A",
++            //.comment                    = grade.contains("Comments") ? get_comment_by_id(grade["Comments"][0]["Id"]) : "N/A",
+             .semester                   = grade["Semester"],
+             .is_semester                = grade["IsSemester"],
+             .is_semester_proposition    = grade["IsSemesterProposition"],
+@@ -440,9 +448,9 @@ void api::parse_events(const std::ostringstream& os, std::shared_ptr<api::events
+         events->try_emplace(date, std::vector<event_t>());
+         events->at(date).push_back({
+             .description = event["Content"],
+-            .category = get_category_by_id(event["Category"]["Id"], EVENT),
++            //.category = get_category_by_id(event["Category"]["Id"], EVENT),
+             .date = event["Date"],
+-            .created_by = *get_username_by_id(event["CreatedBy"]["Id"]),
++            //.created_by = *get_username_by_id(event["CreatedBy"]["Id"]),
+             .lesson_offset = event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
+         });
+     }
