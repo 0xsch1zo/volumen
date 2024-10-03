@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+benchmarks::benchmarks(const std::string& mocks) : mock_dir(mocks) {}
+
 const std::string benchmarks::color(const std::string& text, const std::string& foreground, const std::string& background) {
     return (std::string)ESCAPE
         + CSI 
@@ -70,125 +72,114 @@ authorization::synergia_account_t benchmarks::auth_bench(const std::string& emai
     return synergia_accounts[ACC_NUM];
 }
 
-void benchmarks::api_bench(authorization::synergia_account_t& synergia_acc) {
+void benchmarks::api_bench(authorization::synergia_account_t& synergia_acc, int run_count) {
     api api_o(synergia_acc);
-    const std::function<void()> void_api_functions[] = {
-        [&]{ parse_comment_test(api_o);             /* pure */},
-        [&]{ prase_generic_info_by_id_test(api_o);  /* pure */},
-        [&]{ parse_recent_grades_test(api_o);       /* not pure(4) */},
-        [&]{ parse_events_test(api_o);              /* not pure(2) */},
-        [&]{ parse_messages_test(api_o);            /* not pure(1) */},
-        [&]{ parse_annoucements_test(api_o);        /* not pure(1)*/},
-        [&]{ parse_grades_test(api_o);              /* not pure(4) */},
-        [&]{ parse_timetable_test(api_o);           /* pure */}
+    const std::function<test_result()> void_api_functions[] = {
+        [&]{ return parse_comment_test(api_o);             /* pure */},
+        [&]{ return prase_generic_info_by_id_test(api_o);  /* pure */},
+        [&]{ return parse_recent_grades_test(api_o);       /* not pure(4) */},
+        [&]{ return parse_events_test(api_o);              /* not pure(2) */},
+        [&]{ return parse_messages_test(api_o);            /* not pure(1) */},
+        [&]{ return parse_annoucements_test(api_o);        /* not pure(1)*/},
+        [&]{ return parse_grades_test(api_o);              /* not pure(4) */},
+        [&]{ return parse_timetable_test(api_o);           /* pure */}
     };
 
-    for(auto& func : void_api_functions)
-        func(); 
+    for(auto& func : void_api_functions) {
+        std::string test_name;
+        int64_t total_duration{};
+        for(int i = 0; i < run_count; i++) {
+            test_result res = func(); 
+            test_name = res.test_function;
+            total_duration += res.duration;
+        }
+
+        print_info(test_name);
+        print_duration(total_duration / (int64_t)run_count);
+        std::cout << std::endl << std::endl;
+    }
 }
 
 void benchmarks::load_mock(api_test_functions test_func, std::ostringstream& os) {
-    std::ifstream get_mock("mocks/" + mock_file_name_to_handle_map[test_func]);
+    std::ifstream get_mock(mock_dir + mock_file_name_to_handle_map[test_func]);
     if(!get_mock.is_open())
         throw std::logic_error("File does not exist");
 
     os << get_mock.rdbuf();
 }
 
-void benchmarks::parse_grades_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_grades_test(api& api_o) {
     std::ostringstream os;
     load_mock(GRADES, os);
     std::shared_ptr<api::grades_t> grades = std::make_shared<api::grades_t>();
     std::function<void()> handle = [&]{ api_o.parse_grades(os, grades); };
 
-    print_info(VAR_NAME(GRADES));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(GRADES), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_recent_grades_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_recent_grades_test(api& api_o) {
     std::ostringstream os;
     load_mock(RECENT_GRADES, os);
     auto grades = std::make_shared<std::vector<api::grade_t>>();
 
     std::function<void()> handle = [&]{ api_o.parse_recent_grades(os, grades); };
 
-    print_info(VAR_NAME(RECENT_GRADES));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(RECENT_GRADES), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::prase_generic_info_by_id_test(api& api_o) {
+benchmarks::test_result benchmarks::prase_generic_info_by_id_test(api& api_o) {
     std::ostringstream os;
     const std::string target = "Categories";
     api::generic_info_id_map ids_and_categories;
 
-    load_mock(CATEGORIES, os);
+    load_mock(GENERIC, os);
     std::function<void()> handle = [&]{ api_o.parse_generic_info_by_id(os, target, ids_and_categories); };
 
-    print_info(VAR_NAME(CATEGORIES));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(GENERIC), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_comment_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_comment_test(api& api_o) {
     std::ostringstream os;
     api::generic_info_id_map ids_and_comments;
     
     load_mock(COMMENTS, os);
     std::function<void()> handle = [&]{ api_o.parse_comment_by_id(os, ids_and_comments); };
 
-    print_info(VAR_NAME(COMMENTS));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(COMMENTS), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_events_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_events_test(api& api_o) {
     std::ostringstream os;
     std::shared_ptr<api::events_t> events = std::make_shared<api::events_t>();
 
     load_mock(EVENTS, os);
     std::function<void()> handle = [&]{ api_o.parse_events(os, events); };
 
-    print_info(VAR_NAME(EVENTS));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(EVENTS), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_messages_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_messages_test(api& api_o) {
     std::ostringstream os;
     api::messages_t msgs;
     msgs.messages = std::make_shared<std::vector<api::message_t>>();
 
-
     load_mock(MESSAGES, os);
     std::function<void()> handle = [&]{ api_o.parse_messages(os, msgs.messages); };
 
-    print_info(VAR_NAME(MESSAGES));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(MESSAGES), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_annoucements_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_annoucements_test(api& api_o) {
     std::ostringstream os;
     std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<api::annoucment_t>>();
 
     load_mock(ANNOUCEMENTS, os);
     std::function<void()> handle = [&]{ api_o.parse_annoucments(os, annoucments); };
 
-    print_info(VAR_NAME(ANNOUCEMENTS));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(ANNOUCEMENTS), benchmarks::simple_benchmark(handle) };
 }
 
-void benchmarks::parse_timetable_test(api& api_o) {
+benchmarks::test_result benchmarks::parse_timetable_test(api& api_o) {
     std::ostringstream os;
     std::shared_ptr timetable_struct_p = std::make_shared<api::timetable_t>();
     const int DAY_NUM = 7;
@@ -205,8 +196,5 @@ void benchmarks::parse_timetable_test(api& api_o) {
     load_mock(TIMETABLE, os);
     std::function<void()> handle = [&]{ api_o.parse_timetable(os, timetable_struct_p); };
 
-    print_info(VAR_NAME(TIMETABLE));
-    print_duration(benchmarks::simple_benchmark(handle));
-    std::cout << '\n';
-    std::cout << '\n';
+    return { VAR_NAME(TIMETABLE), benchmarks::simple_benchmark(handle) };
 }
