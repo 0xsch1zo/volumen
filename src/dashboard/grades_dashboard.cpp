@@ -3,10 +3,10 @@
 #include <memory>
 
 ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
-    const auto grades_p = api->get_recent_grades();
+    const auto grades_o = api->get_recent_grades();
     auto grade_component = ft::Container::Vertical({});
 
-    for (const auto& grade : *grades_p) {
+    for (const auto& grade : grades_o) {
         grade_component->Add(ft::MenuEntry({
             .label = grade.subject,
             .transform = [=](const ft::EntryState s) {

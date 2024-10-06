@@ -11,8 +11,8 @@ class timetable {
     std::shared_ptr<std::string> next_url;
 
     static ft::Component lessons(
-        std::shared_ptr<std::vector<api::lesson_t>> day, 
-        std::shared_ptr<api::events_t> events_p
+        const std::vector<api::lesson_t>& day, 
+        api::events_t& events_p
     );
     static ft::Component empty_lesson_box();
     static ft::Component lesson_box(const api::lesson_t& lesson);

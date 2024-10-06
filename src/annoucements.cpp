@@ -14,7 +14,7 @@ annoucements::annoucements(ft::ScreenInteractive* main_screen) {
 }
 
 ft::Component annoucements::content_view() {
-    auto annoucements = annoucements_p->at(selected);
+    auto annoucements = annoucements_o.at(selected);
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
     return ft::Renderer([=]{ 
@@ -37,7 +37,7 @@ ft::Component content_component,
 api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
-    annoucements_p = api->get_annoucments();
+    annoucements_o = api->get_annoucments();
 
     const size_t PREVIEW_SIZE = 300;
 
@@ -45,8 +45,8 @@ std::mutex* redirect_mutex) {
     auto menu_entries = ft::Container::Vertical({});
 
     
-    for(int i{}; i < annoucements_p->size(); i++) {
-        std::string content = annoucements_p->at(i).content;
+    for(int i{}; i < annoucements_o.size(); i++) {
+        std::string content = annoucements_o.at(i).content;
         menu_entries->Add(ft::MenuEntry({
             .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
             .transform = [=](const ft::EntryState &s) {
@@ -55,8 +55,8 @@ std::mutex* redirect_mutex) {
                     selected = i;
                     entry = ft::window(
                         ft::hbox({
-                            ft::text(annoucements_p->at(i).subject) | ft::bold, 
-                            ft::text(deliminator + annoucements_p->at(i).author)
+                            ft::text(annoucements_o.at(i).subject) | ft::bold, 
+                            ft::text(deliminator + annoucements_o.at(i).author)
                         }), 
                         entry | ft::color(ft::Color::White)
                     ) | ft::color(ft::Color::Green);
@@ -64,8 +64,8 @@ std::mutex* redirect_mutex) {
                 else
                     entry = ft::window(
                         ft::hbox({
-                            ft::text(annoucements_p->at(i).subject) | ft::bold,
-                            ft::text(deliminator + annoucements_p->at(i).author)
+                            ft::text(annoucements_o.at(i).subject) | ft::bold,
+                            ft::text(deliminator + annoucements_o.at(i).author)
                         }), 
                         entry | ft::color(ft::Color::GrayLight));
                 return entry;

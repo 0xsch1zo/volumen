@@ -32,6 +32,7 @@ void api::check_if_target_contains(const char* FUNCTION, const json& data, const
 // Fetches from an api endpoint
 void api::fetch(const std::string& endpoint, std::ostringstream& os) {
     cl::Easy request;
+    spd::error(endpoint);
     request_setup(request, os, LIBRUS_API_URL + endpoint);
     request.perform();
 }
@@ -55,7 +56,7 @@ void api::parse_generic_info_by_id(const std::ostringstream& os, const std::stri
     }
 }
 
-std::shared_ptr<std::string> api::fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request) {
+std::string api::fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request) {
     // Handle reuse
     std::ostringstream os;
     request.setOpt<cl::options::WriteStream>(&os);
@@ -63,79 +64,68 @@ std::shared_ptr<std::string> api::fetch_username_by_message_user_id(const std::s
     request.setOpt<cl::options::HttpHeader>(auth_header);
     request.perform();
     json data = json::parse(os.str());
-    return std::make_shared<std::string>((std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"]);
+    return (std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"];
 }
 
-std::shared_ptr<std::vector<api::annoucment_t>> api::get_annoucments() {
+api::annoucements_t api::get_annoucments() {
     std::ostringstream os;
-    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<annoucment_t>>();
+    annoucements_t annoucments;
     fetch(ANNOUCMENT_ENDPOINT, os);
     parse_annoucments(os, annoucments);
     return annoucments;
 }
 
-void api::parse_annoucments(const std::ostringstream& os, std::shared_ptr<std::vector<api::annoucment_t>> annoucments_p) {
+void api::parse_annoucments(const std::ostringstream& os, annoucements_t& annoucments) {
     const std::string target_data_structure = "SchoolNotices";
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    annoucments_p->reserve(data[target_data_structure].size());
+    annoucments.reserve(data[target_data_structure].size());
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--){
         const auto& annoucment = data[target_data_structure].at(i);
-        annoucments_p->emplace_back(
+        annoucments.emplace_back(
             /*.start_date     = */annoucment["StartDate"],
             /*.end_date       = */annoucment["EndDate"],
             /*.subject        = */annoucment["Subject"],
             /*.content        = */annoucment["Content"],
-            /*.author         = */*get_username_by_id(annoucment["AddedBy"]["Id"])
+            /*.author         = */get_username_by_id(annoucment["AddedBy"]["Id"])
         );
     }
 }
 
-std::shared_ptr<api::timetable_t> api::get_timetable(std::string week_start_url){
+api::timetable_t api::get_timetable(std::string week_start_url){
     std::ostringstream os;
-    const int DAY_NUM = 7;
-
+    
     // If url is empty  it will query for the current week
     if(week_start_url.empty())
         fetch(TIMETABLE_ENDPOINT, os);
-    else {
+    else
         fetch_url(week_start_url, os);
-    }
-    // This shit should not exist
-    std::shared_ptr timetable_struct_p = std::make_shared<timetable_t>();
 
-    std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]> 
-    timetable(new std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]);
+    timetable_t timetable_o;
 
-    for(int i{}; i < DAY_NUM; i++) {
-        timetable[i] = std::make_shared<std::vector<api::lesson_t>>();
-    }
+    parse_timetable(os, timetable_o);
 
-    timetable_struct_p->timetable = timetable;
-
-    parse_timetable(os, timetable_struct_p);
-
-    return timetable_struct_p;
+    return timetable_o;
 }
 
-void api::parse_timetable(const std::ostringstream &os, std::shared_ptr<api::timetable_t> timetable_p) {
+void api::parse_timetable(const std::ostringstream &os, api::timetable_t& timetable_o) {
     const std::string target_data_structure = "Timetable";
 
     json data = json::parse(os.str());
 
-    timetable_p->prev_url = std::make_shared<std::string>(data["Pages"]["Prev"]);
-    timetable_p->next_url = std::make_shared<std::string>(data["Pages"]["Next"]);
+    timetable_o.prev_url = data["Pages"]["Prev"];
+    timetable_o.next_url = data["Pages"]["Next"];
 
     int i{};
     for(const auto& day : data[target_data_structure].items()) {
         std::string date = day.key();
 
-        timetable_p->timetable[i]->reserve(data[target_data_structure].size());
+        timetable_o.timetable[i].reserve(data[target_data_structure].size());
         for(const auto& lesson : day.value()) {
             if(lesson.empty()) {
-                timetable_p->timetable[i]->emplace_back(
+                timetable_o.timetable[i].emplace_back(
                     /*.subject            = */"",
                     /*.teacher            = */"",
                     /*.start              = */"",
@@ -149,7 +139,7 @@ void api::parse_timetable(const std::ostringstream &os, std::shared_ptr<api::tim
                 continue;
             }
 
-            timetable_p->timetable[i]->emplace_back(
+            timetable_o.timetable[i].emplace_back(
                 /*.subject            = */lesson[0]["Subject"]["Name"],
                 /*.teacher            = */(std::string)lesson[0]["Teacher"]["FirstName"] + (std::string)lesson[0]["Teacher"]["LastName"],
                 /*.start              = */lesson[0]["HourFrom"],
@@ -176,32 +166,32 @@ std::string api::get_today() {
     return (std::string)data["Date"];
 }
 
-std::shared_ptr<api::messages_t> api::get_messages() {
+api::messages_t api::get_messages() {
     std::ostringstream os;
-    messages_t msgs;
-    msgs.messages = std::make_shared<std::vector<message_t>>();
+    messages_t messages_o;
+    messages_o;
 
     fetch(MESSAGE_ENDPOINT, os);
-    parse_messages(os, msgs.messages);
-    return std::make_shared<messages_t>(msgs);
+    parse_messages(os, messages_o);
+    return messages_o; 
 }
 
-void api::parse_messages(const std::ostringstream& os, std::shared_ptr<std::vector<api::message_t>> messages_p) {
+void api::parse_messages(const std::ostringstream& os, api::messages_t& messages_o) {
     cl::Easy get_user_request;
     const std::string target_data_structure = "Messages";
     json data = json::parse(os.str());
 
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    messages_p->reserve(data[target_data_structure].size());
+    messages_o.reserve(data[target_data_structure].size());
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& message = data[target_data_structure].at(i);
-        messages_p->emplace_back(
+        messages_o.emplace_back(
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),
-            /*.sender     = */*fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
+            /*.sender     = */fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
             /*.send_date  = */message["SendDate"]
         );
     }
@@ -255,17 +245,17 @@ std::string api::get_category_by_id(const int& id, api::category_types type) {
     return ids_and_categories[type][id];
 }
 
-std::shared_ptr<std::string> api::get_username_by_id(const int& id) {
+std::string api::get_username_by_id(const int& id) {
     static std::unordered_map<int, const std::string> ids_and_usernames;
     if(!ids_and_usernames.empty())
-        return std::make_shared<std::string>(ids_and_usernames[id]);
+        return ids_and_usernames[id];
 
     std::ostringstream os;
     cl::Easy request;
 
     fetch(USERS_ENDPOINT, os);
     parse_username_by_id(os, ids_and_usernames);
-    return std::make_shared<std::string>(ids_and_usernames[id]);
+    return ids_and_usernames[id];
 }
 
 void api::parse_username_by_id(const std::ostringstream& os, api::generic_info_id_map& ids_and_usernames) {
@@ -309,25 +299,25 @@ void api::parse_comment_by_id(const std::ostringstream& os, generic_info_id_map&
         ids_and_comments.emplace( comment.value()["Id"], comment.value()["Text"] );
 }
 
-std::shared_ptr<api::grades_t> api::get_grades() {
+api::grades_t api::get_grades() {
     std::ostringstream os;
-    std::shared_ptr<grades_t> grades = std::make_shared<grades_t>();
+    grades_t grades_o;
 
     fetch(GRADES_ENDPOINT, os);
-    parse_grades(os, grades);
-    return grades;
+    parse_grades(os, grades_o);
+    return grades_o;
 }
 
-void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> grades_p) {
-    const std::string target_data_structure = "Grade";
+void api::parse_grades(const std::ostringstream& os, grades_t& grades_o) {
+    const std::string target_data_structure = "Grades";
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     const auto& subjects = get_subjects();
-    grades_p->reserve(data[target_data_structure].size() + subjects->size());
+    grades_o.reserve(data[target_data_structure].size());
 
     for(const auto subject : *subjects)
-        grades_p->emplace(
+        grades_o.emplace(
 			subject.first, 
 			subject_with_grades_t { 
 				.grades = std::vector<grade_t>(), 
@@ -337,7 +327,7 @@ void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> g
 
     // Populate
     for(const auto& grade : data[target_data_structure].items()) {
-        /*grades_p->try_emplace(
+        /*grades_o.try_emplace(
 			grade.value()["Subject"]["Id"], 
 			subject_with_grades_t { 
 				.grades = std::vector<grade_t>(), 
@@ -345,11 +335,11 @@ void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> g
 			}
         );*/
 
-        (*grades_p)[grade.value()["Subject"]["Id"]].grades.emplace_back(
+        grades_o[grade.value()["Subject"]["Id"]].grades.emplace_back(
             /*.subject                    =*/ get_subject_by_id(grade.value()["Subject"]["Id"]),
             /*.grade                      =*/ grade.value()["Grade"],
             /*.category                   =*/ get_category_by_id(grade.value()["Category"]["Id"], GRADE),
-            /*.added_by                   =*/ *get_username_by_id(grade.value()["AddedBy"]["Id"]),
+            /*.added_by                   =*/ get_username_by_id(grade.value()["AddedBy"]["Id"]),
             /*.date                       =*/ grade.value()["Date"],
             // Why would a grade have multiple comments
             /*.comment                    =*/ grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
@@ -362,32 +352,31 @@ void api::parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> g
     }
 }
 
-std::shared_ptr<std::vector<api::grade_t>> 
-api::get_recent_grades() {
+api::recent_grades_t api::get_recent_grades() {
     std::ostringstream os;
-    auto grades = std::make_shared<std::vector<grade_t>>();
+    recent_grades_t grades_o;
 	
     fetch(GRADES_ENDPOINT, os);
-    parse_recent_grades(os, grades);
-    return grades;
+    parse_recent_grades(os, grades_o);
+    return grades_o;
 }
 
-void api::parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std::vector<api::grade_t>> grades_p) {
+void api::parse_recent_grades(const std::ostringstream& os, recent_grades_t& grades_o) {
     const std::string target_data_structure = "Grades";
 	const int MAX_VECTOR_SIZE = 4;
  
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    grades_p->reserve(data[target_data_structure].size());
+    grades_o.reserve(data[target_data_structure].size());
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& grade = data[target_data_structure].at(i);
-        grades_p->emplace_back(
-            /*.subject                    = */get_subject_by_id(grade["Subject"]["Id"]),
+        grades_o.emplace_back(
+            /*.subject                    =*/ get_subject_by_id(grade["Subject"]["Id"]),
             /*.grade                      =*/ grade["Grade"],
             /*.category                   =*/ get_category_by_id(grade["Category"]["Id"], GRADE),
-            /*.added_by                   =*/ *get_username_by_id(grade["AddedBy"]["Id"]),
+            /*.added_by                   =*/ get_username_by_id(grade["AddedBy"]["Id"]),
             /*.date                       =*/ grade["Date"],
             /*.comment                    =*/ grade.contains("Comments") ? get_comment_by_id(grade["Comments"][0]["Id"]) : "N/A",
             /*.semester                   =*/ grade["Semester"],
@@ -397,38 +386,38 @@ void api::parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std:
             /*.is_final_proposition       =*/ grade["IsFinalProposition"]
         );
 
-        if(grades_p->size() >= MAX_VECTOR_SIZE)
+        if(grades_o.size() >= MAX_VECTOR_SIZE)
             break;
     }   
 }
 
-std::shared_ptr<api::events_t> api::get_events() {
+api::events_t api::get_events() {
     std::ostringstream os;
-    std::shared_ptr<events_t> events = std::make_shared<events_t>();
+    events_t events_o;
 	
     fetch(EVENT_ENDPOINT, os);
-    parse_events(os, events);
-    return events;
+    parse_events(os, events_o);
+    return events_o;
 }
 
-void api::parse_events(const std::ostringstream& os, std::shared_ptr<api::events_t> events) {
+void api::parse_events(const std::ostringstream& os, api::events_t& events_o) {
     const std::string target_data_structure = "HomeWorks";
 
     json data = json::parse(os.str());
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    events->reserve(data[target_data_structure].size());
+    events_o.reserve(data[target_data_structure].size());
 
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& event = data[target_data_structure].at(i);
         const std::string date = event["Date"];
 
-        events->try_emplace(date, std::vector<event_t>());
-        events->at(date).emplace_back(
+        events_o.try_emplace(date, std::vector<event_t>());
+        events_o.at(date).emplace_back(
             /*.description =    */    event["Content"],
             /*.category =       */    get_category_by_id(event["Category"]["Id"], EVENT),
             /*.date =           */    event["Date"],
-            /*.created_by =     */    *get_username_by_id(event["CreatedBy"]["Id"]),
+            /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
     }

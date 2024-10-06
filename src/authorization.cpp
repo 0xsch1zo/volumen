@@ -13,10 +13,10 @@ const std::string authorization::LIBRUS_PORTAL_AUTHORIZE_URL           = "https:
 const std::string authorization::LIBRUS_PORTAL_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
 const std::string authorization::LIBRUS_PORTAL_APP_URL                 = "app://librus";
 const std::string authorization::LIBRUS_PORTAL_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
-const std::string authorization::LIBRUS_API_ACCESS_TOKEN_URL    = "https://portal.librus.pl/api/v3/SynergiaAccounts";
+const std::string authorization::LIBRUS_API_ACCESS_TOKEN_URL           = "https://portal.librus.pl/api/v3/SynergiaAccounts";
 const std::string authorization::LIBRUS_PORTAL_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
-const std::string authorization::redirectTo                     = "/konto-librus/redirect/dru";
-const std::string authorization::redirectCrc                    = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
+const std::string authorization::redirectTo                            = "/konto-librus/redirect/dru";
+const std::string authorization::redirectCrc                           = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
 
 // TODO: make custom exception type for login
 // TODO: make shared_request_opt_setup

@@ -24,11 +24,11 @@ void timetable::timetable_display(
         url = std::make_shared<std::string>("");
 
     // get_timetable will handle empty url
-    std::shared_ptr<api::timetable_t> timetable_p = api->get_timetable(*url);
-    std::shared_ptr<api::events_t> events_p = api->get_events();
+    api::timetable_t timetable_o = api->get_timetable(*url);
+    api::events_t events_o = api->get_events();
 
-    prev_url = timetable_p->prev_url;
-    next_url = timetable_p->next_url;
+    prev_url = std::make_shared<std::string>(timetable_o.prev_url);
+    next_url = std::make_shared<std::string>(timetable_o.next_url);
 
     auto weekdays = std::make_shared<std::vector<std::string>>();
     *weekdays = {
@@ -51,7 +51,7 @@ void timetable::timetable_display(
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
 
     for(size_t i{}; i < weekdays->size() - ACTION_COUNT; i++)
-        timetable_container->Add(ft::Container::Vertical({ lessons(timetable_p->timetable[i], events_p) }));
+        timetable_container->Add(ft::Container::Vertical({ lessons(timetable_o.timetable[i], events_o) }));
 
     // Add dummy contianer for '>' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
@@ -97,15 +97,15 @@ void timetable::timetable_display(
         *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
 }
 
-ft::Component timetable::lessons(std::shared_ptr<std::vector<api::lesson_t>> day, std::shared_ptr<api::events_t> events_p) {
+ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::events_t& events_o) {
     ft::Component lessons = ft::Container::Vertical({});
 
     int i{};
-    for(auto& lesson : *day) {
+    for(auto& lesson : day) {
         auto events_component = ft::Container::Horizontal({});
-        if(events_p->contains(lesson.date)) {
+        if(events_o.contains(lesson.date)) {
             // Find event relevant to lesson number
-           for(const auto& event : (*events_p)[lesson.date]) {
+           for(const auto& event : events_o[lesson.date]) {
                 if(event.lesson_offset == (i++) + 1)
                     events_component->Add(event_box(event));
             }

@@ -4,10 +4,10 @@
 #include <ftxui/component/event.hpp>
 
 void grades::grades_display(ft::Component grades_component, api* api) {
-    std::shared_ptr<api::grades_t> grades_p = api->get_grades();
+    api::grades_t grades_p = api->get_grades();
     ft::Component grades_menu = ft::Container::Vertical({});
 
-    for(const auto& subject : *grades_p) {
+    for(const auto& subject : grades_p) {
         if(subject.second.grades.empty()) {
             grades_menu->Add(empty_subject(subject.second.subject));
             continue;

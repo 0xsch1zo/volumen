@@ -1,3 +1,4 @@
+#pragma once
 #include "api.hpp"
 #include "content.hpp"
 #include <bitset>
@@ -9,7 +10,7 @@ namespace ft = ftxui;
 
 class annoucements : public content { 
     size_t selected{};
-    std::shared_ptr<std::vector<api::annoucment_t>> annoucements_p;
+    api::annoucements_t annoucements_o;
 public:
     annoucements(ftxui::ScreenInteractive* main_screen);
     void content_display(ft::Component content_component, api* api, size_t* redirect, std::mutex* redirect_mutex) override;

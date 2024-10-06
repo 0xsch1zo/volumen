@@ -15,6 +15,7 @@ class api {
         GRADE,
         EVENT
     };
+    static const int TIMETABLE_DAY_NUM = 7;
     const std::string LIBRUS_API_URL                = "https://api.librus.pl";
     const std::string ANNOUCMENT_ENDPOINT           = "/3.0/SchoolNotices";
     const std::string TIMETABLE_ENDPOINT            = "/3.0/Timetables";
@@ -31,16 +32,18 @@ class api {
     std::list<std::string> auth_header;
 
 public:
-    static const int RECENT_GRADES_SIZE             = 10;
+//    static const int RECENT_GRADES_SIZE             = 10;
 
     // TODO: return const
-    struct annoucment_t {
+    struct annoucement_t {
         std::string start_date;
         std::string end_date;
         std::string subject;
         std::string content;
         std::string author;
     };
+
+    typedef std::vector<annoucement_t> annoucements_t;
 
     struct lesson_t {
         std::string subject;
@@ -55,9 +58,9 @@ public:
     };
 
     struct timetable_t {
-        std::shared_ptr<std::shared_ptr<std::vector<lesson_t>>[]> timetable;
-        std::shared_ptr<std::string> prev_url;
-        std::shared_ptr<std::string> next_url;
+        std::array<std::vector<lesson_t>, TIMETABLE_DAY_NUM> timetable;
+        std::string prev_url;
+        std::string next_url;
     };
 
     struct message_t {
@@ -67,9 +70,7 @@ public:
         int send_date; // You might ask why did they use a date as a string in the lesson but now they are using unix timestamps. That my friend is a question that I have yet to answer.
     };
 
-    struct messages_t {
-        std::shared_ptr<std::vector<message_t>> messages;
-    };
+    typedef std::vector<message_t> messages_t;
 
     struct grade_t {
         std::string subject;
@@ -91,6 +92,8 @@ public:
     };
 
     typedef std::unordered_map<int, subject_with_grades_t> grades_t;
+    
+    typedef std::vector<grade_t> recent_grades_t;
 
     struct event_t {
         std::string description;
@@ -111,21 +114,22 @@ private:
     std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
     void parse_generic_info_by_id(const std::ostringstream& os, const std::string& target, generic_info_id_map& generic_info_id_map_p);
-    std::shared_ptr<std::string> get_username_by_id(const int& id);
-    std::shared_ptr<std::string> fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
+    std::string get_username_by_id(const int& id);
+    std::string fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
     const std::unordered_map<int, const std::string>* get_subjects();
     static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
+
     void fetch(const std::string& endpoint, std::ostringstream& os);
     void fetch_url(const std::string& url, std::ostringstream& os);
 
-    void parse_username_by_id(const std::ostringstream& os, api::generic_info_id_map& ids_and_usernames);
+    void parse_username_by_id(const std::ostringstream& os,generic_info_id_map& ids_and_usernames);
     void parse_comment_by_id(const std::ostringstream& os, generic_info_id_map& ids_and_comments);
-    void parse_annoucments(const std::ostringstream& os, std::shared_ptr<std::vector<api::annoucment_t>> annoucments_p);
-    void parse_timetable(const std::ostringstream& os, std::shared_ptr<api::timetable_t> timetable_p);
-    void parse_messages(const std::ostringstream& os, std::shared_ptr<std::vector<api::message_t>> messages_p);
-    void parse_grades(const std::ostringstream& os, std::shared_ptr<grades_t> grades_p);
-    void parse_recent_grades(const std::ostringstream& os, std::shared_ptr<std::vector<api::grade_t>> grades_p);
-    void parse_events(const std::ostringstream& os, std::shared_ptr<api::events_t> events);
+    void parse_annoucments(const std::ostringstream& os, annoucements_t& annoucments_o);
+    void parse_timetable(const std::ostringstream& os, timetable_t& timetable_o);
+    void parse_messages(const std::ostringstream& os, messages_t& messages_o);
+    void parse_grades(const std::ostringstream& os, grades_t& grades_o);
+    void parse_recent_grades(const std::ostringstream& os, recent_grades_t& grades_o);
+    void parse_events(const std::ostringstream& os, api::events_t& events_o);
 public:
 
 
@@ -133,22 +137,17 @@ public:
 
     void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
 
-    std::shared_ptr<std::vector<annoucment_t>> get_annoucments();
+    annoucements_t get_annoucments();
 
-    std::shared_ptr<timetable_t>
-    get_timetable(std::string week_start_url = "");
+    timetable_t get_timetable(std::string week_start_url = "");
 
     std::string get_today();
 
-    std::shared_ptr<messages_t>
-    get_messages();
+    messages_t get_messages();
 
-    std::shared_ptr<grades_t> get_grades();
+    grades_t get_grades();
 
-    std::shared_ptr<std::vector<grade_t>>
-    get_recent_grades();
+    recent_grades_t get_recent_grades();
 
-    std::shared_ptr<events_t> get_events();
+    events_t get_events();
 };
-
-

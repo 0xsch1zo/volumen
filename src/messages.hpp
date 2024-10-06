@@ -9,7 +9,7 @@ namespace ft = ftxui;
 
 class messages : public content {
     size_t selected{};
-    std::shared_ptr<api::messages_t> messages_p;
+    api::messages_t messages_o;
 public:
     messages(ftxui::ScreenInteractive* main_screen);
     void content_display(ft::Component content_component, api* api, size_t* redirect, std::mutex* redirect_mutex) override;
