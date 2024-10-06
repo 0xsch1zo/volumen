@@ -111,8 +111,8 @@ void benchmarks::load_mock(api_test_functions test_func, std::ostringstream& os)
 benchmarks::test_result benchmarks::parse_grades_test(api& api_o) {
     std::ostringstream os;
     load_mock(GRADES, os);
-    std::shared_ptr<api::grades_t> grades = std::make_shared<api::grades_t>();
-    std::function<void()> handle = [&]{ api_o.parse_grades(os, grades); };
+    api::grades_t grades_o;
+    std::function<void()> handle = [&]{ api_o.parse_grades(os, grades_o); };
 
     return { VAR_NAME(GRADES), benchmarks::simple_benchmark(handle) };
 }
@@ -120,9 +120,9 @@ benchmarks::test_result benchmarks::parse_grades_test(api& api_o) {
 benchmarks::test_result benchmarks::parse_recent_grades_test(api& api_o) {
     std::ostringstream os;
     load_mock(RECENT_GRADES, os);
-    auto grades = std::make_shared<std::vector<api::grade_t>>();
+    api::recent_grades_t grades_o;
 
-    std::function<void()> handle = [&]{ api_o.parse_recent_grades(os, grades); };
+    std::function<void()> handle = [&]{ api_o.parse_recent_grades(os, grades_o); };
 
     return { VAR_NAME(RECENT_GRADES), benchmarks::simple_benchmark(handle) };
 }
@@ -150,28 +150,27 @@ benchmarks::test_result benchmarks::parse_comment_test(api& api_o) {
 
 benchmarks::test_result benchmarks::parse_events_test(api& api_o) {
     std::ostringstream os;
-    std::shared_ptr<api::events_t> events = std::make_shared<api::events_t>();
+    api::events_t events_o;
 
     load_mock(EVENTS, os);
-    std::function<void()> handle = [&]{ api_o.parse_events(os, events); };
+    std::function<void()> handle = [&]{ api_o.parse_events(os, events_o); };
 
     return { VAR_NAME(EVENTS), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_messages_test(api& api_o) {
     std::ostringstream os;
-    api::messages_t msgs;
-    msgs.messages = std::make_shared<std::vector<api::message_t>>();
+    api::messages_t messages_o;
 
     load_mock(MESSAGES, os);
-    std::function<void()> handle = [&]{ api_o.parse_messages(os, msgs.messages); };
+    std::function<void()> handle = [&]{ api_o.parse_messages(os, messages_o); };
 
     return { VAR_NAME(MESSAGES), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_annoucements_test(api& api_o) {
     std::ostringstream os;
-    std::shared_ptr<std::vector<api::annoucment_t>> annoucments = std::make_shared<std::vector<api::annoucment_t>>();
+    api::annoucements_t annoucments;
 
     load_mock(ANNOUCEMENTS, os);
     std::function<void()> handle = [&]{ api_o.parse_annoucments(os, annoucments); };
@@ -181,20 +180,10 @@ benchmarks::test_result benchmarks::parse_annoucements_test(api& api_o) {
 
 benchmarks::test_result benchmarks::parse_timetable_test(api& api_o) {
     std::ostringstream os;
-    std::shared_ptr timetable_struct_p = std::make_shared<api::timetable_t>();
-    const int DAY_NUM = 7;
-
-    std::shared_ptr<std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]> 
-    timetable(new std::shared_ptr<std::vector<api::lesson_t>>[DAY_NUM]);
-
-    for(int i{}; i < DAY_NUM; i++) {
-        timetable[i] = std::make_shared<std::vector<api::lesson_t>>();
-    }
-
-    timetable_struct_p->timetable = timetable;
+    api::timetable_t timetable_o;
 
     load_mock(TIMETABLE, os);
-    std::function<void()> handle = [&]{ api_o.parse_timetable(os, timetable_struct_p); };
+    std::function<void()> handle = [&]{ api_o.parse_timetable(os, timetable_o); };
 
     return { VAR_NAME(TIMETABLE), benchmarks::simple_benchmark(handle) };
 }
