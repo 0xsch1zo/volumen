@@ -6,21 +6,10 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
+#include <spdlog/spdlog.h>
 
-api::api(authorization::synergia_account_t& account) {
-    assert(!account.access_token.empty() && !account.student_name.empty());
-
-    synergia_account.student_name = account.student_name;
-    synergia_account.access_token = account.access_token;
-    auth_header.push_back("Authorization: Bearer " + synergia_account.access_token);
-}
-
-// Sets up common options for the request
-void api::request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url) {
-    request.setOpt<cl::options::WriteStream>(&stream);
-    request.setOpt<cl::options::Url>(url);
-    request.setOpt<cl::options::Verbose>(false);
-    request.setOpt<cl::options::HttpHeader>(auth_header);
+api::api(const auth& auth_o, const std::string& peaked_login) {
+    api_session->SetBearer(auth_o.get_api_access_token(peaked_login));
 }
 
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
@@ -30,21 +19,24 @@ void api::check_if_target_contains(const char* FUNCTION, const json& data, const
 }
 
 // Fetches from an api endpoint
-void api::fetch(const std::string& endpoint, std::ostringstream& os) {
-    cl::Easy request;
-    spd::error(endpoint);
-    request_setup(request, os, LIBRUS_API_URL + endpoint);
-    request.perform();
+std::string api::fetch(const std::string& endpoint) {
+    std::lock_guard api_session_lock{api_session_mutex};
+    api_session->SetUrl(LIBRUS_API_URL + endpoint);
+    cpr::AsyncResponse r = api_session->GetAsync();
+    r.wait();
+    return r.get().text;
 }
 
-void api::fetch_url(const std::string& url, std::ostringstream& os) {
-    cl::Easy request;
-    request_setup(request, os, url);
-    request.perform();
+std::string api::fetch_url(const std::string& url) {
+    std::lock_guard api_session_lock{api_session_mutex};
+    api_session->SetUrl(url);
+    cpr::AsyncResponse r = api_session->GetAsync();
+    r.wait();
+    return r.get().text;
 }
 
-void api::parse_generic_info_by_id(const std::ostringstream& os, const std::string& target, generic_info_id_map& generic_info_id_map_p) {
-    json data = json::parse(os.str());
+void api::parse_generic_info_by_id(const std::string& response, const std::string& target, generic_info_id_map& generic_info_id_map_p) {
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target);
 
@@ -56,28 +48,21 @@ void api::parse_generic_info_by_id(const std::ostringstream& os, const std::stri
     }
 }
 
-std::string api::fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request) {
+std::string api::fetch_username_by_message_user_id(const std::string& url_id) {
     // Handle reuse
-    std::ostringstream os;
-    request.setOpt<cl::options::WriteStream>(&os);
-    request.setOpt<cl::options::Url>(url_id);
-    request.setOpt<cl::options::HttpHeader>(auth_header);
-    request.perform();
-    json data = json::parse(os.str());
+    json data = json::parse(fetch_url(url_id));
     return (std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"];
 }
 
 api::annoucements_t api::get_annoucments() {
-    std::ostringstream os;
     annoucements_t annoucments;
-    fetch(ANNOUCMENT_ENDPOINT, os);
-    parse_annoucments(os, annoucments);
+    parse_annoucments(fetch(ANNOUCMENT_ENDPOINT), annoucments);
     return annoucments;
 }
 
-void api::parse_annoucments(const std::ostringstream& os, annoucements_t& annoucments) {
+void api::parse_annoucments(const std::string& response, annoucements_t& annoucments) {
     const std::string target_data_structure = "SchoolNotices";
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     annoucments.reserve(data[target_data_structure].size());
@@ -95,25 +80,21 @@ void api::parse_annoucments(const std::ostringstream& os, annoucements_t& annouc
 }
 
 api::timetable_t api::get_timetable(std::string week_start_url){
-    std::ostringstream os;
+    timetable_t timetable_o;
     
     // If url is empty  it will query for the current week
     if(week_start_url.empty())
-        fetch(TIMETABLE_ENDPOINT, os);
+        parse_timetable(fetch(TIMETABLE_ENDPOINT), timetable_o);
     else
-        fetch_url(week_start_url, os);
-
-    timetable_t timetable_o;
-
-    parse_timetable(os, timetable_o);
+        parse_timetable(fetch_url(week_start_url), timetable_o);
 
     return timetable_o;
 }
 
-void api::parse_timetable(const std::ostringstream &os, api::timetable_t& timetable_o) {
+void api::parse_timetable(const std::string& response, api::timetable_t& timetable_o) {
     const std::string target_data_structure = "Timetable";
 
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     timetable_o.prev_url = data["Pages"]["Prev"];
     timetable_o.next_url = data["Pages"]["Next"];
@@ -156,30 +137,19 @@ void api::parse_timetable(const std::ostringstream &os, api::timetable_t& timeta
 }
 
 std::string api::get_today() {
-    std::ostringstream os;
-    cl::Easy request;
-
-    request_setup(request, os, LIBRUS_API_URL + TODAY_ENDPOINT);
-    request.perform();
-
-    json data = json::parse(os.str());
+    json data = json::parse(fetch(TODAY_ENDPOINT));
     return (std::string)data["Date"];
 }
 
 api::messages_t api::get_messages() {
-    std::ostringstream os;
     messages_t messages_o;
-    messages_o;
-
-    fetch(MESSAGE_ENDPOINT, os);
-    parse_messages(os, messages_o);
+    parse_messages(fetch(MESSAGE_ENDPOINT), messages_o);
     return messages_o; 
 }
 
-void api::parse_messages(const std::ostringstream& os, api::messages_t& messages_o) {
-    cl::Easy get_user_request;
+void api::parse_messages(const std::string& response, api::messages_t& messages_o) {
     const std::string target_data_structure = "Messages";
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
@@ -191,7 +161,7 @@ void api::parse_messages(const std::ostringstream& os, api::messages_t& messages
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),
-            /*.sender     = */fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
+            /*.sender     = */fetch_username_by_message_user_id(message["Sender"]["Url"]),
             /*.send_date  = */message["SendDate"]
         );
     }
@@ -208,11 +178,8 @@ const std::unordered_map<int, const std::string>* api::get_subjects() {
     if(!ids_and_subjects.empty())
         return &ids_and_subjects;
 
-    std::ostringstream os;
-
-    fetch(SUBJECTS_ENDPOINT, os);
     // Populate
-    parse_generic_info_by_id(os, target_data_structure, ids_and_subjects);
+    parse_generic_info_by_id(fetch(SUBJECTS_ENDPOINT), target_data_structure, ids_and_subjects);
 
     return &ids_and_subjects;
 }
@@ -229,19 +196,16 @@ std::string api::get_category_by_id(const int& id, api::category_types type) {
         return ids_and_categories[type][id];
 
     
-    std::ostringstream os;
-    
     switch(type) {
         case GRADE:
-            fetch(GRADE_CATEGORIES_ENDPOINT, os);
+            parse_generic_info_by_id(fetch(GRADE_CATEGORIES_ENDPOINT), target_data_structure, ids_and_categories[type]);
             break;
 
         case EVENT:
-            fetch(EVENT_CATEGORIES_ENDPOINT, os);
+            parse_generic_info_by_id(fetch(EVENT_CATEGORIES_ENDPOINT), target_data_structure, ids_and_categories[type]);
             break;
     }
 
-    parse_generic_info_by_id(os, target_data_structure, ids_and_categories[type]);
     return ids_and_categories[type][id];
 }
 
@@ -250,19 +214,15 @@ std::string api::get_username_by_id(const int& id) {
     if(!ids_and_usernames.empty())
         return ids_and_usernames[id];
 
-    std::ostringstream os;
-    cl::Easy request;
-
-    fetch(USERS_ENDPOINT, os);
-    parse_username_by_id(os, ids_and_usernames);
+    parse_username_by_id(fetch(USERS_ENDPOINT), ids_and_usernames);
     return ids_and_usernames[id];
 }
 
-void api::parse_username_by_id(const std::ostringstream& os, api::generic_info_id_map& ids_and_usernames) {
+void api::parse_username_by_id(const std::string& response, api::generic_info_id_map& ids_and_usernames) {
     const std::string delimiter = " ";
     const std::string target_data_structure = "Users";
 
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     ids_and_usernames.reserve(data[target_data_structure].size());
@@ -281,16 +241,14 @@ std::string api::get_comment_by_id(const int& id) {
     if(!ids_and_comments.empty())
         return ids_and_comments[id];
 
-    std::ostringstream os;
-    fetch(GRADE_COMMENTS_ENDPOINT, os);
-    parse_comment_by_id(os, ids_and_comments);
+    parse_comment_by_id(fetch(GRADE_COMMENTS_ENDPOINT), ids_and_comments);
     return ids_and_comments[id];
 }
 
-void api::parse_comment_by_id(const std::ostringstream& os, generic_info_id_map& ids_and_comments) {
+void api::parse_comment_by_id(const std::string& response, generic_info_id_map& ids_and_comments) {
     const std::string target_data_structure = "Comments";
 
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     ids_and_comments.reserve(data[target_data_structure].size());
@@ -300,17 +258,15 @@ void api::parse_comment_by_id(const std::ostringstream& os, generic_info_id_map&
 }
 
 api::grades_t api::get_grades() {
-    std::ostringstream os;
     grades_t grades_o;
 
-    fetch(GRADES_ENDPOINT, os);
-    parse_grades(os, grades_o);
+    parse_grades(fetch(GRADES_ENDPOINT), grades_o);
     return grades_o;
 }
 
-void api::parse_grades(const std::ostringstream& os, grades_t& grades_o) {
+void api::parse_grades(const std::string& response, grades_t& grades_o) {
     const std::string target_data_structure = "Grades";
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     const auto& subjects = get_subjects();
@@ -353,19 +309,17 @@ void api::parse_grades(const std::ostringstream& os, grades_t& grades_o) {
 }
 
 api::recent_grades_t api::get_recent_grades() {
-    std::ostringstream os;
     recent_grades_t grades_o;
 	
-    fetch(GRADES_ENDPOINT, os);
-    parse_recent_grades(os, grades_o);
+    parse_recent_grades(fetch(GRADES_ENDPOINT), grades_o);
     return grades_o;
 }
 
-void api::parse_recent_grades(const std::ostringstream& os, recent_grades_t& grades_o) {
+void api::parse_recent_grades(const std::string& response, recent_grades_t& grades_o) {
     const std::string target_data_structure = "Grades";
 	const int MAX_VECTOR_SIZE = 4;
  
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     grades_o.reserve(data[target_data_structure].size());
@@ -392,18 +346,16 @@ void api::parse_recent_grades(const std::ostringstream& os, recent_grades_t& gra
 }
 
 api::events_t api::get_events() {
-    std::ostringstream os;
     events_t events_o;
 	
-    fetch(EVENT_ENDPOINT, os);
-    parse_events(os, events_o);
+    parse_events(fetch(EVENT_ENDPOINT), events_o);
     return events_o;
 }
 
-void api::parse_events(const std::ostringstream& os, api::events_t& events_o) {
+void api::parse_events(const std::string& response, api::events_t& events_o) {
     const std::string target_data_structure = "HomeWorks";
 
-    json data = json::parse(os.str());
+    json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     events_o.reserve(data[target_data_structure].size());

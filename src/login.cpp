@@ -1,5 +1,4 @@
 #include "login.hpp"
-#include "authorization.hpp"
 #include "tab.hpp"
 #include "utils.hpp"
 #include <sstream>
@@ -9,25 +8,24 @@
 #include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
-const std::string login::splash = R"(
- ██▒   █▓ ▒█████   ██▓     █    ██  ███▄ ▄███▓▓█████  ███▄    █ 
-▓██░   █▒▒██▒  ██▒▓██▒     ██  ▓██▒▓██▒▀█▀ ██▒▓█   ▀  ██ ▀█   █ 
- ▓██  █▒░▒██░  ██▒▒██░    ▓██  ▒██░▓██    ▓██░▒███   ▓██  ▀█ ██▒
-  ▒██ █░░▒██   ██░▒██░    ▓▓█  ░██░▒██    ▒██ ▒▓█  ▄ ▓██▒  ▐▌██▒
-   ▒▀█░  ░ ████▓▒░░██████▒▒▒█████▓ ▒██▒   ░██▒░▒████▒▒██░   ▓██░
-   ░ ▐░  ░ ▒░▒░▒░ ░ ▒░▓  ░░▒▓▒ ▒ ▒ ░ ▒░   ░  ░░░ ▒░ ░░ ▒░   ▒ ▒ 
-   ░ ░░    ░ ▒ ▒░ ░ ░ ▒  ░░░▒░ ░ ░ ░  ░      ░ ░ ░  ░░ ░░   ░ ▒░
-     ░░  ░ ░ ░ ▒    ░ ░    ░░░ ░ ░ ░      ░      ░      ░   ░ ░ 
-      ░      ░ ░      ░  ░   ░            ░      ░  ░         ░ 
-     ░                                                          
-)";
-ft::ScreenInteractive login::screen = ft::ScreenInteractive::FullscreenAlternateScreen();
-
 // Function that displays login interface and gets email and password
 void login::login_screen(){
-    int auth_status{};
+    int auth_failure{};
+    auth auth;
     std::string email;
     std::string password;
+
+    auto authorize = [&] { 
+        try {
+            auth.authorize(email, password);
+        }
+        catch(std::exception &e) {
+            auth_failure = true;
+            return true;
+        }
+        screen.Exit();
+        return true;
+    };
         
     // Login screen
     ft::Component email_box = utils::custom_component_window(
@@ -43,15 +41,11 @@ void login::login_screen(){
         ft::Input(&password, password_opt)
     );
 
-    ft::Component login_button = ft::Button("Login", [&] { 
-        if((auth_status = authorization::authorize(email, password)) == -1) return true;; 
-        screen.Exit();
-        return true; 
-    }, utils::button_rounded());
+    ft::Component login_button = ft::Button("Login", authorize, utils::button_rounded());
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
-    }), [&]{ if(auth_status == -1) return true; else return false; });
+    }), [&]{ return auth_failure; });
 
     email_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { password_box->TakeFocus(); return true; }
@@ -61,8 +55,7 @@ void login::login_screen(){
     password_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { 
             login_button->TakeFocus();
-            if((auth_status = authorization::authorize(email, password)) == -1) return true; 
-            screen.Exit();
+            authorize();
             return true;
         }
         return false;
@@ -98,21 +91,21 @@ void login::login_screen(){
     });
      
     screen.Loop(login_screen);
-    if(auth_status == 0 || auth_status == -1) return;
-    choose_account_screen();
+    if(auth_failure) return;
+    choose_account_screen(auth);
 }
 
-void login::choose_account_screen() {
+void login::choose_account_screen(const auth& auth_o) {
     // Choose synergia account
     int synergia_account_i = 0;
+    auto accounts = auth_o.get_synergia_accounts();
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [](){ screen.Exit(); }, utils::button_rounded());
+    ft::Component continue_button = ft::Button("Continue", [&](){ screen.Exit(); }, utils::button_rounded());
     std::vector<std::string> names;
-
-    for(auto account : authorization::get_synergia_accounts()) {
-        names.push_back(account.student_name);
-    }
+    names.reserve(accounts.size());
+    for(const auto& account : accounts)
+        names.emplace_back(account.student_name);
 
     auto account_menu = utils::custom_dropdown(&names, &synergia_account_i);
 
@@ -144,5 +137,5 @@ void login::choose_account_screen() {
     });
 
     screen.Loop(choose_synergia_account);
-    tab::display_interface(synergia_account_i);
+    tab::display_interface(auth_o, accounts[synergia_account_i].login);
 }

@@ -1,8 +1,9 @@
 #pragma once
-#include "authorization.hpp"
+#include "auth.hpp"
 #include "error_handler.hpp"
 #include <string>
 #include <curlpp/Easy.hpp>
+#include <cpr/cpr.h>
 
 #ifdef VOLUMEN_TESTING
 class benchmarks;
@@ -28,8 +29,8 @@ class api {
     const std::string USERS_ENDPOINT                = "/3.0/Users";
     const std::string EVENT_ENDPOINT                = "/3.0/HomeWorks"; // Why for fucks...
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
-    authorization::synergia_account_t synergia_account; // Gets set once during init than stays the same
-    std::list<std::string> auth_header;
+    std::shared_ptr<cpr::Session> api_session = std::make_shared<cpr::Session>();
+    std::mutex api_session_mutex;
 
 public:
 //    static const int RECENT_GRADES_SIZE             = 10;
@@ -113,29 +114,27 @@ private:
     std::string get_subject_by_id(const int& id);
     std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
-    void parse_generic_info_by_id(const std::ostringstream& os, const std::string& target, generic_info_id_map& generic_info_id_map_p);
     std::string get_username_by_id(const int& id);
-    std::string fetch_username_by_message_user_id(const std::string& url_id, cl::Easy& request);
+    std::string fetch_username_by_message_user_id(const std::string& url_id);
     const std::unordered_map<int, const std::string>* get_subjects();
     static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
 
-    void fetch(const std::string& endpoint, std::ostringstream& os);
-    void fetch_url(const std::string& url, std::ostringstream& os);
+    std::string fetch(const std::string& endpoint);
+    std::string fetch_url(const std::string& urli);
 
-    void parse_username_by_id(const std::ostringstream& os,generic_info_id_map& ids_and_usernames);
-    void parse_comment_by_id(const std::ostringstream& os, generic_info_id_map& ids_and_comments);
-    void parse_annoucments(const std::ostringstream& os, annoucements_t& annoucments_o);
-    void parse_timetable(const std::ostringstream& os, timetable_t& timetable_o);
-    void parse_messages(const std::ostringstream& os, messages_t& messages_o);
-    void parse_grades(const std::ostringstream& os, grades_t& grades_o);
-    void parse_recent_grades(const std::ostringstream& os, recent_grades_t& grades_o);
-    void parse_events(const std::ostringstream& os, api::events_t& events_o);
+    void parse_generic_info_by_id(const std::string& response, const std::string& target, generic_info_id_map& generic_info_id_map_p);
+    void parse_username_by_id(const std::string& response,generic_info_id_map& ids_and_usernames);
+    void parse_comment_by_id(const std::string& response, generic_info_id_map& ids_and_comments);
+    void parse_annoucments(const std::string& response, annoucements_t& annoucments_o);
+    void parse_timetable(const std::string& response, timetable_t& timetable_o);
+    void parse_messages(const std::string& response, messages_t& messages_o);
+    void parse_grades(const std::string& response, grades_t& grades_o);
+    void parse_recent_grades(const std::string& response, recent_grades_t& grades_o);
+    void parse_events(const std::string& response, api::events_t& events_o);
 public:
 
 
-    api(authorization::synergia_account_t& account);
-
-    void request_setup(cl::Easy& request, std::ostringstream& stream, const std::string& url);
+    api(const auth& auth_o, const std::string& picked_login);
 
     annoucements_t get_annoucments();
 

@@ -21,8 +21,9 @@ int main(int argc, char* argv[]) {
     benchmarks bench(argv[PATH_ARG_NUM]);
 
     std::cin >> email >> password;
-    auto synergia_acc = bench.auth_bench(email, password);
-    bench.api_bench(synergia_acc, std::stoi((const std::string)argv[RUN_COUNT_ARG_NUM]));
+    auth auth_o;
+    bench.auth_bench(email, password, auth_o);
+    bench.api_bench(auth_o, std::stoi((const std::string)argv[RUN_COUNT_ARG_NUM]));
 
     spdlog::dump_backtrace();
 }

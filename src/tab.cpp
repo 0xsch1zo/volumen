@@ -2,7 +2,6 @@
 #include "dashboard/dashboard.hpp"
 #include "messages.hpp"
 #include "annoucements.hpp"
-#include "authorization.hpp"
 #include "timetable.hpp"
 #include "content.hpp"
 #include "grades.hpp"
@@ -41,12 +40,12 @@ void tab::tab_error_wrapper(
 }
 
 // TODO: remove unnecessary includes
-void tab::display_interface(int synergia_account_i) {
+void tab::display_interface(const auth& auth_o, const std::string& picked_login) {
 using namespace std::chrono_literals;
-    auto main_screen = ft::ScreenInteractive::FullscreenAlternateScreen();
+    auto main_screen = ft::ScreenInteractive::Fullscreen();
     
     error e;
-    api api(authorization::get_synergia_accounts().at(synergia_account_i));
+    api api(auth_o, picked_login);
     std::unique_ptr<content> annoucements_p = std::make_unique<annoucements>(&main_screen);
     std::unique_ptr<content> messages_p = std::make_unique<messages>(&main_screen);
     timetable t;

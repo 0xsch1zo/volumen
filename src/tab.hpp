@@ -1,4 +1,5 @@
 #pragma once
+#include "auth.hpp"
 #include "error_handler.hpp"
 #include <ftxui/component/component.hpp>
 
@@ -25,5 +26,5 @@ public:
         EXIT
     };
     
-    static void display_interface(int synergia_account_i);
+    static void display_interface(const auth& auth_o, const std::string& picked_login);
 };

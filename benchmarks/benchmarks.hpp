@@ -1,5 +1,6 @@
 #pragma once
 #include "../src/api.hpp"
+#include "../src/auth.hpp"
 #include <string>
 #include <functional>
 #include <unordered_map>
@@ -62,7 +63,7 @@ class benchmarks {
     test_result parse_annoucements_test(api& api_o);
     test_result parse_timetable_test(api& api_o);
     static const std::string color(const std::string& text, const std::string& foreground, const std::string& background = BLACK_BACKGROUND);
-    void load_mock(api_test_functions test_func, std::ostringstream& os);
+    std::string load_mock(api_test_functions test_func);
 
 public:
     benchmarks(const std::string& mocks);
@@ -82,6 +83,6 @@ private:
     static void print_duration(int64_t duration);
     static void print_info(std::string text);
 public:
-    authorization::synergia_account_t auth_bench(const std::string& email, const std::string& password);
-    void api_bench(authorization::synergia_account_t& synergia_acc, int run_count);
+    void auth_bench(const std::string& email, const std::string& password, auth& auth_o);
+    void api_bench(const auth& auth_o, int run_count);
 };

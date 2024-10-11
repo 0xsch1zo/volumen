@@ -13,10 +13,10 @@ FetchContent_Declare(ftxui
   GIT_TAG dfb9558eaff417ee7909169d0abd66e6c52c9d55 
 )
 
-FetchContent_Declare(curlpp
-  GIT_REPOSITORY https://github.com/jpbarrette/curlpp
-  GIT_TAG v0.8.1
-)
+# FetchContent_Declare(curlpp
+#   GIT_REPOSITORY https://github.com/jpbarrette/curlpp
+#   GIT_TAG v0.8.1
+# )
 
 FetchContent_Declare(spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog
@@ -28,14 +28,18 @@ FetchContent_Declare(json
   GIT_TAG v3.11.3
 )
 
-FetchContent_MakeAvailable(ftxui curlpp spdlog json)
+FetchContent_Declare(cpr 
+  GIT_REPOSITORY https://github.com/libcpr/cpr
+  GIT_TAG 1.10.5
+)
+
+FetchContent_MakeAvailable(ftxui spdlog json cpr)
 
 project(volumen)
 
 add_executable(volumen
   src/main.cpp
   src/login.cpp
-  src/authorization.cpp
   src/dashboard/dashboard.cpp
   src/dashboard/timetable_dashboard.cpp 
   src/dashboard/grades_dashboard.cpp
@@ -48,6 +52,7 @@ add_executable(volumen
   src/timetable.cpp
   src/grades.cpp
   src/error_handler.cpp
+  src/auth.cpp
 )
 
 target_link_libraries(volumen
@@ -55,14 +60,14 @@ target_link_libraries(volumen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
   PRIVATE nlohmann_json::nlohmann_json
-  curlpp
+  PRIVATE cpr::cpr
   spdlog
 )
 
 add_executable(benchmark
   benchmarks/main.cpp
   benchmarks/benchmarks.cpp
-  src/authorization.cpp
+  src/auth.cpp
   src/api.cpp 
   src/utils.cpp
   src/error_handler.cpp
@@ -73,6 +78,6 @@ target_link_libraries(benchmark
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
   PRIVATE nlohmann_json::nlohmann_json
-  curlpp
+  PRIVATE cpr::cpr
   spdlog
 )

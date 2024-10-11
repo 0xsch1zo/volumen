@@ -58,22 +58,25 @@ void benchmarks::benchmark::reset() {
     total_time = 0;
 }
 
-authorization::synergia_account_t benchmarks::auth_bench(const std::string& email, const std::string& password) {
+void benchmarks::auth_bench(const std::string& email, const std::string& password, auth& auth_o) {
     const int ACC_NUM = 0;
-    std::function<bool(std::string, std::string)> auth_handle = authorization::authorize;
+    std::function<void()> auth_handle = [&]{ auth_o.authorize(email, password); };
 
-    const int64_t auth_duration = simple_benchmark(auth_handle, email, password);
+    const int64_t auth_duration = simple_benchmark(auth_handle);
     print_info("AUTH");
     print_duration(auth_duration);
     std::cout << '\n';
     std::cout << '\n';
-
-    auto synergia_accounts = authorization::get_synergia_accounts();
-    return synergia_accounts[ACC_NUM];
 }
 
-void benchmarks::api_bench(authorization::synergia_account_t& synergia_acc, int run_count) {
-    api api_o(synergia_acc);
+void benchmarks::api_bench(const auth& auth_o, int run_count) {
+    const int TEST_LOGIN_INDEX = 0;
+
+    api api_o(
+        auth_o, 
+        auth_o.get_synergia_accounts()[TEST_LOGIN_INDEX].login
+    );
+
     const std::function<test_result()> void_api_functions[] = {
         [&]{ return parse_comment_test(api_o);             /* pure */},
         [&]{ return prase_generic_info_by_id_test(api_o);  /* pure */},
@@ -100,90 +103,76 @@ void benchmarks::api_bench(authorization::synergia_account_t& synergia_acc, int 
     }
 }
 
-void benchmarks::load_mock(api_test_functions test_func, std::ostringstream& os) {
+std::string benchmarks::load_mock(api_test_functions test_func) {
     std::ifstream get_mock(mock_dir + mock_file_name_to_handle_map[test_func]);
     if(!get_mock.is_open())
         throw std::logic_error("File does not exist");
 
+    std::ostringstream os;
     os << get_mock.rdbuf();
+    return os.str();
 }
 
 benchmarks::test_result benchmarks::parse_grades_test(api& api_o) {
-    std::ostringstream os;
-    load_mock(GRADES, os);
     api::grades_t grades_o;
-    std::function<void()> handle = [&]{ api_o.parse_grades(os, grades_o); };
+    std::function<void()> handle = [&]{ api_o.parse_grades(load_mock(GRADES), grades_o); };
 
     return { VAR_NAME(GRADES), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_recent_grades_test(api& api_o) {
-    std::ostringstream os;
-    load_mock(RECENT_GRADES, os);
     api::recent_grades_t grades_o;
 
-    std::function<void()> handle = [&]{ api_o.parse_recent_grades(os, grades_o); };
+    std::function<void()> handle = [&]{ api_o.parse_recent_grades(load_mock(RECENT_GRADES), grades_o); };
 
     return { VAR_NAME(RECENT_GRADES), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::prase_generic_info_by_id_test(api& api_o) {
-    std::ostringstream os;
     const std::string target = "Categories";
     api::generic_info_id_map ids_and_categories;
 
-    load_mock(GENERIC, os);
-    std::function<void()> handle = [&]{ api_o.parse_generic_info_by_id(os, target, ids_and_categories); };
+    std::function<void()> handle = [&]{ api_o.parse_generic_info_by_id(load_mock(GENERIC), target, ids_and_categories); };
 
     return { VAR_NAME(GENERIC), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_comment_test(api& api_o) {
-    std::ostringstream os;
     api::generic_info_id_map ids_and_comments;
     
-    load_mock(COMMENTS, os);
-    std::function<void()> handle = [&]{ api_o.parse_comment_by_id(os, ids_and_comments); };
+    std::function<void()> handle = [&]{ api_o.parse_comment_by_id(load_mock(COMMENTS), ids_and_comments); };
 
     return { VAR_NAME(COMMENTS), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_events_test(api& api_o) {
-    std::ostringstream os;
     api::events_t events_o;
 
-    load_mock(EVENTS, os);
-    std::function<void()> handle = [&]{ api_o.parse_events(os, events_o); };
+    std::function<void()> handle = [&]{ api_o.parse_events(load_mock(EVENTS), events_o); };
 
     return { VAR_NAME(EVENTS), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_messages_test(api& api_o) {
-    std::ostringstream os;
     api::messages_t messages_o;
 
-    load_mock(MESSAGES, os);
-    std::function<void()> handle = [&]{ api_o.parse_messages(os, messages_o); };
+    std::function<void()> handle = [&]{ api_o.parse_messages(load_mock(MESSAGES), messages_o); };
 
     return { VAR_NAME(MESSAGES), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_annoucements_test(api& api_o) {
-    std::ostringstream os;
     api::annoucements_t annoucments;
 
-    load_mock(ANNOUCEMENTS, os);
-    std::function<void()> handle = [&]{ api_o.parse_annoucments(os, annoucments); };
+    std::function<void()> handle = [&]{ api_o.parse_annoucments(load_mock(ANNOUCEMENTS), annoucments); };
 
     return { VAR_NAME(ANNOUCEMENTS), benchmarks::simple_benchmark(handle) };
 }
 
 benchmarks::test_result benchmarks::parse_timetable_test(api& api_o) {
-    std::ostringstream os;
     api::timetable_t timetable_o;
 
-    load_mock(TIMETABLE, os);
-    std::function<void()> handle = [&]{ api_o.parse_timetable(os, timetable_o); };
+    std::function<void()> handle = [&]{ api_o.parse_timetable(load_mock(TIMETABLE), timetable_o); };
 
     return { VAR_NAME(TIMETABLE), benchmarks::simple_benchmark(handle) };
 }

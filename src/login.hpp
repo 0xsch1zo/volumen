@@ -1,4 +1,5 @@
 #pragma once
+#include "auth.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -6,11 +7,20 @@
 namespace ft = ftxui;
 
 class login {
-    login();
-    static const std::string splash;
-    static ft::ScreenInteractive screen;
-
+    const std::string splash = R"(
+ ██▒   █▓ ▒█████   ██▓     █    ██  ███▄ ▄███▓▓█████  ███▄    █ 
+▓██░   █▒▒██▒  ██▒▓██▒     ██  ▓██▒▓██▒▀█▀ ██▒▓█   ▀  ██ ▀█   █ 
+ ▓██  █▒░▒██░  ██▒▒██░    ▓██  ▒██░▓██    ▓██░▒███   ▓██  ▀█ ██▒
+  ▒██ █░░▒██   ██░▒██░    ▓▓█  ░██░▒██    ▒██ ▒▓█  ▄ ▓██▒  ▐▌██▒
+   ▒▀█░  ░ ████▓▒░░██████▒▒▒█████▓ ▒██▒   ░██▒░▒████▒▒██░   ▓██░
+   ░ ▐░  ░ ▒░▒░▒░ ░ ▒░▓  ░░▒▓▒ ▒ ▒ ░ ▒░   ░  ░░░ ▒░ ░░ ▒░   ▒ ▒ 
+   ░ ░░    ░ ▒ ▒░ ░ ░ ▒  ░░░▒░ ░ ░ ░  ░      ░ ░ ░  ░░ ░░   ░ ▒░
+     ░░  ░ ░ ░ ▒    ░ ░    ░░░ ░ ░ ░      ░      ░      ░   ░ ░ 
+      ░      ░ ░      ░  ░   ░            ░      ░  ░         ░ 
+     ░                                                          
+    )";
+    ft::ScreenInteractive screen = ft::ScreenInteractive::Fullscreen();
 public:
-    static void login_screen();
-    static void choose_account_screen();
+    void login_screen();
+    void choose_account_screen(const auth& auth_o);
 };
