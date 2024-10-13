@@ -1,5 +1,6 @@
 #include "api.hpp"
 #include "timetable.hpp"
+#include "custom_ui.hpp"
 #include "utils.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -134,27 +135,23 @@ ft::Component timetable::empty_lesson_box() {
     auto menu = ft::MenuEntry({
         .label = "",
         .transform = [=](const ft::EntryState& s) {
-            auto empty_entry = [&](ft::Color color){
-                return ft::vbox({
+            return custom_ui::focus_managed_whatever(
+                ft::vbox({
                     ft::separatorEmpty(),
                     ft::separator()
-                    | ft::color(color)
                     | seperator_size
                     | ft::center,
                     ft::separatorEmpty()
-                });
-            };
-            if(s.focused) 
-                return empty_entry(ft::Color::Green);
-            if(s.active)
-                return empty_entry(ft::Color::Red);
-            return empty_entry(ft::Color::White);
+                }),
+                { .active = s.active, .focused = s.focused }
+            );
         }
     });
     return ft::Renderer(menu, [=]{ return menu->Render() | ft::hcenter; });
 
 }
 
+// TODO: incorporate empty_lesson_box, divide lesson types into separate funcs
 ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
     const std::string deliminator = " - ";
     const auto subject_size = ft::size(ft::WIDTH, ft::LESS_THAN, 40);
@@ -162,40 +159,33 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
     auto lesson_box = ft::MenuEntry({
         .label = lesson.subject,
         .transform = [=](const ft::EntryState& s) {
-            ft::Element entry;
-
             if(lesson.is_canceled) {
-                entry = ft::vbox({
-                    ft::text(s.label)
-                    | ft::bold
-                    | ft::color(ft::Color::Red)
-                    | ft::strikethrough
-                    | subject_size
-                    | ft::hcenter,
-                    ft::text(lesson.start + deliminator + lesson.end)
-                    | ft::hcenter
-                });
+                return custom_ui::focus_managed_border_box(
+                    ft::vbox({
+                        ft::text(s.label)
+                        | ft::bold
+                        | ft::color(ft::Color::Red)
+                        | ft::strikethrough
+                        | subject_size
+                        | ft::hcenter,
+                        ft::text(lesson.start + deliminator + lesson.end)
+                        | ft::hcenter
+                    }) | ft::xflex,
+                    { .active = s.active, .focused = s.focused }
+                );
             }
-
-            else {
-                entry = ft::vbox({
-                    ft::text(s.label)
-                    | ft::bold
-                    | ft::color(ft::Color::Green)
-                    | ft::hcenter,
-                    ft::text(lesson.start + deliminator + lesson.end)
-                    | ft::hcenter
-                });
-            }
-
-            entry | ft::xflex;
-
-            if(s.focused)
-                return entry | ft::borderStyled(ft::Color::Green);
-            if(s.active)
-                return entry | ft::borderStyled(ft::Color::Red);
-            
-            return entry | ft::border;
+            else
+                return custom_ui::focus_managed_border_box(
+                    ft::vbox({
+                        ft::text(s.label)
+                        | ft::bold
+                        | ft::color(ft::Color::Green)
+                        | ft::hcenter,
+                        ft::text(lesson.start + deliminator + lesson.end)
+                        | ft::hcenter
+                    }) | ft::xflex,
+                    { .active = s.active, .focused = s.focused }
+                );
         }
     });
 
@@ -206,21 +196,13 @@ ft::Component timetable::event_box(const api::event_t& event) {
     return ft::MenuEntry({
         .label = event.category,
         .transform = [&](const ft::EntryState& s) {
-            auto base = [&](const ft::Color& color) {
-                return ft::text(s.label)
+            return custom_ui::focus_managed_border_box(
+                ft::text(s.label)
                 | ft::bold
                 | ft::color(ft::Color::Green)
-                | ft::center
-                | ft::borderStyled(color);
-            };
-
-            if(s.focused)
-                return base(ft::Color::Green);
-
-            if(s.active)
-                return base(ft::Color::Red);
-
-            return base(ft::Color::White);
+                | ft::center,
+                { .active = s.active, .focused = s.focused }
+            );
         }
     });
 }

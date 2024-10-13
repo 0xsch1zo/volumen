@@ -3,7 +3,6 @@
 #include "messages.hpp"
 #include "annoucements.hpp"
 #include "timetable.hpp"
-#include "content.hpp"
 #include "grades.hpp"
 #include "error_handler.hpp"
 #include <future>
@@ -46,10 +45,10 @@ using namespace std::chrono_literals;
     
     error e;
     api api(auth_o, picked_login);
-    std::unique_ptr<content> annoucements_p = std::make_unique<annoucements>(&main_screen);
-    std::unique_ptr<content> messages_p = std::make_unique<messages>(&main_screen);
-    timetable t;
-    grades g;
+    annoucements annoucements_o(&main_screen);
+    messages messages_o(&main_screen);
+    timetable timetable_o;
+    grades grades_o;
 
     int tab_selected{};
     std::vector<std::string> menu = {
@@ -144,7 +143,7 @@ using namespace std::chrono_literals;
                     GUARD(MESSAGES);
 
                     messages_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
-                        messages_p->content_display(messages_component, &api, &redirect, &redirect_mutex); 
+                        messages_o.content_display(messages_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, MESSAGES);
 
                     envoked_lazy_load[MESSAGES] = true;
@@ -154,7 +153,7 @@ using namespace std::chrono_literals;
                     GUARD(ANNOUCEMENTS);
 
                     annoucements_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
-                        annoucements_p->content_display(annoucements_component, &api, &redirect, &redirect_mutex); 
+                        annoucements_o.content_display(annoucements_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, ANNOUCEMENTS);
 
                     envoked_lazy_load[ANNOUCEMENTS] = true;
@@ -164,7 +163,7 @@ using namespace std::chrono_literals;
                     GUARD(TIMETABLE);
 
                     timetable_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
-                        t.timetable_display(timetable_component, &api, &selsd, nullptr, &main_screen);
+                        timetable_o.timetable_display(timetable_component, &api, &selsd, nullptr, &main_screen);
                     }, tab_container, TIMETABLE);
 
                     envoked_lazy_load[TIMETABLE] = true;
@@ -174,7 +173,7 @@ using namespace std::chrono_literals;
                     GUARD(GRADES);
 
                     grades_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
-                        g.grades_display(grades_component, &api);
+                        grades_o.grades_display(grades_component, &api);
                     }, tab_container, GRADES);
 
                     envoked_lazy_load[GRADES] = true;
@@ -195,13 +194,13 @@ main_loop:
             break;
 
         case MESSAGE_VIEW:
-            main_screen.Loop(messages_p->content_view());
+            main_screen.Loop(messages_o.content_view());
             redirect = EXIT;
             goto main_loop;
             break;
 
         case ANNOUCEMENT_VIEW:
-            main_screen.Loop(annoucements_p->content_view());
+            main_screen.Loop(annoucements_o.content_view());
             redirect = EXIT;
             goto main_loop;
             break;

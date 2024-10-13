@@ -8,13 +8,15 @@ namespace ft = ftxui;
 class dashboard {
     class timetable_dashboard {
         static ft::Element get_timeline_widget(const std::vector<api::lesson_t>& day);
+        bool active{};
     public:
-        static ft::Component get_timetable_widget(api* api);
+        ft::Component get_timetable_widget(api* api);
     };
 
     class grades_dashboard {
+        bool active{};
     public:
-        static ft::Component get_grades_widget(api* api);
+        ft::Component get_grades_widget(api* api);
     };
 
     class weekend_bar {

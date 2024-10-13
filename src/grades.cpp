@@ -1,13 +1,16 @@
 #include "grades.hpp"
+#include "custom_ui.hpp"
 #include "utils.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 
 void grades::grades_display(ft::Component grades_component, api* api) {
-    api::grades_t grades_p = api->get_grades();
+    api::grades_t grades_o = api->get_grades();
     ft::Component grades_menu = ft::Container::Vertical({});
+    active.resize(grades_o.size());
 
-    for(const auto& subject : grades_p) {
+    int i{};
+    for(const auto& subject : grades_o) {
         if(subject.second.grades.empty()) {
             grades_menu->Add(empty_subject(subject.second.subject));
             continue;
@@ -19,11 +22,14 @@ void grades::grades_display(ft::Component grades_component, api* api) {
             subject_component->Add( grade_box(grade) );
 
         grades_menu->Add(ft::Renderer(subject_component, [=]{ 
-                return ft::window(
-                    ft::text(subject.second.subject), 
-                    subject_component->Render() | ft::xframe
-                ); 
-        }));
+            return custom_ui::focus_managed_window(
+                ft::text(subject.second.subject), 
+                subject_component->Render() | ft::xframe,
+                { .active = static_cast<bool>(active[i]), .focused = subject_component->Focused() }
+            );
+        }) | ft::Hoverable((bool*)&active[i])
+        );
+        i++;
     }
 
     grades_component->DetachAllChildren();
@@ -32,36 +38,28 @@ void grades::grades_display(ft::Component grades_component, api* api) {
 
 ft::Component grades::grade_box(const api::grade_t& grade) {
     return ft::MenuEntry({
-                .label = grade.grade,
-                .transform = [=](const ft::EntryState& s) {
-                    const auto max_grade_box_size = ft::size(ft::WIDTH, ft::LESS_THAN, 30);
-                    auto base = [&](ft::Color color){
-                        return ft::vbox({
-                            ft::text(grade.category),
-                            ft::vbox({
-                                ft::separator(),
-                                ft::text("Grade: " + grade.grade),
-                                ft::vbox({
-                                    utils::split("Comment: " + grade.comment),
-                                }),
-                                ft::text("Added by: " + grade.added_by),
-                                ft::text("Date: " + grade.date),
-                            }) 
-                            | ft::color(ft::Color::White)
-                        })
-                        | ft::borderStyled(color)
-                        | max_grade_box_size;
-                    };
-
-                    if(s.focused)
-                        return base(ft::Color::Green);
-
-                    if(s.active)
-                        return base(ft::Color::Red);
-
-                    return base(ft::Color::White);
-                }
-            });
+        .label = grade.grade,
+        .transform = [=](const ft::EntryState& s) {
+            const auto max_grade_box_size = ft::size(ft::WIDTH, ft::LESS_THAN, 30);
+            return custom_ui::focus_managed_border_box(
+                ft::vbox({
+                    ft::text(grade.category),
+                    ft::vbox({
+                        ft::separator(),
+                        ft::text("Grade: " + grade.grade),
+                        ft::vbox({
+                            utils::split("Comment: " + grade.comment),
+                        }),
+                        ft::text("Added by: " + grade.added_by),
+                        ft::text("Date: " + grade.date),
+                    }) 
+                    | ft::color(ft::Color::White)
+                })
+                | max_grade_box_size,
+                { .active = s.active, .focused = s.focused }
+            );
+        }
+    });
 }
 
 ft::Component grades::empty_subject(const std::string& subject) {
@@ -69,24 +67,14 @@ ft::Component grades::empty_subject(const std::string& subject) {
         .label = subject,
         .transform = [=](const ft::EntryState& s) {
             const auto empty_placeholder_size = ft::size(ft::WIDTH, ft::EQUAL, 10);
-            auto subject_with_placeholder_for_empty = [&](ft::Color color){
-                return ft::window(
-                    ft::text(s.label)
-                    | ft::bold,
-                    ft::separator()
-                    | ft::color(color)
-                    | empty_placeholder_size
-                    | ft::hcenter
-                );
-            };
-
-            if(s.focused)
-                return subject_with_placeholder_for_empty(ft::Color::Green);
-
-            if(s.active)
-                return subject_with_placeholder_for_empty(ft::Color::Red);
-
-            return subject_with_placeholder_for_empty(ft::Color::White);
+            return custom_ui::focus_managed_window(
+                ft::text(s.label)
+                | ft::bold,
+                ft::separator()
+                | empty_placeholder_size
+                | ft::hcenter,
+                { .active = s.active, .focused = s.focused }
+            );
         }
     });
 }

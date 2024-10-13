@@ -1,6 +1,7 @@
 #include "login.hpp"
 #include "tab.hpp"
 #include "utils.hpp"
+#include "custom_ui.hpp"
 #include <sstream>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -28,20 +29,20 @@ void login::login_screen(){
     };
         
     // Login screen
-    ft::Component email_box = utils::custom_component_window(
+    ft::Component email_box = custom_ui::custom_component_window(
         ft::text("Email"),
-        ft::Input(&email, utils::plain_input())
+        ft::Input(&email, custom_ui::plain_input())
     );
 
-    ft::InputOption password_opt = utils::plain_input();
+    ft::InputOption password_opt = custom_ui::plain_input();
     password_opt.password = true;
 
-    ft::Component password_box = utils::custom_component_window(
+    ft::Component password_box = custom_ui::custom_component_window(
         ft::text("Password"),
         ft::Input(&password, password_opt)
     );
 
-    ft::Component login_button = ft::Button("Login", authorize, utils::button_rounded());
+    ft::Component login_button = ft::Button("Login", authorize, custom_ui::button_rounded());
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
@@ -101,13 +102,13 @@ void login::choose_account_screen(const auth& auth_o) {
     auto accounts = auth_o.get_synergia_accounts();
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [&](){ screen.Exit(); }, utils::button_rounded());
+    ft::Component continue_button = ft::Button("Continue", [&](){ screen.Exit(); }, custom_ui::button_rounded());
     std::vector<std::string> names;
     names.reserve(accounts.size());
     for(const auto& account : accounts)
         names.emplace_back(account.student_name);
 
-    auto account_menu = utils::custom_dropdown(&names, &synergia_account_i);
+    auto account_menu = custom_ui::custom_dropdown(&names, &synergia_account_i);
 
     auto choose_synergia_account_components = ft::Container::Vertical({
         info,

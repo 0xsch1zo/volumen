@@ -1,4 +1,5 @@
 #include "dashboard.hpp"
+#include "../custom_ui.hpp"
 #include "../utils.hpp"
 
 namespace ft = ftxui;
@@ -19,23 +20,13 @@ ft::Component dashboard::weekend_bar::get_weekend_bar(api* api) {
     return ft::MenuEntry({ 
         .label = weekend_text,
         .transform = [=](const ft::EntryState& s) {
-            auto base = [&](ft::Color color){
-                return ft::window(
-                    ft::text(s.label),
-                    ft::gauge(
-                        (day_of_week == FRIDAY) ? 0.98f : static_cast<float>(day_of_week) / (SCHOOL_DAY_COUNT + 1)
-                    )
-                    | ft::color(ft::Color::White)
-                ) | ft::color(color);
-            };
-
-            if(s.focused)
-                return base(ft::Color::Green);
-
-            if(s.active)
-                return base(ft::Color::Red);
-
-            return base(ft::Color::White);
+            return custom_ui::focus_managed_window(
+                ft::text(s.label),
+                ft::gauge(
+                    (day_of_week == FRIDAY) ? 0.98f : static_cast<float>(day_of_week) / (SCHOOL_DAY_COUNT + 1)
+                ),
+                { .active = s.active, .focused = s.focused }
+            );
         }
     });
 }

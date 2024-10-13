@@ -2,13 +2,12 @@
 #include "auth.hpp"
 #include "error_handler.hpp"
 #include <string>
-#include <curlpp/Easy.hpp>
 #include <cpr/cpr.h>
 
 #ifdef VOLUMEN_TESTING
 class benchmarks;
 #endif
-namespace cl = cURLpp;
+
 using json = nlohmann::json;
 
 class api {
@@ -34,14 +33,20 @@ class api {
 
 public:
 //    static const int RECENT_GRADES_SIZE             = 10;
-
-    // TODO: return const
-    struct annoucement_t {
-        std::string start_date;
-        std::string end_date;
+    struct content_t {
         std::string subject;
         std::string content;
         std::string author;
+    };
+
+    // TODO: return const
+    struct annoucement_t : content_t {
+        std::string start_date;
+        std::string end_date;
+
+        annoucement_t(const std::string& start, const std::string& end, 
+                    const std::string& sub, const std::string& cont, const std::string& authr) 
+        : start_date(start), end_date(end), content_t{sub, cont, authr} {}
     };
 
     typedef std::vector<annoucement_t> annoucements_t;
@@ -64,11 +69,12 @@ public:
         std::string next_url;
     };
 
-    struct message_t {
-        std::string subject;
-        std::string content;
-        std::string sender;
+    struct message_t : content_t {
         int send_date; // You might ask why did they use a date as a string in the lesson but now they are using unix timestamps. That my friend is a question that I have yet to answer.
+
+        message_t(const std::string& sub, const std::string& cont, const std::string& authr,
+                int send_d) 
+        : send_date(send_d), content_t{sub, cont, authr} {}
     };
 
     typedef std::vector<message_t> messages_t;

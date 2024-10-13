@@ -1,6 +1,7 @@
 #include "dashboard.hpp"
 #include "../api.hpp"
 #include "../timetable.hpp"
+#include "../custom_ui.hpp"
 #include "../utils.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
@@ -34,18 +35,16 @@ ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
     auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_o.timetable[today]);
 
     return ft::Renderer(timetable_widget, [=] {
-        auto timetable = ft::hbox({
-            timeline_widget,
-            ft::separator(),
-            timetable_widget->Render(),
-        });
-        if(timetable_widget->Focused()) 
-            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable | ft::color(ft::Color::White)) | ft::color(ft::Color::Green);
-        else
-            timetable = ft::window(ft::text("Timetable") | ft::hcenter, timetable );
-
-        return timetable;
-    });
+        return custom_ui::focus_managed_window(
+            ft::text("Timetable"), 
+            ft::hbox({
+                timeline_widget,
+                ft::separator(),
+                timetable_widget->Render(),
+            }),
+            { .active = active, .focused = timetable_widget->Focused() }
+        );
+    }) | ft::Hoverable(&active);
     
 }
 

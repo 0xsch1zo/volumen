@@ -8,9 +8,11 @@
 #include <spdlog/spdlog.h>
 
 void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
+    grades_dashboard grades_dashboard_o;
+    timetable_dashboard timetable_dashboard_o;
     auto dashboard_components = ft::Container::Vertical({
-		grades_dashboard::get_grades_widget(api),
-        timetable_dashboard::get_timetable_widget(api),
+		grades_dashboard_o.get_grades_widget(api),
+        timetable_dashboard_o.get_timetable_widget(api),
         weekend_bar::get_weekend_bar(api)
     });
 

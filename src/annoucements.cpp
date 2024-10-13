@@ -1,4 +1,5 @@
 #include "annoucements.hpp"
+#include "custom_ui.hpp"
 #include "tab.hpp"
 #include "utils.hpp"
 #include <thread>
@@ -7,11 +8,6 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/component.hpp>
-
-// takes in main screen as pointer and content type enum
-annoucements::annoucements(ft::ScreenInteractive* main_screen) {
-    main_screen_p = main_screen;
-}
 
 ft::Component annoucements::content_view() {
     auto annoucements = annoucements_o.at(selected);
@@ -39,43 +35,16 @@ size_t* redirect,
 std::mutex* redirect_mutex) {
     annoucements_o = api->get_annoucments();
 
-    const size_t PREVIEW_SIZE = 300;
+    std::vector<api::content_t*> contents;
+    contents.reserve(annoucements_o.size());
+    for(const auto& annoucement : annoucements_o)
+        contents.emplace_back((api::content_t*)&annoucement);
 
-    const std::string deliminator = " | ";
-    auto menu_entries = ft::Container::Vertical({});
+    auto annoucement_components = custom_ui::content_box(contents);
 
-    
-    for(int i{}; i < annoucements_o.size(); i++) {
-        std::string content = annoucements_o.at(i).content;
-        menu_entries->Add(ft::MenuEntry({
-            .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
-            .transform = [=](const ft::EntryState &s) {
-                ft::Element entry = ft::paragraph(s.label);
-                if(s.focused) {
-                    selected = i;
-                    entry = ft::window(
-                        ft::hbox({
-                            ft::text(annoucements_o.at(i).subject) | ft::bold, 
-                            ft::text(deliminator + annoucements_o.at(i).author)
-                        }), 
-                        entry | ft::color(ft::Color::White)
-                    ) | ft::color(ft::Color::Green);
-                }
-                else
-                    entry = ft::window(
-                        ft::hbox({
-                            ft::text(annoucements_o.at(i).subject) | ft::bold,
-                            ft::text(deliminator + annoucements_o.at(i).author)
-                        }), 
-                        entry | ft::color(ft::Color::GrayLight));
-                return entry;
-            }
-        }));
-    }
- 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(menu_entries, [=]{ return menu_entries->Render() | ft::yframe; })
+    content_component->Add(ft::Renderer(annoucement_components, [=]{ return annoucement_components->Render() | ft::yframe; })
     | ft::CatchEvent([&](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();

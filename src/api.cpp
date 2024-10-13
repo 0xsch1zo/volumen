@@ -1,8 +1,6 @@
 #include "api.hpp"
 #include "utils.hpp"
 #include <unordered_map>
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Options.hpp>
 #include <iostream>
 #include <memory>
 #include <cassert>
@@ -67,7 +65,7 @@ void api::parse_annoucments(const std::string& response, annoucements_t& annoucm
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     annoucments.reserve(data[target_data_structure].size());
 
-    for(int i = data[target_data_structure].size() - 1; i >= 0; i--){
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& annoucment = data[target_data_structure].at(i);
         annoucments.emplace_back(
             /*.start_date     = */annoucment["StartDate"],
@@ -151,7 +149,6 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
     const std::string target_data_structure = "Messages";
     json data = json::parse(response);
 
-
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
     messages_o.reserve(data[target_data_structure].size());
 
@@ -161,7 +158,7 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),
-            /*.sender     = */fetch_username_by_message_user_id(message["Sender"]["Url"]),
+            /*.author     = */fetch_username_by_message_user_id(message["Sender"]["Url"]),
             /*.send_date  = */message["SendDate"]
         );
     }

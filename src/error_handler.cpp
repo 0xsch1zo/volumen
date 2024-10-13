@@ -1,5 +1,5 @@
 #include "error_handler.hpp"
-#include "utils.hpp"
+#include "custom_ui.hpp"
 
 error::volumen_exception::volumen_exception(const std::string& msg, const std::string& FUNCTION_) : 
     std::runtime_error(msg.c_str()),
@@ -14,7 +14,7 @@ const char* error::volumen_exception::what() const noexcept { return message.c_s
 ft::Component error::get_component() { return error_component; }
 
 ft::Component error::handler_component(const std::string& FUNCTION, const std::string& what) {
-    auto ok_button = ft::Button("OK", [&]{ show = false; }, utils::button_rounded());
+    auto ok_button = ft::Button("OK", [&]{ show = false; }, custom_ui::button_rounded());
     const auto error_msg_size = ft::size(ft::WIDTH, ft::EQUAL, 30);
 
     return ft::Renderer(ok_button, [=]{
@@ -30,7 +30,7 @@ ft::Component error::handler_component(const std::string& FUNCTION, const std::s
 }
 
 ft::Component error::handler_component(const std::string& what) {
-    auto ok_button = ft::Button("OK", [&]{ show = false; }, utils::button_rounded());
+    auto ok_button = ft::Button("OK", [&]{ show = false; }, custom_ui::button_rounded());
 
     return ft::Renderer(ok_button, [=]{
         return ft::vbox({

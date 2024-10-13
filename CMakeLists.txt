@@ -5,35 +5,33 @@ set(JSON_Diagnostics ON)
 add_compile_definitions(VOLUMEN_TESTING)
 
 include(FetchContent)
-# Hacky workaround for curlpp
-include_directories(./_deps/curlpp-src/include/)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG dfb9558eaff417ee7909169d0abd66e6c52c9d55 
+  GIT_TAG        1d40687a403b7babdafdd577d10e001840b0f12
 )
-
-# FetchContent_Declare(curlpp
-#   GIT_REPOSITORY https://github.com/jpbarrette/curlpp
-#   GIT_TAG v0.8.1
-# )
 
 FetchContent_Declare(spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG v1.14.1
+  GIT_TAG        v1.14.1
 )
 
 FetchContent_Declare(json
   GIT_REPOSITORY https://github.com/nlohmann/json
-  GIT_TAG v3.11.3
+  GIT_TAG        v3.11.3
 )
 
 FetchContent_Declare(cpr 
   GIT_REPOSITORY https://github.com/libcpr/cpr
-  GIT_TAG 1.10.5
+  GIT_TAG         1.10.5
 )
 
-FetchContent_MakeAvailable(ftxui spdlog json cpr)
+FetchContent_Declare(tomlplusplus
+  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+  GIT_TAG        v3.4.0
+)
+
+FetchContent_MakeAvailable(ftxui spdlog json cpr tomlplusplus)
 
 project(volumen)
 
@@ -53,6 +51,8 @@ add_executable(volumen
   src/grades.cpp
   src/error_handler.cpp
   src/auth.cpp
+  src/custom_ui.cpp
+  # src/config.cpp
 )
 
 target_link_libraries(volumen
@@ -71,6 +71,7 @@ add_executable(benchmark
   src/api.cpp 
   src/utils.cpp
   src/error_handler.cpp
+  src/custom_ui.cpp
 )
 
 target_link_libraries(benchmark

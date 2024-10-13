@@ -1,4 +1,5 @@
 #include "messages.hpp"
+#include "custom_ui.hpp"
 #include "utils.hpp"
 #include "tab.hpp"
 #include <string>
@@ -11,11 +12,6 @@
 #include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
-// TODO: make variable for accent color
-messages::messages(ft::ScreenInteractive* main_screen) {
-    main_screen_p = main_screen;
-}
-
 ft::Component messages::content_view() {
     auto message = messages_o.at(selected);
     const std::string deliminator = " | ";
@@ -27,7 +23,7 @@ ft::Component messages::content_view() {
     strftime(date_s, sizeof(date), "%Y-%m-%d", date);
     return ft::Renderer([=]{
         return ft::vbox({
-            ft::text("Author: " + message.sender + deliminator + "Date:" + date_s),
+            ft::text("Author: " + message.author + deliminator + "Date:" + date_s),
             ft::separator(),
             ft::separatorEmpty(),
             ft::text(message.subject) | ft::bold,
@@ -46,44 +42,16 @@ api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
     messages_o = api->get_messages();
+    std::vector<api::content_t*> contents;
+    contents.reserve(messages_o.size());
+    for(const auto& message : messages_o)
+        contents.emplace_back((api::content_t*)&message);
 
-    const size_t PREVIEW_SIZE = 300;
-
-    const std::string deliminator = " | ";
-    auto menu_entries = ft::Container::Vertical({});
-
-    
-    for(int i{}; i < messages_o.size(); i++) {
-        const std::string content = messages_o.at(i).content;
-        menu_entries->Add(ft::MenuEntry({
-            .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
-            .transform = [=](const ft::EntryState &s) {
-                ft::Element entry = ft::paragraph(s.label);
-                if(s.focused) {
-                    selected = i;
-                    entry = ft::window(
-                        ft::hbox({
-                            ft::text(messages_o.at(i).subject) | ft::bold, 
-                            ft::text(deliminator + messages_o.at(i).sender)
-                        }), 
-                        entry | ft::color(ft::Color::White)
-                    ) | ft::color(ft::Color::Green);
-                }
-                else
-                    entry = ft::window(
-                        ft::hbox({
-                            ft::text(messages_o.at(i).subject) | ft::bold,
-                            ft::text(deliminator + messages_o.at(i).sender)
-                        }), 
-                        entry | ft::color(ft::Color::GrayLight));
-                return entry;
-            }
-        }));
-    }
+    auto message_components = custom_ui::content_box(contents);
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(menu_entries, [=]{ return menu_entries->Render() | ft::yframe; })
+    content_component->Add(ft::Renderer(message_components, [=]{ return message_components->Render() | ft::yframe; })
     | ft::CatchEvent([&](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();
