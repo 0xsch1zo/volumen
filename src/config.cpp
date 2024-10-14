@@ -3,7 +3,7 @@
 
 namespace spd = spdlog;
 
-config::config() {
+config::config()/* : misc_o(config_toml), colors_o(config_toml) */{
     const std::string NAME = "volumen";
     const std::string CONFIG_NAME = "volumen_config.toml";
 #if defined(_WIN32) || defined(_WIN64)
@@ -28,15 +28,17 @@ config::config() {
         
     spd::debug(LOAD_CONFIG_MSG + config_path);
     config_toml = toml::parse_file(config_path);
+    misc_o.emplace(misc(config_toml));
+    colors_o.emplace(colors(config_toml));
 }
 
-config::colors::colors(const config* config) : config_p(config) {
+config::colors::colors(const toml::table& config) : config_toml(config) {
     main_color = parse_main_color();
     accent_color1 = parse_accent_color1();
     accent_color2 = parse_accent_color2();
 }
 
-std::string config::get_error_msg(ERROR e, const std::string& key) const {
+std::string config::get_error_msg(ERROR e, const std::string& key) {
     switch(e) {
         case INVALID_INT:
             return "Invalid intiger value for '" + key + "'. The value needs to be between 0 - 15";
@@ -50,18 +52,18 @@ std::string config::get_error_msg(ERROR e, const std::string& key) const {
 }
 
 ft::Color config::colors::get_color(const std::string& key) const {
-    if(config_p->config_toml[COLORS_GROUP][key].is_integer()) {
-        const int color16 = config_p->config_toml[COLORS_GROUP][key].value_or(-1);
+    if(config_toml[COLORS_GROUP][key].is_integer()) {
+        const int color16 = config_toml[COLORS_GROUP][key].value_or(-1);
         if(color16 < 0 || color16 >= 16)
-            throw std::runtime_error(config_p->get_error_msg(INVALID_INT, key));
+            throw std::runtime_error(get_error_msg(INVALID_INT, key));
         return ft::Color::Palette16(color16);
     }
-    else if(config_p->config_toml[COLORS_GROUP][key].is_string()) {
-        rgb color_rgb = hextorgb(config_p->config_toml[COLORS_GROUP][key].value_or(""));
+    else if(config_toml[COLORS_GROUP][key].is_string()) {
+        rgb color_rgb = hextorgb(config_toml[COLORS_GROUP][key].value_or(""));
         return ft::Color(color_rgb.red, color_rgb.green, color_rgb.blue);
     }
     
-    throw std::runtime_error(config_p->get_error_msg(INVALID_VAL, key));
+    throw std::runtime_error(get_error_msg(INVALID_VAL, key));
 }
 
 config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
@@ -73,7 +75,7 @@ config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
     const int BASE = 16;
 
     if(hex.size() != HEX_SIZE)
-        throw std::runtime_error(config_p->get_error_msg(INVALID_HEX, hex));
+        throw std::runtime_error(get_error_msg(INVALID_HEX, hex));
 
     return {
         .red    = std::stoi(hex.substr(BEGIN, END_RED), 0, BASE),
@@ -84,7 +86,7 @@ config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
 
 ft::Color config::colors::parse_main_color() const {
     const std::string main_key = "main";
-    if(!config_p->config_toml[COLORS_GROUP][main_key].is_value())
+    if(!config_toml[COLORS_GROUP][main_key].is_value())
         return default_main;
     else
         return get_color(main_key);
@@ -92,7 +94,7 @@ ft::Color config::colors::parse_main_color() const {
 
 ft::Color config::colors::parse_accent_color1() const {
     const std::string accent_color1_key = "accent_color1";
-    if(!config_p->config_toml[COLORS_GROUP][accent_color1_key].is_value())
+    if(!config_toml[COLORS_GROUP][accent_color1_key].is_value())
         return default_accent_color1;
     else
         return get_color(accent_color1_key);
@@ -100,7 +102,7 @@ ft::Color config::colors::parse_accent_color1() const {
 
 ft::Color config::colors::parse_accent_color2() const {
     const std::string accent_color2_key = "accent_color2";
-    if(!config_p->config_toml[COLORS_GROUP][accent_color2_key].is_value())
+    if(!config_toml[COLORS_GROUP][accent_color2_key].is_value())
         return default_accent_color2;
     else
         return get_color(accent_color2_key);
@@ -118,20 +120,28 @@ ft::Color config::colors::get_accent_color2() const {
     return accent_color2;
 }
 
-config::misc::misc(const config* config) : config_p(config) {
+config::misc::misc(const toml::table& config) : config_toml(config) {
     splash = parse_splash();
 }
 
 std::string config::misc::parse_splash() const {
     const std::string splash_key = "splash";
-    if(config_p->config_toml[MISC_GROUP][splash_key].is_string())
-        return config_p->config_toml[MISC_GROUP][splash_key].value_or("");
-    else if(config_p->config_toml[MISC_GROUP][splash_key].is_value())
-        throw std::runtime_error(config_p->get_error_msg(INVALID_VAL, splash_key));
+    if(config_toml[MISC_GROUP][splash_key].is_string())
+        return config_toml[MISC_GROUP][splash_key].value_or("");
+    else if(config_toml[MISC_GROUP][splash_key].is_value())
+        throw std::runtime_error(get_error_msg(INVALID_VAL, splash_key));
     else
         return default_splash;
 }
 
 std::string config::misc::get_splash() const {
     return splash;
+}
+
+config::colors config::Colors() const {
+    return colors_o.value();
+}
+
+config::misc config::Misc() const {
+    return misc_o.value();
 }

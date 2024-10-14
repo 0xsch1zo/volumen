@@ -9,22 +9,13 @@ namespace ft = ftxui;
 
 class config {
     const std::string config_path;
-protected:
-    enum ERROR {
-            INVALID_INT,
-            INVALID_VAL,
-            INVALID_HEX
-    };
-    toml::table config_toml;
-
-    std::string get_error_msg(ERROR e, const std::string& key) const;
-public:
-    config();
     const std::string DEFAULT_CONFIG_MSG = "No config detected. Using defaults";
     const std::string LOAD_CONFIG_MSG = "Loading config from: ";
     
+    toml::table config_toml;
+    
     class colors {
-        const config* config_p;
+        const toml::table config_toml;
         const std::string COLORS_GROUP = "colors";
         const ft::Color default_main = ft::Color::Green;
         const ft::Color default_accent_color1 = ft::Color::Red;
@@ -44,14 +35,14 @@ public:
         ft::Color parse_accent_color1() const;
         ft::Color parse_accent_color2() const;
     public:
-        colors(const config* config);
+        colors(const toml::table& config);
         ft::Color get_main_color() const;
         ft::Color get_accent_color1() const;
         ft::Color get_accent_color2() const;
     };
 
     class misc {
-        const config* config_p;
+        const toml::table config_toml;
         const std::string MISC_GROUP = "misc";
         const std::string default_splash = R"(
  ██▒   █▓ ▒█████   ██▓     █    ██  ███▄ ▄███▓▓█████  ███▄    █ 
@@ -69,7 +60,22 @@ public:
 
         std::string parse_splash() const;
     public:
-        misc(const config* config);
+        misc(const toml::table& config);
         std::string get_splash() const;
     };
+
+    std::optional<misc> misc_o;
+    std::optional<colors> colors_o;
+protected:
+    enum ERROR {
+        INVALID_INT,
+        INVALID_VAL,
+        INVALID_HEX
+    };    
+    static std::string get_error_msg(ERROR e, const std::string& key);
+
+public:
+    config();
+    misc Misc() const;
+    colors Colors() const;
 };
