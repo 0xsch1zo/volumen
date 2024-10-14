@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include "custom_ui.hpp"
 #include <sstream>
+#include <spdlog/spdlog.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
@@ -11,7 +12,8 @@
 
 // Function that displays login interface and gets email and password
 void login::login_screen(){
-    int auth_failure{};
+    bool auth_failure{};
+    bool auth_complete{};
     auth auth;
     std::string email;
     std::string password;
@@ -24,6 +26,8 @@ void login::login_screen(){
             auth_failure = true;
             return true;
         }
+
+        auth_complete = true;
         screen.Exit();
         return true;
     };
@@ -92,7 +96,8 @@ void login::login_screen(){
     });
      
     screen.Loop(login_screen);
-    if(auth_failure) return;
+    if(!auth_complete)
+        return;
     choose_account_screen(auth);
 }
 
