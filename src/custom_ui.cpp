@@ -1,5 +1,9 @@
 #include "custom_ui.hpp"
 
+void custom_ui::init(const config* config) {
+    config_p = config;
+}
+
 // This provides a button with centered text and rounded corners, yeah ...
 ft::ButtonOption custom_ui::button_rounded()
 {
@@ -8,10 +12,10 @@ ft::ButtonOption custom_ui::button_rounded()
     {
         auto element = ft::text(s.label) | ft::center | ft::borderRounded | ft::size(ft::WIDTH, ft::EQUAL, 40);
         if (s.focused)
-            return element | ft::bold | ft::color(ft::Color::Green);
+            return element | ft::bold | ft::color(config_p->Colors().get_main_color());
 
         if (s.active)
-            return element | ft::bold | ft::color(ft::Color::Red);
+            return element | ft::bold | ft::color(config_p->Colors().get_accent_color1());
 
         return element;
     };
@@ -22,10 +26,10 @@ ft::Element custom_ui::focus_managed_window(ft::Element title, ft::Element conte
 {
     auto base = ft::window(title, contents | ft::color(ft::Color::White));
     if (focus_management.focused)
-        return base | ft::color(ft::Color::Green);
+        return base | ft::color(config_p->Colors().get_main_color());
 
     if (focus_management.active)
-        return base | ft::color(ft::Color::Red);
+        return base | ft::color(config_p->Colors().get_accent_color1());
 
     return base;
 }
@@ -36,7 +40,7 @@ ft::Component custom_ui::custom_component_window(ft::Element title, ft::Componen
                         {
         if(contents->Focused())
             return ft::window(title, contents->Render() | ft::color(ft::Color::White)) 
-            | ft::color(ft::Color::Green);
+            | ft::color(config_p->Colors().get_main_color());
 
         return ft::window(title, contents->Render()); });
 }
@@ -70,20 +74,20 @@ ft::Component custom_ui::content_box(const std::vector<api::content_t*>& content
 ft::Element custom_ui::focus_managed_border_box(ft::Element contents, const focus_management_t& focus_management) {
     if(focus_management.focused)
         return contents 
-        | ft::borderStyled(ft::Color::Green);
+        | ft::borderStyled(config_p->Colors().get_main_color());
     if(focus_management.active)
         return contents 
-        | ft::borderStyled(ft::Color::Red);
+        | ft::borderStyled(config_p->Colors().get_accent_color1());
     return contents | ft::border; 
 }
 
 ft::Element custom_ui::focus_managed_whatever(ft::Element contents, const focus_management_t& focus_management) {
     if(focus_management.focused)
         return contents 
-        | ft::color(ft::Color::Green);
+        | ft::color(config_p->Colors().get_main_color());
     if(focus_management.active)
         return contents 
-        | ft::color(ft::Color::Red);
+        | ft::color(config_p->Colors().get_accent_color1());
     return contents;
 }
 
@@ -139,12 +143,12 @@ ft::Component custom_ui::custom_dropdown(ft::ConstStringListRef entries, int* se
                     | ft::frame 
                     | ft::size(ft::HEIGHT, ft::LESS_THAN, max_height),
                 });
-                menu |= handle->Focused() ? ft::borderStyled(ft::Color::Green) : ft::border;
+                menu |= handle->Focused() ? ft::borderStyled(config_p->Colors().get_main_color()) : ft::border;
 
                 return menu;
             }
             auto menu = ft::vbox({ std::move(checkbox_element), ft::filler() });
-            menu |= handle->Focused() ? ft::borderStyled(ft::Color::Green) : ft::border;
+            menu |= handle->Focused() ? ft::borderStyled(config_p->Colors().get_main_color()) : ft::border;
             return menu;
         }
     });

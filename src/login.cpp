@@ -77,7 +77,7 @@ void login::login_screen(){
     auto login_screen = ft::Renderer(login_components, [&] {
         return ft::vbox({
             // Could make splash a component but there will be focus issues caused by that if it's a static global
-            ft::vbox(utils::split(splash)) | ft::hcenter,
+            ft::vbox(utils::split(config_p->Misc().get_splash())) | ft::hcenter,
             ft::vbox({
                 email_box->Render(),
                 password_box->Render(),
@@ -89,7 +89,7 @@ void login::login_screen(){
             | ft::hcenter,
             ft::separatorEmpty(),
             error_msg->Render() 
-            | ft::color(ft::Color::Red)
+            | ft::color(config_p->Colors().get_accent_color1())
             | ft::hcenter
         })
         | ft::vcenter;
@@ -107,7 +107,10 @@ void login::choose_account_screen(const auth& auth_o) {
     auto accounts = auth_o.get_synergia_accounts();
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
 
-    ft::Component continue_button = ft::Button("Continue", [&](){ screen.Exit(); }, custom_ui::button_rounded());
+    ft::Component continue_button = ft::Button("Continue", [&](){ 
+        screen.Exit(); 
+        tab::display_interface(auth_o, accounts[synergia_account_i].login);
+    }, custom_ui::button_rounded());
     std::vector<std::string> names;
     names.reserve(accounts.size());
     for(const auto& account : accounts)
@@ -126,10 +129,10 @@ void login::choose_account_screen(const auth& auth_o) {
 
     auto choose_synergia_account = ft::Renderer(choose_synergia_account_components, [&] {
         return ft::vbox({
-            ft::vbox(utils::split(splash)) | ft::hcenter,
+            ft::vbox(utils::split(config_p->Misc().get_splash())) | ft::hcenter,
             ft::separatorEmpty(),
             ft::vbox({
-                info->Render() | ft::color(ft::Color::Green),
+                info->Render() | ft::color(config_p->Colors().get_main_color()),
                 ft::separatorEmpty(),
                 account_menu->Render(), 
                 continue_button->Render() 
@@ -143,5 +146,4 @@ void login::choose_account_screen(const auth& auth_o) {
     });
 
     screen.Loop(choose_synergia_account);
-    tab::display_interface(auth_o, accounts[synergia_account_i].login);
 }
