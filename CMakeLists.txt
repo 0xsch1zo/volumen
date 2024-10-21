@@ -52,7 +52,7 @@ add_executable(volumen
   src/error_handler.cpp
   src/auth.cpp
   src/custom_ui.cpp
-  # src/config.cpp
+  src/config.cpp
 )
 
 target_link_libraries(volumen
@@ -72,6 +72,7 @@ add_executable(benchmark
   src/utils.cpp
   src/error_handler.cpp
   src/custom_ui.cpp
+  src/config.cpp
 )
 
 target_link_libraries(benchmark
