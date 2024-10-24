@@ -1,9 +1,11 @@
 #pragma once
 #include "auth.hpp"
 #include "error_handler.hpp"
+#include "config.hpp"
 #include <ftxui/component/component.hpp>
 
 class tab {
+    const config* config_p;
     enum tabs_t {
         DASHBOARD,
         MESSAGES,
@@ -26,5 +28,6 @@ public:
         EXIT
     };
     
-    static void display_interface(const auth& auth_o, const std::string& picked_login);
+    tab(const config* config) : config_p(config) {}
+    void display_interface(const auth& auth_o, const std::string& picked_login);
 };

@@ -47,7 +47,7 @@ using namespace std::chrono_literals;
     api api(auth_o, picked_login);
     annoucements annoucements_o(&main_screen);
     messages messages_o(&main_screen);
-    timetable timetable_o;
+    timetable timetable_o(config_p);
     grades grades_o;
 
     int tab_selected{};

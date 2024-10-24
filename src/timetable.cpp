@@ -106,7 +106,7 @@ ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::eve
         auto events_component = ft::Container::Horizontal({});
         if(events_o.contains(lesson.date)) {
             // Find event relevant to lesson number
-           for(const auto& event : events_o[lesson.date]) {
+            for(const auto& event : events_o[lesson.date]) {
                 if(event.lesson_offset == (i++) + 1)
                     events_component->Add(event_box(event));
             }
@@ -164,7 +164,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
                     ft::vbox({
                         ft::text(s.label)
                         | ft::bold
-                        | ft::color(ft::Color::Red)
+                        | ft::color(config_p->Colors().get_accent_color1())
                         | ft::strikethrough
                         | subject_size
                         | ft::hcenter,
@@ -179,7 +179,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
                     ft::vbox({
                         ft::text(s.label)
                         | ft::bold
-                        | ft::color(ft::Color::Green)
+                        | ft::color(config_p->Colors().get_main_color())
                         | ft::hcenter,
                         ft::text(lesson.start + deliminator + lesson.end)
                         | ft::hcenter
@@ -199,7 +199,7 @@ ft::Component timetable::event_box(const api::event_t& event) {
             return custom_ui::focus_managed_border_box(
                 ft::text(s.label)
                 | ft::bold
-                | ft::color(ft::Color::Green)
+                | ft::color(config_p->Colors().get_main_color())
                 | ft::center,
                 { .active = s.active, .focused = s.focused }
             );
