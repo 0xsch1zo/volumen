@@ -13,7 +13,7 @@ ft::Component annoucements::content_view() {
     auto annoucements = annoucements_o.at(selected);
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
-    return ft::Renderer([=]{ 
+    return ft::Renderer([=, this]{ 
         return ft::vbox({
             ft::text("Author: " + annoucements.author + deliminator + "Start date: " + annoucements.start_date + deliminator + "End date: " + annoucements.end_date),
             ft::separator(),
@@ -44,7 +44,7 @@ std::mutex* redirect_mutex) {
 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(annoucement_components, [=]{ return annoucement_components->Render() | ft::yframe; })
+    content_component->Add(ft::Renderer(annoucement_components, [=, this]{ return annoucement_components->Render() | ft::yframe; })
     | ft::CatchEvent([&](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();

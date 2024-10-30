@@ -66,11 +66,11 @@ void timetable::timetable_display(
         // this is the only hacky way I found to predictably update the menu selector and have it work
         // Enjoy :)
         ft::Component menu = ft::Menu(*weekdays, selector, ft::MenuOption::HorizontalAnimated())
-        | ft::CatchEvent([=](ft::Event event) {
+        | ft::CatchEvent([=, this](ft::Event event) {
             screen_p->PostEvent(ft::Event::Special("Why"));
             return false;
         })
-        | ft::CatchEvent([=](ft::Event e){
+        | ft::CatchEvent([=, this](ft::Event e){
             if(e == ft::Event::Special("Why")) {
                 if(*selector == 0) {
                     *selector = weekdays->size() - ACTION_COUNT;
@@ -127,14 +127,14 @@ ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::eve
         else
             lessons->Add(lesson_component); 
     }
-    return ft::Renderer(lessons, [=]{ return lessons->Render() | ft::yframe; });
+    return ft::Renderer(lessons, [=, this]{ return lessons->Render() | ft::yframe; });
 }
 
 ft::Component timetable::empty_lesson_box() {
     const auto seperator_size = ft::size(ft::WIDTH, ft::EQUAL, 20);
     auto menu = ft::MenuEntry({
         .label = "",
-        .transform = [=](const ft::EntryState& s) {
+        .transform = [=, this](const ft::EntryState& s) {
             return custom_ui::focus_managed_whatever(
                 ft::vbox({
                     ft::separatorEmpty(),
@@ -147,7 +147,7 @@ ft::Component timetable::empty_lesson_box() {
             );
         }
     });
-    return ft::Renderer(menu, [=]{ return menu->Render() | ft::hcenter; });
+    return ft::Renderer(menu, [=, this]{ return menu->Render() | ft::hcenter; });
 
 }
 
@@ -158,7 +158,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
 
     auto lesson_box = ft::MenuEntry({
         .label = lesson.subject,
-        .transform = [=](const ft::EntryState& s) {
+        .transform = [=, this](const ft::EntryState& s) {
             if(lesson.is_canceled) {
                 return custom_ui::focus_managed_border_box(
                     ft::vbox({
@@ -203,7 +203,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
         }
     });
 
-    return ft::Renderer(lesson_box, [=]{ return lesson_box->Render() | ft::xflex; });
+    return ft::Renderer(lesson_box, [=, this]{ return lesson_box->Render() | ft::xflex; });
 }
 
 ft::Component timetable::event_box(const api::event_t& event) {

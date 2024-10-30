@@ -21,7 +21,7 @@ ft::Component messages::content_view() {
     std::time_t t = message.send_date;
     std::tm* date = std::localtime(&t);
     strftime(date_s, sizeof(date), "%Y-%m-%d", date);
-    return ft::Renderer([=]{
+    return ft::Renderer([=, this]{
         return ft::vbox({
             ft::text("Author: " + message.author + deliminator + "Date:" + date_s),
             ft::separator(),
@@ -51,7 +51,7 @@ std::mutex* redirect_mutex) {
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(message_components, [=]{ return message_components->Render() | ft::yframe; })
+    content_component->Add(ft::Renderer(message_components, [=, this]{ return message_components->Render() | ft::yframe; })
     | ft::CatchEvent([&](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();

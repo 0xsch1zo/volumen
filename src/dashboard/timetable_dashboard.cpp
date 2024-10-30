@@ -34,7 +34,7 @@ ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
     
     auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_o.timetable[today]);
 
-    return ft::Renderer(timetable_widget, [=] {
+    return ft::Renderer(timetable_widget, [=, this] {
         return custom_ui::focus_managed_window(
             ft::text("Timetable"), 
             ft::hbox({

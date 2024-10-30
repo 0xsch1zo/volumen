@@ -20,7 +20,7 @@ ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
         }));
     }
 
-    return ft::Renderer(grade_component, [=]{
+    return ft::Renderer(grade_component, [=, this] {
 		const std::string grade_window_name = "Recent grades";
 
         return custom_ui::focus_managed_window(
