@@ -64,8 +64,8 @@ class config {
         std::string get_splash() const;
     };
 
-    std::optional<misc> misc_o;
-    std::optional<colors> colors_o;
+    std::unique_ptr<misc> misc_o;
+    std::unique_ptr<colors> colors_o;
 protected:
     enum ERROR {
         INVALID_INT,
@@ -76,6 +76,6 @@ protected:
 
 public:
     config();
-    misc Misc() const;
-    colors Colors() const;
+    misc& Misc() const;
+    colors& Colors() const;
 };

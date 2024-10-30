@@ -28,8 +28,8 @@ config::config()/* : misc_o(config_toml), colors_o(config_toml) */{
         
     spd::debug(LOAD_CONFIG_MSG + config_path);
     config_toml = toml::parse_file(config_path);
-    misc_o.emplace(misc(config_toml));
-    colors_o.emplace(colors(config_toml));
+    colors_o = std::make_unique<colors>(config_toml);
+    misc_o = std::make_unique<misc>(config_toml);
 }
 
 config::colors::colors(const toml::table& config) : config_toml(config) {
@@ -67,20 +67,20 @@ ft::Color config::colors::get_color(const std::string& key) const {
 }
 
 config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
-    const int HEX_SIZE = 7;
+    const int8_t HEX_SIZE = 7;
     const int BEGIN = 1;
-    const int END_RED = 2;
-    const int END_GREEN = 4;
-    const int END_BLUE = 6;
+    const int8_t END_RED = 2;
+    const int8_t END_GREEN = 4;
+    const int8_t END_BLUE = 6;
     const int BASE = 16;
 
     if(hex.size() != HEX_SIZE)
         throw std::runtime_error(get_error_msg(INVALID_HEX, hex));
 
     return {
-        .red    = std::stoi(hex.substr(BEGIN, END_RED), 0, BASE),
-        .green  = std::stoi(hex.substr(BEGIN, END_GREEN), 0, BASE),
-        .blue   = std::stoi(hex.substr(BEGIN, END_BLUE), 0, BASE)
+        .red    = (int8_t)std::stoi(hex.substr(BEGIN, END_RED), 0, BASE),
+        .green  = (int8_t)std::stoi(hex.substr(END_RED, END_GREEN), 0, BASE),
+        .blue   = (int8_t)std::stoi(hex.substr(END_BLUE, END_BLUE), 0, BASE)
     };
 }
 
@@ -138,10 +138,10 @@ std::string config::misc::get_splash() const {
     return splash;
 }
 
-config::colors config::Colors() const {
-    return colors_o.value();
+config::colors& config::Colors() const {
+    return *colors_o;
 }
 
-config::misc config::Misc() const {
-    return misc_o.value();
+config::misc& config::Misc() const {
+    return *misc_o;
 }
