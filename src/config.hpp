@@ -15,11 +15,11 @@ class config {
     toml::table config_toml;
     
     class colors {
-        const toml::table config_toml;
+        const toml::table* config_toml;
         const std::string COLORS_GROUP = "colors";
         const ft::Color default_main = ft::Color::Green;
         const ft::Color default_accent_color1 = ft::Color::Red;
-        const ft::Color default_accent_color2 = ft::Color::Violet;
+        const ft::Color default_accent_color2 = ft::Color::Magenta;
         ft::Color main_color;
         ft::Color accent_color1;
         ft::Color accent_color2;
@@ -35,14 +35,14 @@ class config {
         ft::Color parse_accent_color1() const;
         ft::Color parse_accent_color2() const;
     public:
-        colors(const toml::table& config);
+        colors(const toml::table* config = nullptr);
         ft::Color get_main_color() const;
         ft::Color get_accent_color1() const;
         ft::Color get_accent_color2() const;
     };
 
     class misc {
-        const toml::table config_toml;
+        const toml::table* config_toml;
         const std::string MISC_GROUP = "misc";
         const std::string default_splash = R"(
  ██▒   █▓ ▒█████   ██▓     █    ██  ███▄ ▄███▓▓█████  ███▄    █ 
@@ -60,7 +60,7 @@ class config {
 
         std::string parse_splash() const;
     public:
-        misc(const toml::table& config);
+        misc(const toml::table* config = nullptr);
         std::string get_splash() const;
     };
 
