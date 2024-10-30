@@ -77,11 +77,15 @@ config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
     if(hex.size() != HEX_SIZE)
         throw std::runtime_error(get_error_msg(INVALID_HEX, hex));
 
-    return {
-        .red    = (int8_t)std::stoi(hex.substr(BEGIN, END_RED), 0, BASE),
-        .green  = (int8_t)std::stoi(hex.substr(END_RED, END_GREEN), 0, BASE),
-        .blue   = (int8_t)std::stoi(hex.substr(END_BLUE, END_BLUE), 0, BASE)
-    };
+    try {
+        return {
+            .red    = (int8_t)std::stoi(hex.substr(BEGIN, END_RED), 0, BASE),
+            .green  = (int8_t)std::stoi(hex.substr(END_RED, END_GREEN), 0, BASE),
+            .blue   = (int8_t)std::stoi(hex.substr(END_BLUE, END_BLUE), 0, BASE)
+        };
+    } catch(std::exception& e) {
+        throw std::runtime_error(get_error_msg(INVALID_HEX, hex));
+    }
 }
 
 ft::Color config::colors::parse_main_color() const {
