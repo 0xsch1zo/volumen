@@ -173,8 +173,22 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
                     }) | ft::xflex,
                     { .active = s.active, .focused = s.focused }
                 );
-            }
-            else
+            } else if(lesson.is_substitution) {
+                return custom_ui::focus_managed_border_box(
+                    ft::vbox({
+                        ft::hbox({
+                            ft::text(s.label)
+                            | ft::bold,
+                            ft::text(" - Substitution")
+                        })
+                        | ft::color(config_p->Colors().get_accent_color2())
+                        | ft::hcenter,
+                        ft::text(lesson.start + deliminator + lesson.end)
+                        | ft::hcenter
+                    }) | ft::xflex,
+                    { .active = s.active, .focused = s.focused }
+                );
+            } else
                 return custom_ui::focus_managed_border_box(
                     ft::vbox({
                         ft::text(s.label)
