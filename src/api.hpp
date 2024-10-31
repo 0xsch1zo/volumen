@@ -30,16 +30,16 @@ class api {
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
     std::shared_ptr<cpr::Session> api_session = std::make_shared<cpr::Session>();
     std::mutex api_session_mutex;
+    const std::string login;
+    auth auth_o;
 
 public:
-//    static const int RECENT_GRADES_SIZE             = 10;
     struct content_t {
         std::string subject;
         std::string content;
         std::string author;
     };
 
-    // TODO: return const
     struct annoucement_t : content_t {
         std::string start_date;
         std::string end_date;
@@ -141,6 +141,8 @@ public:
 
 
     api(const auth& auth_o, const std::string& picked_login);
+
+    void update_access_token();
 
     annoucements_t get_annoucments();
 

@@ -1,13 +1,13 @@
 #include "auth.hpp"
 #include <cpr/cpr.h>
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <regex>
 
 void auth::authorize(const std::string& email, const std::string& password) {
     const std::string authcode = get_authcode(email, password);
-    auto synergia_creds = fetch_portal_access_token(authcode);
-    fetch_synergia_accounts(synergia_creds);
+    fetch_portal_access_token(authcode);
+    fetch_synergia_accounts();
 }
 
 std::string auth::get_api_access_token(const std::string& login) const {
@@ -21,13 +21,20 @@ std::vector<auth::synergia_account_t> auth::get_synergia_accounts() const {
 }
 
 // After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
-void auth::fetch_synergia_accounts(const oauth_data_t& oauth_data) {
+void auth::fetch_synergia_accounts() {
     cpr::Response r = cpr::Get(
         cpr::Url{LIBRUS_API_ACCESS_TOKEN_URL},
         cpr::Bearer{oauth_data.access_token}
     );
 
     json data = json::parse(r.text);
+
+    // In case already populated and called on refresh
+    synergia_accounts.clear();
+    api_access_tokens.clear();
+
+    synergia_accounts.reserve(data["accounts"].size());
+    api_access_tokens.reserve(data["accounts"].size());
 
     // TODO: If fails log where it happened
     for(const auto& account : data["accounts"].items()) {
@@ -44,7 +51,41 @@ void auth::fetch_synergia_accounts(const oauth_data_t& oauth_data) {
     }
 }
 
-auth::oauth_data_t auth::fetch_portal_access_token(const std::string& authcode) {
+void auth::refresh_portal_token() {
+    cpr::Multipart refresh_token_data {
+        { "grant_type",      "refresh_token" },
+        { "client_id",       LIBRUS_PORTAL_CLIENT_ID },
+        { "redirect_uri",    LIBRUS_PORTAL_APP_URL },
+        { "refresh_token",   oauth_data.refresh_token }
+    };
+    cpr::Response r = cpr::Post(
+        cpr::Url{ LIBRUS_PORTAL_OAUTH_URL },
+        refresh_token_data 
+    );
+
+    json data = json::parse(r.text);
+
+    // If the refresh token has expired begin oauth flow from start
+    if(r.status_code == UNAUTHORIZED_ERR_CODE) {
+    }
+
+    oauth_data = {
+        .token_type     = data["token_type"],
+        .expires_in     = data["expires_in"],
+        .access_token   = data["access_token"],
+        .refresh_token  = data["refresh_token"]
+    };
+}
+
+void auth::refresh_api_tokens() {
+    // Refresh the portal access token
+    refresh_portal_token();
+
+    // Renew api tokens
+    fetch_synergia_accounts();
+}
+
+void auth::fetch_portal_access_token(const std::string& authcode) {
     cpr::Multipart access_token_data {
         { "grant_type",      "authorization_code" },
         { "client_id",       LIBRUS_PORTAL_CLIENT_ID },
@@ -58,7 +99,7 @@ auth::oauth_data_t auth::fetch_portal_access_token(const std::string& authcode) 
 
     json data = json::parse(r.text);
 
-    return { 
+    oauth_data = { 
         .token_type     = data["token_type"],
         .expires_in     = data["expires_in"],
         .access_token   = data["access_token"],

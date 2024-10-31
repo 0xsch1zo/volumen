@@ -13,10 +13,13 @@ public:
         std::string login;
     };
 
+    static const int UNAUTHORIZED_ERR_CODE = 401;
+
 public:
     std::string get_api_access_token(const std::string& login) const;
     std::vector<synergia_account_t> get_synergia_accounts() const;
     void authorize(const std::string& email, const std::string& password);
+    void refresh_api_tokens();
 
 private:
     struct oauth_data_t {
@@ -24,7 +27,7 @@ private:
         size_t expires_in;
         std::string access_token;
         std::string refresh_token;
-    };
+    } oauth_data;
     
 	const std::string LIBRUS_PORTAL_AUTHORIZE_URL           = "https://portal.librus.pl/konto-librus/redirect/dru";
 	const std::string LIBRUS_PORTAL_LOGIN_URL               = "https://portal.librus.pl/konto-librus/login/action";
@@ -41,8 +44,9 @@ private:
 private:
     std::string find_token(cpr::Cookies& cookies);
     std::string get_authcode(const std::string& email, const std::string& password);
-    oauth_data_t fetch_portal_access_token(const std::string& authcode);
-    void fetch_synergia_accounts(const oauth_data_t& oauth_data);
+    void fetch_portal_access_token(const std::string& authcode);
+    void fetch_synergia_accounts();
+    void refresh_portal_token();
 };
 
 

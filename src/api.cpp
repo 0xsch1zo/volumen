@@ -6,8 +6,12 @@
 #include <cassert>
 #include <spdlog/spdlog.h>
 
-api::api(const auth& auth_o, const std::string& peaked_login) {
-    api_session->SetBearer(auth_o.get_api_access_token(peaked_login));
+api::api(const auth& auth, const std::string& picked_login) : auth_o(auth), login(picked_login) {
+    update_access_token();
+}
+
+void api::update_access_token() {
+    api_session->SetBearer(auth_o.get_api_access_token(login));
 }
 
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
@@ -20,17 +24,47 @@ void api::check_if_target_contains(const char* FUNCTION, const json& data, const
 std::string api::fetch(const std::string& endpoint) {
     std::lock_guard api_session_lock{api_session_mutex};
     api_session->SetUrl(LIBRUS_API_URL + endpoint);
-    cpr::AsyncResponse r = api_session->GetAsync();
-    r.wait();
-    return r.get().text;
+    cpr::AsyncResponse async_r = api_session->GetAsync();
+
+    async_r.wait();
+
+    cpr::Response resp = async_r.get();
+    if(resp.status_code == auth::UNAUTHORIZED_ERR_CODE) {
+        auth_o.refresh_api_tokens();
+        update_access_token();
+        cpr::AsyncResponse retry = api_session->GetAsync();
+        retry.wait();
+        if((resp = retry.get()).status_code >= 400)
+            throw error::volumen_exception(__FUNCTION__, 
+                "Unexected error while accessing" + LIBRUS_API_URL + endpoint + 
+                "\n Status code:" + std::to_string(resp.status_code)
+            );
+        
+    }
+    return resp.text;
 }
 
 std::string api::fetch_url(const std::string& url) {
     std::lock_guard api_session_lock{api_session_mutex};
     api_session->SetUrl(url);
-    cpr::AsyncResponse r = api_session->GetAsync();
-    r.wait();
-    return r.get().text;
+    cpr::AsyncResponse async_r = api_session->GetAsync();
+
+    async_r.wait();
+
+    cpr::Response resp = async_r.get();
+    if(resp.status_code == auth::UNAUTHORIZED_ERR_CODE) {
+        auth_o.refresh_api_tokens();
+        update_access_token();
+        cpr::AsyncResponse retry = api_session->GetAsync();
+        retry.wait();
+        if((resp = retry.get()).status_code >= 400)
+            throw error::volumen_exception(__FUNCTION__, 
+                "Unexected error while accessing" + url +
+                "\n Status code:" + std::to_string(resp.status_code)
+            );
+    }
+
+    return resp.text;
 }
 
 void api::parse_generic_info_by_id(const std::string& response, const std::string& target, generic_info_id_map& generic_info_id_map_p) {
