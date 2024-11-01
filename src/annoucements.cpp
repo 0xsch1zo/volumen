@@ -40,15 +40,14 @@ std::mutex* redirect_mutex) {
     for(const auto& annoucement : annoucements_o)
         contents.emplace_back((api::content_t*)&annoucement);
 
-    auto annoucement_components = custom_ui::content_box(contents);
+    auto annoucement_components = custom_ui::content_boxes(contents, &selected);
 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
     content_component->Add(ft::Renderer(annoucement_components, [=, this]{ return annoucement_components->Render() | ft::yframe; })
-    | ft::CatchEvent([&](ft::Event event){
+    | ft::CatchEvent([=, this](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();
-            //std::lock_guard<std::mutex> lock(*redirect_mutex);
             redirect_mutex->lock();
             *redirect = tab::ANNOUCEMENT_VIEW; 
             redirect_mutex->unlock();

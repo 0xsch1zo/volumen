@@ -165,7 +165,7 @@ ft::Component custom_ui::custom_component_window(ft::Element title, ft::Componen
     });
 }
 
-ft::Component custom_ui::content_box(const std::vector<api::content_t*>& contents) {
+ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& contents, int* selector) {
     const size_t PREVIEW_SIZE = 300;
 
     const std::string deliminator = " | ";
@@ -176,6 +176,8 @@ ft::Component custom_ui::content_box(const std::vector<api::content_t*>& content
         content_entries->Add(ft::MenuEntry({
             .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
             .transform = [=](const ft::EntryState &s) {
+                if(s.focused)
+                    *selector = i;
                 return focus_managed_window(
                     ft::hbox({
                         ft::text(contents.at(i)->subject) | ft::bold,

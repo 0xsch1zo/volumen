@@ -10,7 +10,7 @@ namespace ft = ftxui;
 
 class messages {
     ft::ScreenInteractive* main_screen_p;
-    size_t selected{};
+    int selected{};
     api::messages_t messages_o;
 public:
     messages(ft::ScreenInteractive* main_screen) : main_screen_p(main_screen) {}

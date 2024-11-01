@@ -9,7 +9,7 @@ namespace ft = ftxui;
 
 class annoucements { 
     ft::ScreenInteractive* main_screen_p;
-    size_t selected{};
+    int selected{};
     api::annoucements_t annoucements_o;
 public:
     annoucements(ft::ScreenInteractive* main_screen) : main_screen_p(main_screen) {}

@@ -47,15 +47,14 @@ std::mutex* redirect_mutex) {
     for(const auto& message : messages_o)
         contents.emplace_back((api::content_t*)&message);
 
-    auto message_components = custom_ui::content_box(contents);
+    auto message_components = custom_ui::content_boxes(contents, &selected);
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
     content_component->Add(ft::Renderer(message_components, [=, this]{ return message_components->Render() | ft::yframe; })
-    | ft::CatchEvent([&](ft::Event event){
+    | ft::CatchEvent([=, this](ft::Event event){
         if(event == ft::Event::Return) {
             main_screen_p->Exit();
-            //std::lock_guard<std::mutex> lock(*redirect_mutex);
             redirect_mutex->lock();
             *redirect = tab::MESSAGE_VIEW; 
             redirect_mutex->unlock();
