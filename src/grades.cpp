@@ -33,13 +33,13 @@ void grades::grades_display(ft::Component grades_component, api* api) {
     }
 
     grades_component->DetachAllChildren();
-    grades_component->Add(ft::Renderer(grades_menu, [&]{ return grades_menu->Render() | ft::yframe; } ));
+    grades_component->Add(ft::Renderer(grades_menu, [=]{ return grades_menu->Render() | ft::yframe; } ));
 }
 
 ft::Component grades::grade_box(const api::grade_t& grade) {
     return ft::MenuEntry({
         .label = grade.grade,
-        .transform = [=, this](const ft::EntryState& s) {
+        .transform = [=](const ft::EntryState& s) {
             const auto max_grade_box_size = ft::size(ft::WIDTH, ft::LESS_THAN, 30);
             return custom_ui::focus_managed_border_box(
                 ft::vbox({
@@ -65,7 +65,7 @@ ft::Component grades::grade_box(const api::grade_t& grade) {
 ft::Component grades::empty_subject(const std::string& subject) {
     return ft::MenuEntry({
         .label = subject,
-        .transform = [=, this](const ft::EntryState& s) {
+        .transform = [=](const ft::EntryState& s) {
             const auto empty_placeholder_size = ft::size(ft::WIDTH, ft::EQUAL, 10);
             return custom_ui::focus_managed_window(
                 ft::text(s.label)
