@@ -17,13 +17,11 @@ ft::Component messages::content_view() {
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
     const int DATE_SIZE = 10;
-    char date_s[DATE_SIZE];
-    std::time_t t = message.send_date;
-    std::tm* date = std::localtime(&t);
-    strftime(date_s, sizeof(date), "%Y-%m-%d", date);
+    auto date_timepoint = std::chrono::sys_seconds(std::chrono::seconds(message.send_date));
+    std::string date = std::format("{:%Y-%m-%d}", date_timepoint);
     return ft::Renderer([=, this]{
         return ft::vbox({
-            ft::text("Author: " + message.author + deliminator + "Date:" + date_s),
+            ft::text("Author: " + message.author + deliminator + "Date: " + date),
             ft::separator(),
             ft::separatorEmpty(),
             ft::text(message.subject) | ft::bold,
