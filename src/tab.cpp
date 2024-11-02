@@ -163,7 +163,7 @@ using namespace std::chrono_literals;
                     GUARD(TIMETABLE);
 
                     timetable_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
-                        timetable_o.timetable_display(timetable_component, &api, &selsd, nullptr, &main_screen);
+                        timetable_o.timetable_display(timetable_component, &api, &selsd, "", &main_screen);
                     }, tab_container, TIMETABLE);
 
                     envoked_lazy_load[TIMETABLE] = true;

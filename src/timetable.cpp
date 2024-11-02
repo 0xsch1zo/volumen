@@ -16,23 +16,19 @@ void timetable::timetable_display(
     ft::Component timetable_component, 
     api* api, 
     int* selector,
-    std::shared_ptr<std::string> url,
+    const std::string& url,
     ft::ScreenInteractive* screen_p
 ) {
     const int TIMETABLE_POSITION = 1;
-    
-    if(url == nullptr)
-        url = std::make_shared<std::string>("");
 
     // get_timetable will handle empty url
-    api::timetable_t timetable_o = api->get_timetable(*url);
+    api::timetable_t timetable_o = api->get_timetable(url);
     api::events_t events_o = api->get_events();
 
-    prev_url = std::make_shared<std::string>(timetable_o.prev_url);
-    next_url = std::make_shared<std::string>(timetable_o.next_url);
+    prev_url = timetable_o.prev_url;
+    next_url = timetable_o.next_url;
 
-    auto weekdays = std::make_shared<std::vector<std::string>>();
-    *weekdays = {
+    const std::vector<std::string> weekdays = {
         "<",
         "Monday",
         "Tuesday",
@@ -51,37 +47,38 @@ void timetable::timetable_display(
     // Add dummy contianer for '<' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
 
-    for(size_t i{}; i < weekdays->size() - ACTION_COUNT; i++)
+    for(size_t i{}; i < weekdays.size() - ACTION_COUNT; i++)
         timetable_container->Add(ft::Container::Vertical({ lessons(timetable_o.timetable[i], events_o) }));
 
     // Add dummy contianer for '>' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
 
     // On first run
-    if(url->empty()) {
+    if(url.empty()) {
         timetable_component->DetachAllChildren();
-        
+        // WARNING: If you pass timetable_component directly you will create a std::shared_ptr dependency cycly and with that a memory leak
+        std::weak_ptr timetable_component_for_lamda = timetable_component;
+
         // If youre seeing this you might ask:
         // "Why the hell did you put those CatchEvents in there, this looks awful!?" well, 
         // this is the only hacky way I found to predictably update the menu selector and have it work
         // Enjoy :)
-        ft::Component menu = ft::Menu(*weekdays, selector, ft::MenuOption::HorizontalAnimated())
-        | ft::CatchEvent([=, this](ft::Event event) {
+        ft::Component menu = ft::Menu(weekdays, selector, ft::MenuOption::HorizontalAnimated())
+        | ft::CatchEvent([screen_p = screen_p](ft::Event event) {
             screen_p->PostEvent(ft::Event::Special("Why"));
             return false;
         })
         | ft::CatchEvent([=, this](ft::Event e){
             if(e == ft::Event::Special("Why")) {
                 if(*selector == 0) {
-                    *selector = weekdays->size() - ACTION_COUNT;
+                    *selector = weekdays.size() - ACTION_COUNT;
                     timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                    timetable_display(timetable_component, api, selector, prev_url, screen_p);
-                    return true;
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, prev_url, screen_p);
                 }
-                else if(*selector == weekdays->size() - 1) {
+                else if(*selector == weekdays.size() - 1) {
                     *selector = ACTION_PREV_ENTRY_OFFSET;
                     timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                    timetable_display(timetable_component, api, selector, next_url, screen_p);
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, next_url, screen_p);
                 }
                 return true;
             }
@@ -94,7 +91,7 @@ void timetable::timetable_display(
 
     timetable_component->Add(timetable_contents);
 
-    if(url == nullptr || url->empty())
+    if(url.empty())
         *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
 }
 
@@ -132,9 +129,9 @@ ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::eve
 
 ft::Component timetable::empty_lesson_box() {
     const auto seperator_size = ft::size(ft::WIDTH, ft::EQUAL, 20);
-    auto menu = ft::MenuEntry({
+    return ft::MenuEntry({
         .label = "",
-        .transform = [=, this](const ft::EntryState& s) {
+        .transform = [=](const ft::EntryState& s) {
             return custom_ui::focus_managed_whatever(
                 ft::vbox({
                     ft::separatorEmpty(),
@@ -147,8 +144,6 @@ ft::Component timetable::empty_lesson_box() {
             );
         }
     });
-    return ft::Renderer(menu, [=, this]{ return menu->Render() | ft::hcenter; });
-
 }
 
 // TODO: incorporate empty_lesson_box, divide lesson types into separate funcs
@@ -156,7 +151,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
     const std::string deliminator = " - ";
     const auto subject_size = ft::size(ft::WIDTH, ft::LESS_THAN, 40);
 
-    auto lesson_box = ft::MenuEntry({
+    return ft::MenuEntry({
         .label = lesson.subject,
         .transform = [=, this](const ft::EntryState& s) {
             if(lesson.is_canceled) {
@@ -202,8 +197,6 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
                 );
         }
     });
-
-    return ft::Renderer(lesson_box, [=, this]{ return lesson_box->Render() | ft::xflex; });
 }
 
 ft::Component timetable::event_box(const api::event_t& event) {

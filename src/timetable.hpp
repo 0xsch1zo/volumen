@@ -9,8 +9,8 @@ namespace ft = ftxui;
 class timetable {
     ft::Component timetable_contents = ft::Container::Vertical({});
     const config* config_p;
-    std::shared_ptr<std::string> prev_url;
-    std::shared_ptr<std::string> next_url;
+    std::string prev_url;
+    std::string next_url;
 
     ft::Component lessons(
         const std::vector<api::lesson_t>& day, 
@@ -26,7 +26,7 @@ public:
         ft::Component timetable_component, 
         api* api, 
         int* selector,
-        std::shared_ptr<std::string> url,
+        const std::string& url,
         ft::ScreenInteractive* screen_p
     );
 };
