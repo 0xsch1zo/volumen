@@ -190,7 +190,15 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
         }));
     }
 
-    return content_entries;
+    return ft::Renderer(content_entries, [=]{ 
+        auto base = content_entries->Render()
+        | ft::vscroll_indicator 
+        | ft::yframe;
+        if(!content_entries->Focused())
+            return base | terminal_height();
+        
+        return base;
+    });
 }
 
 ft::Element custom_ui::focus_managed_border_box(ft::Element contents, const focus_management_t& focus_management) {
@@ -276,4 +284,8 @@ ft::Component custom_ui::custom_dropdown(ft::ConstStringListRef entries, int* se
     });
 
     return handle;
+}
+
+ft::ElementDecorator custom_ui::terminal_height() {
+    return ft::size(ft::HEIGHT, ft::LESS_THAN, ft::Terminal::Size().dimy);
 }

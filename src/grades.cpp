@@ -33,7 +33,15 @@ void grades::grades_display(ft::Component grades_component, api* api) {
     }
 
     grades_component->DetachAllChildren();
-    grades_component->Add(ft::Renderer(grades_menu, [=]{ return grades_menu->Render() | ft::yframe; } ));
+    grades_component->Add(ft::Renderer(grades_menu, [=]{ 
+        auto base = grades_menu->Render() 
+        | ft::vscroll_indicator
+        | ft::yframe;
+        if(!grades_menu->Focused())
+            return base | custom_ui::terminal_height();
+        
+        return base;
+    }));
 }
 
 ft::Component grades::grade_box(const api::grade_t& grade) {

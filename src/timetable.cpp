@@ -47,8 +47,18 @@ void timetable::timetable_display(
     // Add dummy contianer for '<' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});
 
-    for(size_t i{}; i < weekdays.size() - ACTION_COUNT; i++)
-        timetable_container->Add(ft::Container::Vertical({ lessons(timetable_o.timetable[i], events_o) }));
+    for(size_t i{}; i < weekdays.size() - ACTION_COUNT; i++) {
+        auto lessons_component = ft::Container::Vertical({ lessons(timetable_o.timetable[i], events_o) });
+        timetable_container->Add(ft::Renderer(lessons_component, [=]{ 
+            auto base = lessons_component->Render()
+            | ft::vscroll_indicator
+            | ft::yframe;
+            if(!lessons_component->Focused())
+                return base | custom_ui::terminal_height();
+
+            return base;
+        }));
+    }
 
     // Add dummy contianer for '>' action
     timetable_container->Add({ft::Renderer([]{ return ft::text(""); })});

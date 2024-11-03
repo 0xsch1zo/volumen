@@ -25,4 +25,5 @@ public:
     static ft::Element focus_managed_border_box(ft::Element contents, const focus_management_t& focus_management);
     static ft::Element focus_managed_whatever(ft::Element contents, const focus_management_t& focus_management);
     static ft::InputOption plain_input();
+    static ft::ElementDecorator terminal_height();
 };
