@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include "custom_ui.hpp"
 #include <sstream>
+#include <fstream>
 #include <spdlog/spdlog.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -11,16 +12,15 @@
 #include <ftxui/component/screen_interactive.hpp>
 
 // Function that displays login interface and gets email and password
-void login::login_screen(){
+void login::login_screen(auth& auth_o){
     bool auth_failure{};
     bool auth_complete{};
-    auth auth;
     std::string email;
     std::string password;
 
     auto authorize = [&] { 
         try {
-            auth.authorize(email, password);
+            auth_o.authorize(email, password);
         }
         catch(std::exception &e) {
             auth_failure = true;
@@ -98,7 +98,8 @@ void login::login_screen(){
     screen.Loop(login_screen);
     if(!auth_complete)
         return;
-    choose_account_screen(auth);
+    choose_account_screen(auth_o);
+
 }
 
 void login::choose_account_screen(const auth& auth_o) {
@@ -109,6 +110,8 @@ void login::choose_account_screen(const auth& auth_o) {
     tab tab_o(config_p);
 
     ft::Component continue_button = ft::Button("Continue", [&](){ 
+        std::ofstream save_login("login");
+        save_login << accounts[synergia_account_i].login;
         screen.Exit(); 
         tab_o.display_interface(auth_o, accounts[synergia_account_i].login);
     }, custom_ui::button_rounded());
@@ -148,3 +151,7 @@ void login::choose_account_screen(const auth& auth_o) {
 
     screen.Loop(choose_synergia_account);
 }
+/*
+std::string login::get_saved_login() {
+    std::ifstream 
+}*/
