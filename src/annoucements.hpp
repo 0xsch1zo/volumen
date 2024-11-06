@@ -8,11 +8,11 @@
 namespace ft = ftxui;
 
 class annoucements { 
-    ft::ScreenInteractive* main_screen_p;
-    int selected{};
-    api::annoucements_t annoucements_o;
+    std::function<void()> screen_exit_;
+    int selected_{};
+    api::annoucements_t annoucements_;
 public:
-    annoucements(ft::ScreenInteractive* main_screen) : main_screen_p(main_screen) {}
+    annoucements(std::function<void()> screen_exit) : screen_exit_(screen_exit) {}
     void content_display(ft::Component content_component, api* api, size_t* redirect, std::mutex* redirect_mutex);
     ft::Component content_view();
 };

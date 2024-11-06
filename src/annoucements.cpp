@@ -10,7 +10,7 @@
 #include <ftxui/component/component.hpp>
 
 ft::Component annoucements::content_view() {
-    auto annoucements = annoucements_o.at(selected);
+    auto annoucements = annoucements_.at(selected_);
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
     return ft::Renderer([=, this]{ 
@@ -25,7 +25,7 @@ ft::Component annoucements::content_view() {
             ft::separator(),
             ft::text(quit_message)
         });
-    });
+    }) | ft::CatchEvent(utils::exit_on_keybind(screen_exit_));
 }
 
 void annoucements::content_display(
@@ -33,21 +33,21 @@ ft::Component content_component,
 api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
-    annoucements_o = api->get_annoucments();
+    annoucements_ = api->get_annoucments();
 
     std::vector<api::content_t*> contents;
-    contents.reserve(annoucements_o.size());
-    for(const auto& annoucement : annoucements_o)
+    contents.reserve(annoucements_.size());
+    for(const auto& annoucement : annoucements_)
         contents.emplace_back((api::content_t*)&annoucement);
 
-    auto annoucement_components = custom_ui::content_boxes(contents, &selected);
+    auto annoucement_components = custom_ui::content_boxes(contents, &selected_);
 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
     content_component->Add(ft::Renderer(annoucement_components, [=, this]{ return annoucement_components->Render() | ft::yframe; })
     | ft::CatchEvent([=, this](ft::Event event){
         if(event == ft::Event::Return) {
-            main_screen_p->Exit();
+            screen_exit_();
             redirect_mutex->lock();
             *redirect = tab::ANNOUCEMENT_VIEW; 
             redirect_mutex->unlock();

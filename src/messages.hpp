@@ -9,11 +9,11 @@
 namespace ft = ftxui;
 
 class messages {
-    ft::ScreenInteractive* main_screen_p;
-    int selected{};
-    api::messages_t messages_o;
+    std::function<void()> screen_exit_;
+    int selected_{};
+    api::messages_t messages_;
 public:
-    messages(ft::ScreenInteractive* main_screen) : main_screen_p(main_screen) {}
+    messages(std::function<void()> screen_exit) : screen_exit_(screen_exit) {}
     void content_display(ft::Component content_component, api* api, size_t* redirect, std::mutex* redirect_mutex);
     ft::Component content_view(); 
 };

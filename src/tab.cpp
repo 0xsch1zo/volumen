@@ -5,6 +5,7 @@
 #include "timetable.hpp"
 #include "grades.hpp"
 #include "error_handler.hpp"
+#include "utils.hpp"
 #include <future>
 #include <chrono>
 #include <bitset>
@@ -45,8 +46,8 @@ using namespace std::chrono_literals;
     
     error e;
     api api(auth_o, picked_login);
-    annoucements annoucements_o(&main_screen);
-    messages messages_o(&main_screen);
+    annoucements annoucements_o(main_screen.ExitLoopClosure());
+    messages messages_o(main_screen.ExitLoopClosure());
     timetable timetable_o(config_p);
     grades grades_o;
 
@@ -93,7 +94,7 @@ using namespace std::chrono_literals;
     ft::Component container = ft::Container::Vertical({
         tab_menu,
         tab_container
-    });
+    }) | ft::CatchEvent(utils::exit_on_keybind(main_screen.ExitLoopClosure()));
 
     size_t redirect{EXIT};
     std::mutex redirect_mutex;

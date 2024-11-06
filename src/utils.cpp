@@ -3,6 +3,7 @@
 #include <sstream>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 
 // Split text to individual lines. This helps to display ascii art properly among other things
 ft::Elements utils::split(std::string text) {
@@ -39,4 +40,15 @@ int utils::get_day_of_week(std::string&& date_unformated) {
         return 6;
     else
         return date_out->tm_wday - 1;
+}
+
+
+std::function<bool(ft::Event)> utils::exit_on_keybind(const std::function<void()>& screen_exit) {
+    return [&](ft::Event event){
+        if(event == ft::Event::Q || event == ft::Event::q) {
+            screen_exit();
+            return true;
+        }
+        return false;
+    };
 }
