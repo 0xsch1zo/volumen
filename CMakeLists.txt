@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_Diagnostics ON)
-add_compile_definitions(VOLUMEN_TESTING)
+add_compile_definitions(VOLUMEN_TESTING TOML_ENABLE_UNRELEASED_FEATURES TOML_LANG_UNRELEASED TOML_UNRELEASED_FEATURES)
 
 include(FetchContent)
 
@@ -27,11 +27,16 @@ FetchContent_Declare(cpr
 )
 
 FetchContent_Declare(tomlplusplus
-  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+  GIT_REPOSITORY https://github.com/marzer/tomlplusplus
   GIT_TAG        v3.4.0
 )
 
-FetchContent_MakeAvailable(ftxui spdlog json cpr tomlplusplus)
+FetchContent_Declare(keychain
+  GIT_REPOSITORY https://github.com/hrantzsch/keychain
+  GIT_TAG        82acee89623d0d84e1575147fb83ed387646bce8 
+)
+
+FetchContent_MakeAvailable(ftxui spdlog json cpr tomlplusplus keychain)
 
 project(volumen)
 
@@ -53,6 +58,7 @@ add_executable(volumen
   src/auth.cpp
   src/custom_ui.cpp
   src/config.cpp
+  src/ssave.cpp
 )
 
 target_link_libraries(volumen
@@ -60,8 +66,10 @@ target_link_libraries(volumen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
   PRIVATE nlohmann_json::nlohmann_json
+  PRIVATE tomlplusplus::tomlplusplus
   PRIVATE cpr::cpr
-  spdlog
+  PRIVATE keychain 
+  PRIVATE spdlog
 )
 
 add_executable(benchmark
@@ -73,6 +81,7 @@ add_executable(benchmark
   src/error_handler.cpp
   src/custom_ui.cpp
   src/config.cpp
+  src/ssave.cpp
 )
 
 target_link_libraries(benchmark
@@ -80,6 +89,8 @@ target_link_libraries(benchmark
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
   PRIVATE nlohmann_json::nlohmann_json
+  PRIVATE tomlplusplus::tomlplusplus
   PRIVATE cpr::cpr
-  spdlog
+  PRIVATE keychain 
+  PRIVATE spdlog
 )
