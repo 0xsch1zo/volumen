@@ -1,4 +1,5 @@
 #include "auth.hpp"
+#include "ssave.hpp"
 #include <cpr/cpr.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
@@ -51,12 +52,19 @@ void auth::fetch_synergia_accounts() {
     }
 }
 
-void auth::refresh_portal_token() {
+bool auth::refresh_portal_token() {
+    std::string refresh_token;
+    if(oauth_data.refresh_token.empty() && ssave::exists(refresh_token_service)) {
+        refresh_token = ssave::get(refresh_token_service);
+    } else {
+        refresh_token = oauth_data.refresh_token;
+    }
+
     cpr::Multipart refresh_token_data {
         { "grant_type",      "refresh_token" },
         { "client_id",       LIBRUS_PORTAL_CLIENT_ID },
         { "redirect_uri",    LIBRUS_PORTAL_APP_URL },
-        { "refresh_token",   oauth_data.refresh_token }
+        { "refresh_token",   refresh_token }
     };
     cpr::Response r = cpr::Post(
         cpr::Url{ LIBRUS_PORTAL_OAUTH_URL },
@@ -66,7 +74,9 @@ void auth::refresh_portal_token() {
     json data = json::parse(r.text);
 
     // If the refresh token has expired begin oauth flow from start
-    if(r.status_code == UNAUTHORIZED_ERR_CODE) {
+    if(r.status_code >= 400) {
+        refresh_failure_handler();
+        return false;
     }
 
     oauth_data = {
@@ -75,14 +85,19 @@ void auth::refresh_portal_token() {
         .access_token   = data["access_token"],
         .refresh_token  = data["refresh_token"]
     };
+
+    ssave::save(oauth_data.refresh_token, refresh_token_service);
+    return true;
 }
 
-void auth::refresh_api_tokens() {
+bool auth::refresh_api_tokens() {
     // Refresh the portal access token
-    refresh_portal_token();
-
-    // Renew api tokens
-    fetch_synergia_accounts();
+    if(refresh_portal_token()) {
+        // Renew api tokens if refreshing the access token was successful
+        fetch_synergia_accounts();
+        return true;
+    } else
+        return false;
 }
 
 void auth::fetch_portal_access_token(const std::string& authcode) {
@@ -105,6 +120,8 @@ void auth::fetch_portal_access_token(const std::string& authcode) {
         .access_token   = data["access_token"],
         .refresh_token  = data["refresh_token"]
     };
+
+    ssave::save(oauth_data.refresh_token, refresh_token_service);
 }
 
 std::string auth::find_token(cpr::Cookies& cookies) {

@@ -1,17 +1,16 @@
 #include "api.hpp"
 #include "utils.hpp"
 #include <unordered_map>
-#include <iostream>
 #include <memory>
 #include <cassert>
 #include <spdlog/spdlog.h>
 
-api::api(const auth& auth, const std::string& picked_login) : auth_o(auth), login(picked_login) {
+api::api(const auth& auth, const std::string& picked_login) : auth_o(auth), login_(picked_login) {
     update_access_token();
 }
 
 void api::update_access_token() {
-    api_session->SetBearer(auth_o.get_api_access_token(login));
+    api_session->SetBearer(auth_o.get_api_access_token(login_));
 }
 
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {

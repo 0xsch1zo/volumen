@@ -1,0 +1,33 @@
+#include "ssave.hpp"
+#include <keychain/keychain.h>
+#include <stdexcept>
+
+namespace kc = keychain;
+
+void ssave::save(const std::string& secret, const std::string& service) {
+    kc::Error error;
+    kc::setPassword(package, service, user, secret, error);
+    if(error)
+        throw std::runtime_error(error.message);
+}
+
+std::string ssave::get(const std::string& service) {
+    kc::Error error;
+    std::string secret = kc::getPassword(package, service, user, error);
+    if(error)
+        throw std::runtime_error(error.message);
+
+    return secret;
+}
+
+bool ssave::exists(const std::string& service) {
+    kc::Error error;
+    std::string secret = kc::getPassword(package, service, user, error);
+    if(error.type == kc::ErrorType::NotFound)
+        return false;
+    
+    if(error)
+        throw std::runtime_error(error.message);
+
+    return true;
+}

@@ -30,7 +30,7 @@ class api {
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
     std::shared_ptr<cpr::Session> api_session = std::make_shared<cpr::Session>();
     std::mutex api_session_mutex;
-    const std::string login;
+    const std::string login_;
     auth auth_o;
 
 public:

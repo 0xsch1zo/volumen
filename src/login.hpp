@@ -12,6 +12,6 @@ class login {
     const config* config_p;
 public:
     login(const config* config) : config_p(config) {}
-    void login_screen();
+    void login_screen(auth& auth_o);
     void choose_account_screen(const auth& auth_o);
 };
