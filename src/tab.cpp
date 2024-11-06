@@ -87,8 +87,9 @@ using namespace std::chrono_literals;
         timetable_component,
         grades_component
     }, 
-    &tab_selected) | ft::Modal(e.get_component(), e.get_show());
-    
+    &tab_selected)
+    | ft::Modal(e.get_component(), e.get_show());
+
     ft::Component container = ft::Container::Vertical({
         tab_menu,
         tab_container
@@ -105,21 +106,22 @@ using namespace std::chrono_literals;
     // While they're working increment counter for loading spinner
     // And update the screen    
 
-    auto loading_animation = std::async(std::launch::async, ([&]{ 
+    auto loading_animation = std::jthread([&](std::stop_token s_token){
         // Run until all things have been loaded
-        while(!envoked_lazy_load.all()
+        while((!envoked_lazy_load.all()
         || dashboard_load_handle.wait_for(0ms)      != std::future_status::ready
         || messages_load_handle.wait_for(0ms)       != std::future_status::ready
         || annoucements_load_handle.wait_for(0ms)   != std::future_status::ready
         || timetable_load_handle.wait_for(0ms)      != std::future_status::ready
-        || grades_load_handle.wait_for(0ms)         != std::future_status::ready) {
+        || grades_load_handle.wait_for(0ms)         != std::future_status::ready
+        ) && !s_token.stop_requested()) {
             std::this_thread::sleep_for(ANIMATION_WAIT);
             if(load_state >= 8)
                 load_state = 0;
             load_state++;
             main_screen.PostEvent(ft::Event::Special("Spaghetti code"));
         }
-    }));
+    });
 
 // Prevent std::async ftom being called twice for the same handle
 #define GUARD(x) if(envoked_lazy_load[x]) break
@@ -181,10 +183,7 @@ using namespace std::chrono_literals;
             }
         }
 
-        return ft::vbox({
-            tab_menu->Render(),
-            tab_container->Render()
-        });
+        return container->Render();
     });
 
 main_loop:
@@ -205,4 +204,6 @@ main_loop:
             goto main_loop;
             break;
     }
+
+    loading_animation.request_stop();
 }
