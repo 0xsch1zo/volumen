@@ -42,6 +42,7 @@ project(volumen)
 
 add_executable(volumen
   src/main.cpp
+  src/volumen.cpp
   src/login.cpp
   src/dashboard/dashboard.cpp
   src/dashboard/timetable_dashboard.cpp 
