@@ -1,6 +1,7 @@
 #include "login.hpp"
 #include "auth.hpp"
 #include "config.hpp"
+#include "error_handler.hpp"
 #include "custom_ui.hpp"
 #include "ssave.hpp"
 #include "main_ui.hpp"
@@ -25,15 +26,21 @@ int main () {
     
     custom_ui::init(config_p);
     login login(config_p);
-    auth auth_o([&]{ login.login_screen(auth_o); });
+    auth auth_o([&]{
+        try {
+            login.login_screen(auth_o);
+        } catch(error::volumen_exception& e) {
+            delete config_p;
+            exit(0);
+        }
+    });
 
-    if(auth_o.refresh_api_tokens()) {
-        if(!ssave::exists("login"))
-            login.choose_account_screen(auth_o);
+    auth_o.refresh_api_tokens();
+    if(!ssave::exists("login"))
+        login.choose_account_screen(auth_o);
         
-        main_ui main_ui(config_p);
-        main_ui.display_interface(auth_o, ssave::get("login"));
-    }
+    main_ui main_ui(config_p);
+    main_ui.display_interface(auth_o, ssave::get("login"));
 
     delete config_p;
     spdlog::dump_backtrace();

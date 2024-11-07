@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include "custom_ui.hpp"
 #include "ssave.hpp"
+#include "error_handler.hpp"
 #include <sstream>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -96,9 +97,9 @@ void login::login_screen(auth& auth_o){
      
     screen.Loop(login_screen);
     if(!auth_complete)
-        return;
-    choose_account_screen(auth_o);
+        throw error::volumen_exception("auth failed", __FUNCTION__);
 
+    choose_account_screen(auth_o);
 }
 
 void login::choose_account_screen(const auth& auth_o) {
@@ -112,7 +113,6 @@ void login::choose_account_screen(const auth& auth_o) {
         // store encrypted login for autologin
         ssave::save(accounts[synergia_account_i].login, "login");
         screen.Exit(); 
-        main_ui.display_interface(auth_o, accounts[synergia_account_i].login);
     }, custom_ui::button_rounded());
     std::vector<std::string> names;
     names.reserve(accounts.size());
