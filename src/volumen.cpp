@@ -1,7 +1,7 @@
-/*#include "login.hpp"
+#include "volumen.hpp"
+#include "login.hpp"
 #include "auth.hpp"
 #include "config.hpp"
-#include "error_handler.hpp"
 #include "custom_ui.hpp"
 #include "ssave.hpp"
 #include "main_ui.hpp"
@@ -9,8 +9,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-// TODO: make loggger  display messages only in backtrace
-int main () {
+namespace volumen {
+
+
+void volumen() {
     auto logger = spdlog::stderr_color_mt("stderr");
     logger->enable_backtrace(32); 
     spdlog::set_default_logger(logger);
@@ -44,10 +46,6 @@ int main () {
 
     delete config_p;
     spdlog::dump_backtrace();
-    return 0;
-}*/
-#include "volumen.hpp"
-
-int main() {
-    volumen::volumen();
 }
+
+} // namespace
