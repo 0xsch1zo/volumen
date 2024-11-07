@@ -21,6 +21,10 @@ std::vector<auth::synergia_account_t> auth::get_synergia_accounts() const {
     return synergia_accounts;
 }
 
+void auth::forget_refresh_token() {
+    oauth_data.refresh_token.clear();
+}
+
 // After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
 void auth::fetch_synergia_accounts() {
     cpr::Response r = cpr::Get(
@@ -54,8 +58,8 @@ void auth::fetch_synergia_accounts() {
 
 bool auth::refresh_portal_token() {
     std::string refresh_token;
-    if(oauth_data.refresh_token.empty() && ssave::exists(refresh_token_service)) {
-        refresh_token = ssave::get(refresh_token_service);
+    if(oauth_data.refresh_token.empty() && ssave::exists(refresh_token_service_field)) {
+        refresh_token = ssave::get(refresh_token_service_field);
     } else {
         refresh_token = oauth_data.refresh_token;
     }
@@ -86,18 +90,17 @@ bool auth::refresh_portal_token() {
         .refresh_token  = data["refresh_token"]
     };
 
-    ssave::save(oauth_data.refresh_token, refresh_token_service);
+    ssave::save(oauth_data.refresh_token, refresh_token_service_field);
     return true;
 }
 
-bool auth::refresh_api_tokens() {
+void auth::refresh_api_tokens() {
     // Refresh the portal access token
     if(refresh_portal_token()) {
         // Renew api tokens if refreshing the access token was successful
+        // If oauth flow had to be started all over we don't care about refreshing it now it will get called anyway
         fetch_synergia_accounts();
-        return true;
-    } else
-        return false;
+    }
 }
 
 void auth::fetch_portal_access_token(const std::string& authcode) {
@@ -121,7 +124,7 @@ void auth::fetch_portal_access_token(const std::string& authcode) {
         .refresh_token  = data["refresh_token"]
     };
 
-    ssave::save(oauth_data.refresh_token, refresh_token_service);
+    ssave::save(oauth_data.refresh_token, refresh_token_service_field);
 }
 
 std::string auth::find_token(cpr::Cookies& cookies) {

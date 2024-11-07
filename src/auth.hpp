@@ -20,8 +20,12 @@ public:
     std::string get_api_access_token(const std::string& login) const;
     std::vector<synergia_account_t> get_synergia_accounts() const;
     void authorize(const std::string& email, const std::string& password);
-    bool refresh_api_tokens();
+    void refresh_api_tokens();
+    void forget_refresh_token();
 
+public:
+    static const inline std::string login_service_field             = "login";
+    static const inline std::string refresh_token_service_field     = "refresh_token";
 private:
     struct oauth_data_t {
         std::string token_type;
@@ -38,7 +42,6 @@ private:
 	const std::string LIBRUS_PORTAL_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
 	const std::string redirectTo                            = "/konto-librus/redirect/dru";
 	const std::string redirectCrc                           = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
-    const std::string refresh_token_service                 = "refresh_token";
 
     std::unordered_map<std::string, std::string> api_access_tokens;
     std::vector<synergia_account_t> synergia_accounts;
