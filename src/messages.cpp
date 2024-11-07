@@ -1,7 +1,7 @@
 #include "messages.hpp"
 #include "custom_ui.hpp"
 #include "utils.hpp"
-#include "tab.hpp"
+#include "main_ui.hpp"
 #include <string>
 #include <vector>
 #include <chrono>
@@ -54,7 +54,7 @@ std::mutex* redirect_mutex) {
         if(event == ft::Event::Return) {
             screen_exit_();
             redirect_mutex->lock();
-            *redirect = tab::MESSAGE_VIEW; 
+            *redirect = main_ui::MESSAGE_VIEW; 
             redirect_mutex->unlock();
             return true;
         }

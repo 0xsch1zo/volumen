@@ -3,7 +3,7 @@
 #include "config.hpp"
 #include "custom_ui.hpp"
 #include "ssave.hpp"
-#include "tab.hpp"
+#include "main_ui.hpp"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -31,8 +31,8 @@ int main () {
         if(!ssave::exists("login"))
             login.choose_account_screen(auth_o);
         
-        tab tab_o(config_p);
-        tab_o.display_interface(auth_o, ssave::get("login"));
+        main_ui main_ui(config_p);
+        main_ui.display_interface(auth_o, ssave::get("login"));
     }
 
     delete config_p;

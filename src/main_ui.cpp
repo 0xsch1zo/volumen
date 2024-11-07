@@ -1,4 +1,4 @@
-#include "tab.hpp"
+#include "main_ui.hpp"
 #include "dashboard/dashboard.hpp"
 #include "messages.hpp"
 #include "annoucements.hpp"
@@ -10,6 +10,7 @@
 #include <chrono>
 #include <bitset>
 #include <memory>
+#include <thread>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -17,11 +18,11 @@
 #include <ftxui/component/captured_mouse.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 
-void tab::tab_error_wrapper(
+void main_ui::ui_error_wrapper(
     error* e, 
     std::function<void()> caller_lambda,  
     ft::Component tab_container, 
-    tab::tabs_t tabs
+    main_ui::tabs_t tabs
 ) {
     try {
         caller_lambda();
@@ -40,7 +41,7 @@ void tab::tab_error_wrapper(
 }
 
 // TODO: remove unnecessary includes
-void tab::display_interface(const auth& auth_o, const std::string& picked_login) {
+void main_ui::display_interface(const auth& auth_o, const std::string& picked_login) {
 using namespace std::chrono_literals;
     auto main_screen = ft::ScreenInteractive::Fullscreen();
     
@@ -135,7 +136,7 @@ using namespace std::chrono_literals;
                 case DASHBOARD:
                     GUARD(DASHBOARD);
 
-                    dashboard_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                    dashboard_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
                         dashboard::dashboard_display(dashboard_component, &api); 
                     }, tab_container, DASHBOARD);
 
@@ -145,7 +146,7 @@ using namespace std::chrono_literals;
                 case MESSAGES:
                     GUARD(MESSAGES);
 
-                    messages_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                    messages_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
                         messages_o.content_display(messages_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, MESSAGES);
 
@@ -155,7 +156,7 @@ using namespace std::chrono_literals;
                 case ANNOUCEMENTS: 
                     GUARD(ANNOUCEMENTS);
 
-                    annoucements_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                    annoucements_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
                         annoucements_o.content_display(annoucements_component, &api, &redirect, &redirect_mutex); 
                     }, tab_container, ANNOUCEMENTS);
 
@@ -165,7 +166,7 @@ using namespace std::chrono_literals;
                 case TIMETABLE:
                     GUARD(TIMETABLE);
 
-                    timetable_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                    timetable_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
                         timetable_o.timetable_display(timetable_component, &api, &selsd, "", &main_screen);
                     }, tab_container, TIMETABLE);
 
@@ -175,7 +176,7 @@ using namespace std::chrono_literals;
                 case GRADES:
                     GUARD(GRADES);
 
-                    grades_load_handle = std::async(std::launch::async, tab_error_wrapper, &e, [&]{
+                    grades_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
                         grades_o.grades_display(grades_component, &api);
                     }, tab_container, GRADES);
 

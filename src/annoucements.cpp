@@ -1,6 +1,6 @@
 #include "annoucements.hpp"
 #include "custom_ui.hpp"
-#include "tab.hpp"
+#include "main_ui.hpp"
 #include "utils.hpp"
 #include <thread>
 #include <future>
@@ -49,7 +49,7 @@ std::mutex* redirect_mutex) {
         if(event == ft::Event::Return) {
             screen_exit_();
             redirect_mutex->lock();
-            *redirect = tab::ANNOUCEMENT_VIEW; 
+            *redirect = main_ui::ANNOUCEMENT_VIEW; 
             redirect_mutex->unlock();
             return true;
         }

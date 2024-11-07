@@ -1,5 +1,5 @@
 #include "login.hpp"
-#include "tab.hpp"
+#include "main_ui.hpp"
 #include "utils.hpp"
 #include "custom_ui.hpp"
 #include "ssave.hpp"
@@ -106,13 +106,13 @@ void login::choose_account_screen(const auth& auth_o) {
     int synergia_account_i = 0;
     auto accounts = auth_o.get_synergia_accounts();
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
-    tab tab_o(config_p);
+    main_ui main_ui(config_p);
 
     ft::Component continue_button = ft::Button("Continue", [&](){ 
         // store encrypted login for autologin
         ssave::save(accounts[synergia_account_i].login, "login");
         screen.Exit(); 
-        tab_o.display_interface(auth_o, accounts[synergia_account_i].login);
+        main_ui.display_interface(auth_o, accounts[synergia_account_i].login);
     }, custom_ui::button_rounded());
     std::vector<std::string> names;
     names.reserve(accounts.size());

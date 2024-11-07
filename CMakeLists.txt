@@ -49,7 +49,7 @@ add_executable(volumen
   src/dashboard/weekend_bar.cpp
   src/utils.cpp 
   src/messages.cpp 
-  src/tab.cpp 
+  src/main_ui.cpp 
   src/api.cpp 
   src/annoucements.cpp 
   src/timetable.cpp
@@ -93,4 +93,12 @@ target_link_libraries(benchmark
   PRIVATE cpr::cpr
   PRIVATE keychain 
   PRIVATE spdlog
+)
+
+add_executable(test 
+  test.cpp
+)
+
+target_link_libraries(test
+  PRIVATE keychain
 )
