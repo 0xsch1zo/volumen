@@ -98,8 +98,6 @@ void login::login_screen(auth& auth_o){
     screen.Loop(login_screen);
     if(!auth_complete)
         throw error::volumen_exception("auth failed", __FUNCTION__);
-
-    choose_account_screen(auth_o);
 }
 
 void login::choose_account_screen(const auth& auth_o) {
