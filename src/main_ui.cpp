@@ -6,6 +6,7 @@
 #include "grades.hpp"
 #include "error_handler.hpp"
 #include "utils.hpp"
+#include "ssave.hpp"
 #include <future>
 #include <chrono>
 #include <bitset>
@@ -41,10 +42,11 @@ void main_ui::ui_error_wrapper(
 }
 
 // TODO: remove unnecessary includes
-void main_ui::display_interface(const auth& auth_o, const std::string& picked_login) {
+bool main_ui::display_interface(auth& auth_o, const std::string& picked_login) {
 using namespace std::chrono_literals;
     auto main_screen = ft::ScreenInteractive::Fullscreen();
     
+    bool logout{};
     error e;
     api api(auth_o, picked_login);
     annoucements annoucements_o(main_screen.ExitLoopClosure());
@@ -95,7 +97,19 @@ using namespace std::chrono_literals;
     ft::Component container = ft::Container::Vertical({
         tab_menu,
         tab_container
-    }) | ft::CatchEvent(utils::exit_on_keybind(main_screen.ExitLoopClosure()));
+    })
+    | ft::CatchEvent(utils::exit_on_keybind(main_screen.ExitLoopClosure()))
+    | ft::CatchEvent([&](ft::Event event){
+        if(event == ft::Event::M || event == ft::Event::m) {
+            logout = true;
+            ssave::del(auth::login_service_field);
+            ssave::del(auth::refresh_token_service_field);
+            auth_o.forget_refresh_token();
+            main_screen.Exit();
+            return true;
+        }
+        return false;
+    });
 
     size_t redirect{EXIT};
     std::mutex redirect_mutex;
@@ -208,4 +222,5 @@ main_loop:
     }
 
     loading_animation.request_stop();
+    return logout;
 }

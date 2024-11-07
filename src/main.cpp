@@ -35,12 +35,12 @@ int main () {
         }
     });
 
-    auth_o.refresh_api_tokens();
-    if(!ssave::exists("login"))
-        login.choose_account_screen(auth_o);
-        
     main_ui main_ui(config_p);
-    main_ui.display_interface(auth_o, ssave::get("login"));
+    do {
+        auth_o.refresh_api_tokens();
+        if(!ssave::exists(auth::login_service_field))
+            login.choose_account_screen(auth_o);
+    } while(ssave::exists(auth::login_service_field) && main_ui.display_interface(auth_o, ssave::get(auth::login_service_field)));
 
     delete config_p;
     spdlog::dump_backtrace();

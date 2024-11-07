@@ -111,7 +111,7 @@ void login::choose_account_screen(const auth& auth_o) {
 
     ft::Component continue_button = ft::Button("Continue", [&](){ 
         // store encrypted login for autologin
-        ssave::save(accounts[synergia_account_i].login, "login");
+        ssave::save(accounts[synergia_account_i].login, auth::login_service_field);
         screen.Exit(); 
     }, custom_ui::button_rounded());
     std::vector<std::string> names;

@@ -29,5 +29,5 @@ public:
     };
     
     main_ui(const config* config) : config_p(config) {}
-    void display_interface(const auth& auth_o, const std::string& picked_login);
+    bool display_interface(auth& auth_o, const std::string& picked_login);
 };
