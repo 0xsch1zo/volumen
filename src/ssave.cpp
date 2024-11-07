@@ -31,3 +31,10 @@ bool ssave::exists(const std::string& service) {
 
     return true;
 }
+
+void ssave::del(const std::string& service) {
+    kc::Error error;
+    kc::deletePassword(package_, service, user_, error);
+    if(error)
+        throw std::runtime_error(error.message);
+}

@@ -6,6 +6,7 @@ public:
     static std::string get(const std::string& service);
     static void save(const std::string& secret, const std::string& service);
     static bool exists(const std::string& service);
+    static void del(const std::string& service);
 
 private:
     ssave();
