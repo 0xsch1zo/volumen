@@ -6,6 +6,7 @@
 namespace ft = ftxui;
 
 class utils {
+    utils();
 public:
     static ft::Elements split(std::string text);
     static int get_day_of_week(std::string&& date_unformated);
