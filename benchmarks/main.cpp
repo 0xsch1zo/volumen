@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     benchmarks bench(argv[PATH_ARG_NUM]);
 
     std::cin >> email >> password;
-    auth auth_o;
+    auth auth_o([]{});
     bench.auth_bench(email, password, auth_o);
     bench.api_bench(auth_o, std::stoi((const std::string)argv[RUN_COUNT_ARG_NUM]));
 

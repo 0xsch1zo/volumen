@@ -43,23 +43,27 @@ project(volumen)
 add_executable(volumen
   src/main.cpp
   src/volumen.cpp
-  src/login.cpp
-  src/dashboard/dashboard.cpp
-  src/dashboard/timetable_dashboard.cpp 
-  src/dashboard/grades_dashboard.cpp
-  src/dashboard/weekend_bar.cpp
-  src/utils.cpp 
-  src/messages.cpp 
-  src/main_ui.cpp 
-  src/api.cpp 
-  src/annoucements.cpp 
-  src/timetable.cpp
-  src/grades.cpp
-  src/error_handler.cpp
-  src/auth.cpp
-  src/custom_ui.cpp
-  src/config.cpp
-  src/ssave.cpp
+  src/ui/login.cpp
+  src/ui/dashboard/dashboard.cpp
+  src/ui/dashboard/timetable_dashboard.cpp 
+  src/ui/dashboard/grades_dashboard.cpp
+  src/ui/dashboard/weekend_bar.cpp
+  src/ui/annoucements.cpp 
+  src/ui/timetable.cpp
+  src/ui/grades.cpp
+  src/ui/messages.cpp 
+  src/ui/main_ui.cpp 
+  src/ui/custom_ui.cpp
+  src/auth/auth.cpp
+  src/api/api.cpp 
+  src/misc/utils.cpp 
+  src/misc/error_handler.cpp
+  src/misc/config.cpp
+  src/misc/ssave.cpp
+)
+
+target_include_directories(volumen
+  PRIVATE include/
 )
 
 target_link_libraries(volumen
@@ -76,13 +80,17 @@ target_link_libraries(volumen
 add_executable(benchmark
   benchmarks/main.cpp
   benchmarks/benchmarks.cpp
-  src/auth.cpp
-  src/api.cpp 
-  src/utils.cpp
-  src/error_handler.cpp
-  src/custom_ui.cpp
-  src/config.cpp
-  src/ssave.cpp
+  src/ui/custom_ui.cpp
+  src/auth/auth.cpp
+  src/api/api.cpp 
+  src/misc/utils.cpp
+  src/misc/error_handler.cpp
+  src/misc/config.cpp
+  src/misc/ssave.cpp
+)
+
+target_include_directories(benchmark
+  PRIVATE include/
 )
 
 target_link_libraries(benchmark
@@ -94,12 +102,4 @@ target_link_libraries(benchmark
   PRIVATE cpr::cpr
   PRIVATE keychain 
   PRIVATE spdlog
-)
-
-add_executable(test 
-  test.cpp
-)
-
-target_link_libraries(test
-  PRIVATE keychain
 )

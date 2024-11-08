@@ -1,6 +1,6 @@
 #pragma once
-#include "../src/api.hpp"
-#include "../src/auth.hpp"
+#include <api/api.hpp>
+#include <auth/auth.hpp>
 #include <string>
 #include <functional>
 #include <unordered_map>

@@ -1,10 +1,10 @@
-#include "volumen.hpp"
-#include "login.hpp"
-#include "auth.hpp"
-#include "config.hpp"
-#include "custom_ui.hpp"
-#include "ssave.hpp"
-#include "main_ui.hpp"
+#include <volumen.hpp>
+#include <ui/login.hpp>
+#include <ui/custom_ui.hpp>
+#include <ui/main_ui.hpp>
+#include <auth/auth.hpp>
+#include <misc/config.hpp>
+#include <misc/ssave.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
