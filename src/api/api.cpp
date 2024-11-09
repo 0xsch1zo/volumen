@@ -150,7 +150,7 @@ void api::parse_timetable(const std::string& response, api::timetable_t& timetab
 
             timetable_o.timetable[i].emplace_back(
                 /*.subject            = */lesson[0]["Subject"]["Name"],
-                /*.teacher            = */(std::string)lesson[0]["Teacher"]["FirstName"] + (std::string)lesson[0]["Teacher"]["LastName"],
+                /*.teacher            = */(std::string)lesson[0]["Teacher"]["FirstName"] + " " + (std::string)lesson[0]["Teacher"]["LastName"],
                 /*.start              = */lesson[0]["HourFrom"],
                 /*.end                = */lesson[0]["HourTo"],
                 /*.date               = */date,
