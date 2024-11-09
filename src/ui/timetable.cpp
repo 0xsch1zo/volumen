@@ -210,6 +210,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
 }
 
 ft::Component timetable::event_box(const api::event_t& event) {
+    std::shared_ptr<bool> show = std::make_shared<bool>(0);
     return ft::MenuEntry({
         .label = event.category,
         .transform = [&](const ft::EntryState& s) {
@@ -220,6 +221,35 @@ ft::Component timetable::event_box(const api::event_t& event) {
                 | ft::center,
                 { .active = s.active, .focused = s.focused }
             );
+        }
+    })
+    | ft::Modal(event_detail_box(event), show.get())
+    | ft::CatchEvent([=](ft::Event event){
+        if(event == ft::Event::Return) {
+            *show = !*show;
+            return true;
+        }
+        return false;
+    });
+}
+
+ft::Component timetable::event_detail_box(const api::event_t& event) {
+    const auto max_details_size = ft::size(ft::WIDTH, ft::LESS_THAN, 50);
+    return ft::MenuEntry({
+        .label = event.category,
+        .transform = [=, this](const ft::EntryState& s) {
+            return custom_ui::focus_managed_border_box(
+                ft::vbox({
+                    ft::paragraph(event.category),
+                    ft::separator(),
+                    ft::paragraph("Description: " + event.description),
+                    ft::paragraph("Date: " + event.date),
+                    ft::paragraph("Created by: " + event.created_by)
+                }),
+                { .active = s.active, .focused = s.focused }
+            )
+            | max_details_size
+            | ft::center;
         }
     });
 }

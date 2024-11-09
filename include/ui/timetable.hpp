@@ -19,6 +19,7 @@ class timetable {
     ft::Component empty_lesson_box();
     ft::Component lesson_box(const api::lesson_t& lesson);
     ft::Component event_box(const api::event_t& event);
+    ft::Component event_detail_box(const api::event_t& event);
 
 public:
     timetable(const config* config) : config_p(config) {}
