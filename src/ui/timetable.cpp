@@ -160,6 +160,7 @@ ft::Component timetable::empty_lesson_box() {
 ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
     const std::string deliminator = " - ";
     const auto subject_size = ft::size(ft::WIDTH, ft::LESS_THAN, 40);
+    std::shared_ptr show = std::make_shared<bool>(0);
 
     return ft::MenuEntry({
         .label = lesson.subject,
@@ -179,33 +180,51 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
                     { .active = s.active, .focused = s.focused }
                 );
             } else if(lesson.is_substitution) {
-                return custom_ui::focus_managed_border_box(
-                    ft::vbox({
-                        ft::hbox({
-                            ft::text(s.label)
-                            | ft::bold,
-                            ft::text(" - Substitution")
-                        })
-                        | ft::color(config_p->Colors().get_accent_color2())
-                        | ft::hcenter,
-                        ft::text(lesson.start + deliminator + lesson.end)
-                        | ft::hcenter
-                    }) | ft::xflex,
-                    { .active = s.active, .focused = s.focused }
-                );
-            } else
-                return custom_ui::focus_managed_border_box(
-                    ft::vbox({
+                ft::Elements base = {
+                    ft::hbox({
                         ft::text(s.label)
-                        | ft::bold
-                        | ft::color(config_p->Colors().get_main_color())
-                        | ft::hcenter,
-                        ft::text(lesson.start + deliminator + lesson.end)
-                        | ft::hcenter
-                    }) | ft::xflex,
+                        | ft::bold,
+                        ft::text(" - Substitution")
+                    })
+                    | ft::color(config_p->Colors().get_accent_color2())
+                    | ft::hcenter,
+                    ft::text(lesson.start + deliminator + lesson.end)
+                    | ft::hcenter
+                };
+
+                if(*show)
+                    base.emplace(base.begin() + 1, ft::text(lesson.teacher) | ft::hcenter);
+
+                return custom_ui::focus_managed_border_box(
+                    ft::vbox(base) | ft::xflex,
                     { .active = s.active, .focused = s.focused }
                 );
+            } else {
+                ft::Elements base = {
+                    ft::text(s.label)
+                    | ft::bold
+                    | ft::color(config_p->Colors().get_main_color())
+                    | ft::hcenter,
+                    ft::text(lesson.start + deliminator + lesson.end)
+                    | ft::hcenter
+                };
+
+                if(*show)
+                    base.emplace(base.begin() + 1, ft::text(lesson.teacher) | ft::hcenter);
+
+                return custom_ui::focus_managed_border_box(
+                    ft::vbox(base) | ft::xflex,
+                    { .active = s.active, .focused = s.focused }
+                );
+            }
         }
+    })
+    | ft::CatchEvent([=](ft::Event event){
+        if(event == ft::Event::Return) {
+            *show = !(*show);
+            return true;
+        }
+        return false;
     });
 }
 
@@ -226,7 +245,7 @@ ft::Component timetable::event_box(const api::event_t& event) {
     | ft::Modal(event_detail_box(event), show.get())
     | ft::CatchEvent([=](ft::Event event){
         if(event == ft::Event::Return) {
-            *show = !*show;
+            *show = !(*show);
             return true;
         }
         return false;
