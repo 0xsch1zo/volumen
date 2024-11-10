@@ -170,8 +170,18 @@ std::string api::get_today() {
 }
 
 api::messages_t api::get_messages() {
+    const int page_message_limit = 300;
     messages_t messages_o;
-    parse_messages(fetch(MESSAGE_ENDPOINT), messages_o);
+    int page{1};
+    do {
+        parse_messages(
+            fetch(MESSAGE_ENDPOINT + 
+            "?limit=" + std::to_string(page_message_limit) +
+            "&page=" + std::to_string(page++)), 
+            messages_o
+        );
+    } while(messages_o.size() == page_message_limit);
+
     return messages_o; 
 }
 
@@ -180,11 +190,11 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
     json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    messages_o.reserve(data[target_data_structure].size());
+    messages_o.reserve(messages_o.size() + data[target_data_structure].size());
 
-    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+    for(int i{}; i < data[target_data_structure].size(); i++){
         const auto& message = data[target_data_structure].at(i);
-        messages_o.emplace_back(
+        messages_o.emplace(messages_o.begin(),
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),
