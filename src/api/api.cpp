@@ -190,11 +190,10 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
     json data = json::parse(response);
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
-    messages_o.reserve(messages_o.size() + data[target_data_structure].size());
 
     for(int i{}; i < data[target_data_structure].size(); i++){
         const auto& message = data[target_data_structure].at(i);
-        messages_o.emplace(messages_o.begin(),
+        messages_o.emplace_front(
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),

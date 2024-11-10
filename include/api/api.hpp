@@ -3,6 +3,7 @@
 #include <misc/error_handler.hpp>
 #include <string>
 #include <cpr/cpr.h>
+#include <deque>
 
 #ifdef VOLUMEN_TESTING
 class benchmarks;
@@ -77,7 +78,7 @@ public:
         : send_date(send_d), content_t{sub, cont, authr} {}
     };
 
-    typedef std::vector<message_t> messages_t;
+    typedef std::deque<message_t> messages_t;
 
     struct grade_t {
         std::string subject;
