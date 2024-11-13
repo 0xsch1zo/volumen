@@ -41,6 +41,34 @@ void main_ui::ui_error_wrapper(
     
 }
 
+event_handler main_ui::logout_handler(bool& logout) {
+    return [&](ft::Event event) {
+        if(event == ft::Event::N || event == ft::Event::n) {
+            logout = true;
+            ssave::del(auth::login_service_field);
+            ssave::del(auth::refresh_token_service_field);
+            auth_.forget_refresh_token();
+            main_screen.Exit();
+            return true;
+        }
+        return false;
+    };
+}
+
+event_handler main_ui::navigation_handler(int& tab_selected) {
+#define change_tab_ret(x)   tab_selected = x;\
+                            main_screen.Post(ft::Event::Custom);\
+                            return true
+    return [&](ft::Event event) {
+        if(event == ft::Event::T || event == ft::Event::t) {    change_tab_ret(TIMETABLE);     }
+        if(event == ft::Event::M || event == ft::Event::m) {    change_tab_ret(MESSAGES);      }
+        if(event == ft::Event::A || event == ft::Event::a) {    change_tab_ret(ANNOUCEMENTS);  }
+        if(event == ft::Event::D || event == ft::Event::d) {    change_tab_ret(DASHBOARD);     }
+        if(event == ft::Event::G || event == ft::Event::g) {    change_tab_ret(GRADES);        }
+        return false;
+    };
+}
+
 // TODO: remove unnecessary includes
 bool main_ui::display_interface(auth& auth_o, const std::string& picked_login) {
 using namespace std::chrono_literals;
@@ -99,17 +127,8 @@ using namespace std::chrono_literals;
         tab_container
     })
     | ft::CatchEvent(utils::exit_on_keybind(main_screen.ExitLoopClosure()))
-    | ft::CatchEvent([&](ft::Event event){
-        if(event == ft::Event::M || event == ft::Event::m) {
-            logout = true;
-            ssave::del(auth::login_service_field);
-            ssave::del(auth::refresh_token_service_field);
-            auth_o.forget_refresh_token();
-            main_screen.Exit();
-            return true;
-        }
-        return false;
-    });
+    | ft::CatchEvent(logout_handler(logout))
+    | ft::CatchEvent(navigation_handler(tab_selected));
 
     size_t redirect{EXIT};
     std::mutex redirect_mutex;

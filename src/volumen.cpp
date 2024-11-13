@@ -37,7 +37,7 @@ void volumen() {
         }
     });
 
-    main_ui main_ui(config_p);
+    main_ui main_ui(config_p, auth_o);
     do {
         auth_o.refresh_api_tokens();
         if(!ssave::exists(auth::login_service_field))

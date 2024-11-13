@@ -1,5 +1,4 @@
 #include <ui/login.hpp>
-#include <ui/main_ui.hpp>
 #include <ui/custom_ui.hpp>
 #include <misc/utils.hpp>
 #include <misc/ssave.hpp>
@@ -105,7 +104,6 @@ void login::choose_account_screen(const auth& auth_o) {
     int synergia_account_i = 0;
     auto accounts = auth_o.get_synergia_accounts();
     ft::Component info = ft::Renderer([](){ return ft::text("Please choose a synergia account that you want to use"); });
-    main_ui main_ui(config_p);
 
     ft::Component continue_button = ft::Button("Continue", [&](){ 
         // store encrypted login for autologin
