@@ -5,6 +5,8 @@
 
 namespace ft = ftxui;
 
+typedef std::function<bool(ft::Event)> event_handler;
+
 class utils {
     utils();
 public:

@@ -43,7 +43,7 @@ int utils::get_day_of_week(std::string&& date_unformated) {
 }
 
 
-std::function<bool(ft::Event)> utils::exit_on_keybind(const std::function<void()>& screen_exit) {
+event_handler utils::exit_on_keybind(const std::function<void()>& screen_exit) {
     return [&](ft::Event event){
         if(event == ft::Event::Q || event == ft::Event::q) {
             screen_exit();
