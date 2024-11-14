@@ -70,13 +70,11 @@ event_handler main_ui::navigation_handler(int& tab_selected) {
 }
 
 // TODO: remove unnecessary includes
-bool main_ui::display_interface(auth& auth_o, const std::string& picked_login) {
-using namespace std::chrono_literals;
-    auto main_screen = ft::ScreenInteractive::Fullscreen();
-    
+bool main_ui::display_interface(const std::string& picked_login) {
+    using namespace std::chrono_literals;
     bool logout{};
     error e;
-    api api(auth_o, picked_login);
+    api api(auth_, picked_login);
     annoucements annoucements_o(main_screen.ExitLoopClosure());
     messages messages_o(main_screen.ExitLoopClosure());
     timetable timetable_o(config_p);

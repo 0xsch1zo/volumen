@@ -9,7 +9,7 @@
 class main_ui {
     const config* config_p;
     ft::ScreenInteractive main_screen = ft::ScreenInteractive::Fullscreen();
-    auth auth_;
+    auth& auth_;
 
     enum tabs_t {
         DASHBOARD,
@@ -39,5 +39,5 @@ public:
         config_p(config),
         auth_(auth) 
     {}
-    bool display_interface(auth& auth_o, const std::string& picked_login);
+    bool display_interface(const std::string& picked_login);
 };
