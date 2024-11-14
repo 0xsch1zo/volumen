@@ -82,11 +82,11 @@ bool main_ui::display_interface(const std::string& picked_login) {
 
     int tab_selected{};
     std::vector<std::string> menu = {
-        "Dashboard",
-        "Messages",
-        "Annoucements",
-        "Timetable",
-        "Grades"
+        "[D]ashboard",
+        "[M]essages",
+        "[A]nnoucements",
+        "[T]imetable",
+        "[G]rades"
     };
 
 
