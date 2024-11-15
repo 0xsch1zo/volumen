@@ -29,6 +29,7 @@ class api {
     const std::string USERS_ENDPOINT                = "/3.0/Users";
     const std::string EVENT_ENDPOINT                = "/3.0/HomeWorks"; // Why for fucks...
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
+    const std::string MESSAGE_USERS_ENDPOINT        = MESSAGE_ENDPOINT + "/User";
     std::shared_ptr<cpr::Session> api_session = std::make_shared<cpr::Session>();
     std::mutex api_session_mutex;
     const std::string login_;
@@ -122,7 +123,7 @@ private:
     std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
     std::string get_username_by_id(const int& id);
-    std::string fetch_username_by_message_user_id(const std::string& url_id);
+    const std::unordered_map<std::string, std::string>* fetch_usernames_by_message_user_id(std::vector<std::string>&& ids);
     const std::unordered_map<int, const std::string>* get_subjects();
     static void check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure);
 

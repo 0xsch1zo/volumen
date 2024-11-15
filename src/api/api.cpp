@@ -76,10 +76,31 @@ void api::parse_generic_info_by_id(const std::string& response, const std::strin
     }
 }
 
-std::string api::fetch_username_by_message_user_id(const std::string& url_id) {
-    // Handle reuse
-    json data = json::parse(fetch_url(url_id));
-    return (std::string)data["User"]["FirstName"] + " " + (std::string)data["User"]["LastName"];
+const std::unordered_map<std::string, std::string>* api::fetch_usernames_by_message_user_id(std::vector<std::string>&& ids) {
+    static std::unordered_map<std::string, std::string> users;
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    std::string not_cached;
+
+    for(int i{}; i < ids.size(); i++) {
+        const auto& id = ids.at(i);
+        if(!users.contains(id)) {
+            not_cached.append(i == 0 ? id : "," + id);
+        }
+    }
+
+    if(!not_cached.empty()) {
+        json data = json::parse(fetch(MESSAGE_USERS_ENDPOINT + "/" + not_cached + "?limit=" + std::to_string(ids.size())));
+        if(data.contains("User"))
+            users[data["User"]["Id"]] = (std::string)data["User"]["FirstName"] + " "+ (std::string)data["User"]["LastName"];
+        else {
+            check_if_target_contains(__FUNCTION__, data, "Users");
+            for(const auto& user : data["Users"].items())
+                users[user.value()["Id"]] = (std::string)user.value()["FirstName"] + " " + (std::string)user.value()["LastName"];
+        }
+    }
+
+    return &users;
 }
 
 api::annoucements_t api::get_annoucments() {
@@ -191,15 +212,24 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
 
     check_if_target_contains(__FUNCTION__, data, target_data_structure);
 
+    std::vector<std::string> user_ids;
+    user_ids.reserve(data[target_data_structure].size());
     for(int i{}; i < data[target_data_structure].size(); i++){
         const auto& message = data[target_data_structure].at(i);
         messages_o.emplace_front(
             // Subject and content need to be parsed again because these are double escaped
             /*.subject    = */json::parse((std::string)message["Subject"]),
             /*.content    = */json::parse((std::string)message["Body"]),
-            /*.author     = */fetch_username_by_message_user_id(message["Sender"]["Url"]),
+            /*.author     = */message["Sender"]["Id"],
             /*.send_date  = */message["SendDate"]
         );
+
+        user_ids.emplace_back(message["Sender"]["Id"]);
+    }
+
+    auto user_id_map = fetch_usernames_by_message_user_id(std::move(user_ids));
+    for(auto& message : messages_o) {
+        message.author = user_id_map->at(message.author);
     }
 }
 
