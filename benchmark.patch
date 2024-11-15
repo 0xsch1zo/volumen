@@ -1,36 +1,27 @@
-diff --git a/src/api.cpp b/src/api.cpp
-index 6d8618e..a21ce02 100644
---- a/src/api.cpp
-+++ b/src/api.cpp
-@@ -32,7 +32,7 @@ void api::check_if_target_contains(const char* FUNCTION, const json& data, const
- // Fetches from an api endpoint
- void api::fetch(const std::string& endpoint, std::ostringstream& os) {
-     cl::Easy request;
--    spd::error(endpoint);
-+    //spd::error(endpoint);
-     request_setup(request, os, LIBRUS_API_URL + endpoint);
-     request.perform();
- }
-@@ -89,7 +89,7 @@ void api::parse_annoucments(const std::ostringstream& os, annoucements_t& annouc
+diff --git a/src/api/api.cpp b/src/api/api.cpp
+index 382e410..fea8ec7 100644
+--- a/src/api/api.cpp
++++ b/src/api/api.cpp
+@@ -102,7 +102,7 @@ void api::parse_annoucments(const std::string& response, annoucements_t& annoucm
              /*.end_date       = */annoucment["EndDate"],
              /*.subject        = */annoucment["Subject"],
              /*.content        = */annoucment["Content"],
 -            /*.author         = */get_username_by_id(annoucment["AddedBy"]["Id"])
-+            /*.author         = */"" //get_username_by_id(annoucment["AddedBy"]["Id"])
++            /*.author         = */""//get_username_by_id(annoucment["AddedBy"]["Id"])
          );
      }
  }
-@@ -191,7 +191,7 @@ void api::parse_messages(const std::ostringstream& os, api::messages_t& messages
+@@ -197,7 +197,7 @@ void api::parse_messages(const std::string& response, api::messages_t& messages_
              // Subject and content need to be parsed again because these are double escaped
              /*.subject    = */json::parse((std::string)message["Subject"]),
              /*.content    = */json::parse((std::string)message["Body"]),
--            /*.sender     = */fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
-+            /*.sender     = */"", //fetch_username_by_message_user_id(message["Sender"]["Url"], get_user_request),
+-            /*.author     = */fetch_username_by_message_user_id(message["Sender"]["Url"]),
++            /*.author     = */"",//fetch_username_by_message_user_id(message["Sender"]["Url"]),
              /*.send_date  = */message["SendDate"]
          );
      }
-@@ -313,36 +313,36 @@ void api::parse_grades(const std::ostringstream& os, grades_t& grades_o) {
-     json data = json::parse(os.str());
+@@ -305,36 +305,36 @@ void api::parse_grades(const std::string& response, grades_t& grades_o) {
+     json data = json::parse(response);
  
      check_if_target_contains(__FUNCTION__, data, target_data_structure);
 -    const auto& subjects = get_subjects();
@@ -62,13 +53,12 @@ index 6d8618e..a21ce02 100644
  
          grades_o[grade.value()["Subject"]["Id"]].grades.emplace_back(
 -            /*.subject                    =*/ get_subject_by_id(grade.value()["Subject"]["Id"]),
--            /*.grade                      =*/ grade.value()["Grade"],
++            /*.subject                    =*/ "",//get_subject_by_id(grade.value()["Subject"]["Id"]),
+             /*.grade                      =*/ grade.value()["Grade"],
 -            /*.category                   =*/ get_category_by_id(grade.value()["Category"]["Id"], GRADE),
 -            /*.added_by                   =*/ get_username_by_id(grade.value()["AddedBy"]["Id"]),
-+            /*.subject                    =*/ "", //get_subject_by_id(grade.value()["Subject"]["Id"]),
-+            /*.grade                      =*/ "", //grade.value()["Grade"],
-+            /*.category                   =*/ "", //get_category_by_id(grade.value()["Category"]["Id"], GRADE),
-+            /*.added_by                   =*/ "", //get_username_by_id(grade.value()["AddedBy"]["Id"]),
++            /*.category                   =*/ "",//get_category_by_id(grade.value()["Category"]["Id"], GRADE),
++            /*.added_by                   =*/ "",//get_username_by_id(grade.value()["AddedBy"]["Id"]),
              /*.date                       =*/ grade.value()["Date"],
              // Why would a grade have multiple comments
 -            /*.comment                    =*/ grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
@@ -76,7 +66,7 @@ index 6d8618e..a21ce02 100644
              /*.semester                   =*/ grade.value()["Semester"],
              /*.is_semester                =*/ grade.value()["IsSemester"],
              /*.is_semester_proposition    =*/ grade.value()["IsSemesterProposition"],
-@@ -373,12 +373,12 @@ void api::parse_recent_grades(const std::ostringstream& os, recent_grades_t& gra
+@@ -363,12 +363,12 @@ void api::parse_recent_grades(const std::string& response, recent_grades_t& grad
      for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
          const auto& grade = data[target_data_structure].at(i);
          grades_o.emplace_back(
@@ -93,7 +83,7 @@ index 6d8618e..a21ce02 100644
              /*.semester                   =*/ grade["Semester"],
              /*.is_semester                =*/ grade["IsSemester"],
              /*.is_semester_proposition    =*/ grade["IsSemesterProposition"],
-@@ -415,9 +415,9 @@ void api::parse_events(const std::ostringstream& os, api::events_t& events_o) {
+@@ -403,9 +403,9 @@ void api::parse_events(const std::string& response, api::events_t& events_o) {
          events_o.try_emplace(date, std::vector<event_t>());
          events_o.at(date).emplace_back(
              /*.description =    */    event["Content"],
