@@ -5,13 +5,7 @@
 #include <cassert>
 #include <spdlog/spdlog.h>
 
-api::api(const auth& auth, const std::string& picked_login) : auth_o(auth), login_(picked_login) {
-    update_access_token();
-}
-
-void api::update_access_token() {
-    api_session->SetBearer(auth_o.get_api_access_token(login_));
-}
+api::api(auth& auth, const std::string& picked_login) : auth_o(auth), login_(picked_login) {}
 
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
     static const std::string target_does_not_exist_message = "Target json structure not found: \"";
@@ -21,15 +15,18 @@ void api::check_if_target_contains(const char* FUNCTION, const json& data, const
 
 // Fetches from an api endpoint
 std::string api::fetch(const std::string& endpoint) {
-    std::lock_guard api_session_lock{api_session_mutex};
-    api_session->SetUrl(LIBRUS_API_URL + endpoint);
-
-    cpr::Response resp = api_session->Get();
+    cpr::Response resp = cpr::Get(
+        cpr::Url{LIBRUS_API_URL + endpoint},
+        cpr::Bearer{auth_o.get_api_access_token(login_)}
+    );
 
     if(resp.status_code == auth::UNAUTHORIZED_ERR_CODE) {
         auth_o.refresh_api_tokens();
-        update_access_token();
-        resp = api_session->Get();
+        resp = cpr::Get(
+            cpr::Url{LIBRUS_API_URL + endpoint},
+            cpr::Bearer{auth_o.get_api_access_token(login_)}
+        );
+
         if(resp.status_code >= 400)
             throw error::volumen_exception( 
                 "Unexected error while accessing: " + endpoint + 
@@ -43,15 +40,17 @@ std::string api::fetch(const std::string& endpoint) {
 }
 
 std::string api::fetch_url(const std::string& url) {
-    std::lock_guard api_session_lock{api_session_mutex};
-    api_session->SetUrl(url);
-
-    cpr::Response resp = api_session->Get();
+    cpr::Response resp = cpr::Get(
+        cpr::Url{url},
+        cpr::Bearer{auth_o.get_api_access_token(login_)}
+    );
 
     if(resp.status_code == auth::UNAUTHORIZED_ERR_CODE) {
         auth_o.refresh_api_tokens();
-        update_access_token();
-        resp = api_session->Get();
+        resp = cpr::Get(
+            cpr::Url{url},
+            cpr::Bearer{auth_o.get_api_access_token(login_)}
+        );
         if(resp.status_code >= 400)
             throw error::volumen_exception( 
                 "Unexected error while accessing: " + url +

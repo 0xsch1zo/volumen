@@ -30,10 +30,8 @@ class api {
     const std::string EVENT_ENDPOINT                = "/3.0/HomeWorks"; // Why for fucks...
     const std::string EVENT_CATEGORIES_ENDPOINT     = EVENT_ENDPOINT + "/Categories";
     const std::string MESSAGE_USERS_ENDPOINT        = MESSAGE_ENDPOINT + "/User";
-    std::shared_ptr<cpr::Session> api_session = std::make_shared<cpr::Session>();
-    std::mutex api_session_mutex;
     const std::string login_;
-    auth auth_o;
+    auth& auth_o;
 
 public:
     struct content_t {
@@ -142,9 +140,7 @@ private:
 public:
 
 
-    api(const auth& auth_o, const std::string& picked_login);
-
-    void update_access_token();
+    api(auth& auth_o, const std::string& picked_login);
 
     annoucements_t get_annoucments();
 
