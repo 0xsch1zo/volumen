@@ -11,7 +11,8 @@ void auth::authorize(const std::string& email, const std::string& password) {
     fetch_synergia_accounts();
 }
 
-std::string auth::get_api_access_token(const std::string& login) const {
+std::string auth::get_api_access_token(const std::string& login) {
+    std::lock_guard lock{access_token_mutex};
     assert(api_access_tokens.count(login));
     return api_access_tokens.at(login);
 }
@@ -36,10 +37,13 @@ void auth::fetch_synergia_accounts() {
 
     // In case already populated and called on refresh
     synergia_accounts.clear();
-    api_access_tokens.clear();
-
     synergia_accounts.reserve(data["accounts"].size());
-    api_access_tokens.reserve(data["accounts"].size());
+
+    {
+        std::lock_guard lock{access_token_mutex};
+        api_access_tokens.clear();
+        api_access_tokens.reserve(data["accounts"].size());
+    }
 
     // TODO: If fails log where it happened
     for(const auto& account : data["accounts"].items()) {
@@ -49,10 +53,13 @@ void auth::fetch_synergia_accounts() {
             /*.login = */           account.value()["login"]
         );
 
-        api_access_tokens.emplace(
-            account.value()["login"],
-            account.value()["accessToken"]
-        );
+        {
+            std::lock_guard lock{access_token_mutex};
+            api_access_tokens.emplace(
+                account.value()["login"],
+                account.value()["accessToken"]
+            );
+        }
     }
 }
 

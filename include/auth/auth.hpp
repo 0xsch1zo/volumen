@@ -17,7 +17,7 @@ public:
 
 public:
     auth(std::function<void()> refresh_token_failure_handler) : refresh_failure_handler(refresh_token_failure_handler) {}
-    std::string get_api_access_token(const std::string& login) const;
+    std::string get_api_access_token(const std::string& login);
     std::vector<synergia_account_t> get_synergia_accounts() const;
     void authorize(const std::string& email, const std::string& password);
     void refresh_api_tokens();
@@ -26,6 +26,7 @@ public:
 public:
     static const inline std::string login_service_field             = "login";
     static const inline std::string refresh_token_service_field     = "refresh_token";
+
 private:
     struct oauth_data_t {
         std::string token_type;
@@ -46,6 +47,7 @@ private:
     std::unordered_map<std::string, std::string> api_access_tokens;
     std::vector<synergia_account_t> synergia_accounts;
     std::function<void()> refresh_failure_handler;
+    std::mutex access_token_mutex;
 
 private:
     std::string find_token(cpr::Cookies& cookies);
