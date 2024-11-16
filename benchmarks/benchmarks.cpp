@@ -69,7 +69,7 @@ void benchmarks::auth_bench(const std::string& email, const std::string& passwor
     std::cout << '\n';
 }
 
-void benchmarks::api_bench(const auth& auth_o, int run_count) {
+void benchmarks::api_bench(auth& auth_o, int run_count) {
     const int TEST_LOGIN_INDEX = 0;
 
     api api_o(

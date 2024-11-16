@@ -84,5 +84,5 @@ private:
     static void print_info(std::string text);
 public:
     void auth_bench(const std::string& email, const std::string& password, auth& auth_o);
-    void api_bench(const auth& auth_o, int run_count);
+    void api_bench(auth& auth_o, int run_count);
 };
