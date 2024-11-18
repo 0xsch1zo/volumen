@@ -13,7 +13,7 @@
 #include <ftxui/component/screen_interactive.hpp>
 
 ft::Component messages::content_view() {
-    auto message = messages_.at(selected_);
+    auto message = (messages_type_selected_ ? messages_.sent : messages_.recieved).at(message_selected_);
     const std::string deliminator = " | ";
     const std::string quit_message = "Press q or Ctrl+C to quit";
     const int DATE_SIZE = 10;
@@ -40,12 +40,31 @@ api* api,
 size_t* redirect,
 std::mutex* redirect_mutex) {
     messages_ = api->get_messages();
-    std::vector<api::content_t*> contents;
-    contents.reserve(messages_.size());
-    for(const auto& message : messages_)
-        contents.emplace_back((api::content_t*)&message);
+    struct {
+        std::vector<api::content_t*> recieved;
+        std::vector<api::content_t*> sent;
+    } contents;
 
-    auto message_components = custom_ui::content_boxes(contents, &selected_);
+    contents.recieved.reserve(messages_.recieved.size());
+    contents.sent.reserve(messages_.sent.size());
+    for(const auto& message : messages_.recieved)
+        contents.recieved.emplace_back((api::content_t*)&message);
+
+    for(const auto& message : messages_.sent)
+        contents.sent.emplace_back((api::content_t*)&message);
+    
+    const std::vector<std::string> menu_labels = { "Recieved", "Sent" };
+    auto message_type_menu = ft::Menu(menu_labels, &messages_type_selected_, ft::MenuOption::HorizontalAnimated());
+
+    auto message_types_container = ft::Container::Tab({
+        custom_ui::content_boxes(contents.recieved, &message_selected_),
+        custom_ui::content_boxes(contents.sent, &message_selected_),
+    }, &messages_type_selected_);
+
+    auto message_components = ft::Container::Vertical({
+        message_type_menu,
+        message_types_container
+    });
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();

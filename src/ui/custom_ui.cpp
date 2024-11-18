@@ -138,15 +138,15 @@ ft::Element custom_ui::focus_managed_window(ft::Element title, ft::Element conte
 {
     auto base = [&](ft::Color title_color, ft::Color overall_color){
         return custom_window(
-            title | ft::notflex | ft::color(title_color), 
+            ft::hbox({ ft::hbox(title| ft::color(title_color)) | ft::flex}) | ft::flex,
             contents | ft::color(ft::Color::White)
         ) | ft::color(overall_color); 
     };
     if (focus_management.focused)
-        return base(ft::Color::White, config_p->Colors().get_main_color());
+        return base(config_p->Colors().get_accent_color2(), config_p->Colors().get_main_color());
 
     if (focus_management.active)
-        return base(ft::Color::White, config_p->Colors().get_accent_color1());
+        return base(config_p->Colors().get_main_color(), config_p->Colors().get_accent_color1());
 
     return base(config_p->Colors().get_main_color(), ft::Color::Default);
 }
@@ -192,13 +192,10 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
     }
 
     return ft::Renderer(content_entries, [=]{ 
-        auto base = content_entries->Render()
+        return content_entries->Render()
         | ft::vscroll_indicator 
-        | ft::yframe;
-        if(!content_entries->Focused())
-            return base | terminal_height();
-        
-        return base;
+        | ft::yframe
+        | terminal_height();
     });
 }
 
