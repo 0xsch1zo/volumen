@@ -77,7 +77,10 @@ public:
         : send_date(send_d), content_t{sub, cont, authr} {}
     };
 
-    typedef std::deque<message_t> messages_t;
+    struct messages_t {
+        std::deque<message_t> recieved;
+        std::deque<message_t> sent;
+    };
 
     struct grade_t {
         std::string subject;
@@ -128,12 +131,14 @@ private:
     std::string fetch(const std::string& endpoint);
     std::string fetch_url(const std::string& urli);
 
+    void populate_messages(std::deque<message_t>& messages, bool sent);
+
     void parse_generic_info_by_id(const std::string& response, const std::string& target, generic_info_id_map& generic_info_id_map_p);
     void parse_username_by_id(const std::string& response,generic_info_id_map& ids_and_usernames);
     void parse_comment_by_id(const std::string& response, generic_info_id_map& ids_and_comments);
     void parse_annoucments(const std::string& response, annoucements_t& annoucments_o);
     void parse_timetable(const std::string& response, timetable_t& timetable_o);
-    void parse_messages(const std::string& response, messages_t& messages_o);
+    void parse_messages(const std::string& response, std::deque<api::message_t>& messages_o);
     void parse_grades(const std::string& response, grades_t& grades_o);
     void parse_recent_grades(const std::string& response, recent_grades_t& grades_o);
     void parse_events(const std::string& response, api::events_t& events_o);

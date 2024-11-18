@@ -190,22 +190,28 @@ std::string api::get_today() {
 }
 
 api::messages_t api::get_messages() {
-    const int page_message_limit = 300;
     messages_t messages_o;
+    int page{1};
+    populate_messages(messages_o.recieved, false);
+    populate_messages(messages_o.sent, true);
+    return messages_o; 
+}
+
+void api::populate_messages(std::deque<message_t>& messages, bool sent) {
+    const int page_message_limit = 300;
     int page{1};
     do {
         parse_messages(
             fetch(MESSAGE_ENDPOINT + 
             "?limit=" + std::to_string(page_message_limit) +
-            "&page=" + std::to_string(page++)), 
-            messages_o
+            "&page=" + std::to_string(page++) +
+            (sent ? "&inSended=true" : "")), 
+            messages 
         );
-    } while(messages_o.size() == page_message_limit);
-
-    return messages_o; 
+    } while(messages.size() == page_message_limit);
 }
 
-void api::parse_messages(const std::string& response, api::messages_t& messages_o) {
+void api::parse_messages(const std::string& response, std::deque<api::message_t>& messages_o) {
     const std::string target_data_structure = "Messages";
     json data = json::parse(response);
 
