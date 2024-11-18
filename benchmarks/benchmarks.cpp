@@ -156,7 +156,7 @@ benchmarks::test_result benchmarks::parse_events_test(api& api_o) {
 benchmarks::test_result benchmarks::parse_messages_test(api& api_o) {
     api::messages_t messages_o;
 
-    std::function<void()> handle = [&]{ api_o.parse_messages(load_mock(MESSAGES), messages_o); };
+    std::function<void()> handle = [&]{ api_o.parse_messages(load_mock(MESSAGES), messages_o.recieved); };
 
     return { VAR_NAME(MESSAGES), benchmarks::simple_benchmark(handle) };
 }
