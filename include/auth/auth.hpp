@@ -40,6 +40,7 @@ private:
 	const std::string LIBRUS_PORTAL_APP_URL                 = "app://librus";
 	const std::string LIBRUS_PORTAL_OAUTH_URL               = "https://portal.librus.pl/oauth2/access_token";
 	const std::string LIBRUS_API_ACCESS_TOKEN_URL           = "https://portal.librus.pl/api/v3/SynergiaAccounts";
+	const std::string LIBRUS_API_ACCESS_TOKEN_FRESH_URL     = LIBRUS_API_ACCESS_TOKEN_URL + "/fresh";
 	const std::string LIBRUS_PORTAL_CLIENT_ID               = "VaItV6oRutdo8fnjJwysnTjVlvaswf52ZqmXsJGP";
 	const std::string redirectTo                            = "/konto-librus/redirect/dru";
 	const std::string redirectCrc                           = "3b77fc51101d51dc0ae45dc34780a8a36c152daf307f454090ef6bb018a56fab";
