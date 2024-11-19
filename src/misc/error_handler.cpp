@@ -33,15 +33,19 @@ ft::Component error::handler_component(const std::string& FUNCTION, const std::s
 
 ft::Component error::handler_component(const std::string& what) {
     auto ok_button = ft::Button("OK", [&]{ show = false; }, custom_ui::button_rounded());
+    const auto error_msg_size = ft::size(ft::WIDTH, ft::EQUAL, 30);
 
     return ft::Renderer(ok_button, [=, this]{
-        return ft::vbox({
-            ft::text("An exception occured!"),
-            ft::separator(),
-            ft::text(what)
-            | ft::color(ft::Color::Red),
-            ok_button->Render()
-        }) | ft::borderStyled(ft::Color::Green);
+        return custom_ui::focus_managed_border_box(
+            ft::vbox({
+                ft::text("An exception occured!"),
+                ft::separator(),
+                ft::paragraph(what)
+                | error_msg_size,
+                ok_button->Render()
+            }),
+            { .active = false, .focused = true }
+        );
     });
 }
 
