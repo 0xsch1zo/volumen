@@ -11,8 +11,8 @@
 #include <ftxui/component/screen_interactive.hpp>
 
 // Function that displays login interface and gets email and password
-void login::login_screen(auth& auth_o){
-    bool auth_failure{};
+void login::login_screen(auth& auth_o) {
+    std::string auth_error;
     bool auth_complete{};
     std::string email;
     std::string password;
@@ -20,9 +20,11 @@ void login::login_screen(auth& auth_o){
     auto authorize = [&] { 
         try {
             auth_o.authorize(email, password);
-        }
-        catch(std::exception &e) {
-            auth_failure = true;
+        } catch(error::volumen_exception& e) {
+            auth_error = e.get_error_message();
+            return true;
+        } catch(std::exception& e) {
+            auth_error = e.what();
             return true;
         }
 
@@ -49,7 +51,7 @@ void login::login_screen(auth& auth_o){
 
     ft::Component error_msg = ft::Maybe(ft::Renderer([&] { 
         return ft::text("Login failed! Make sure your login and password are correct. View the backtrace after exiting");
-    }), [&]{ return auth_failure; });
+    }), [&]{ return !auth_error.empty(); });
 
     email_box |= ft::CatchEvent([&](ft::Event event) {
         if(event == ft::Event::Return) { password_box->TakeFocus(); return true; }
@@ -95,8 +97,10 @@ void login::login_screen(auth& auth_o){
     });
      
     screen.Loop(login_screen);
-    if(!auth_complete)
-        throw error::volumen_exception("auth failed", __FUNCTION__);
+    if(!auth_complete && auth_error.empty())
+        throw error::volumen_exception("", __FUNCTION__, error::quit_before_login);
+    else if(!auth_error.empty())
+        throw error::volumen_exception(auth_error, __FUNCTION__, error::auth_error);
 }
 
 void login::choose_account_screen(const auth& auth_o) {

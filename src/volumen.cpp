@@ -32,8 +32,13 @@ void volumen() {
         try {
             login.login_screen(auth_o);
         } catch(error::volumen_exception& e) {
+            if(e.get_type() == error::auth_error)
+                spdlog::error(e.get_error_message());
+
             delete config_p;
             exit(0);
+        } catch(std::exception& e) {
+            spdlog::error(e.what());
         }
     });
 

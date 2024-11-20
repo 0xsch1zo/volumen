@@ -10,7 +10,7 @@ api::api(auth& auth, const std::string& picked_login) : auth_o(auth), login_(pic
 void api::check_if_target_contains(const char* FUNCTION, const json& data, const std::string& target_json_data_structure) {
     static const std::string target_does_not_exist_message = "Target json structure not found: \"";
     if(!data.contains(target_json_data_structure))
-        throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION);
+        throw error::volumen_exception(target_does_not_exist_message + target_json_data_structure + "\"", FUNCTION, error::json_parsing_error);
 }
 
 // Fetches from an api endpoint
@@ -29,9 +29,9 @@ std::string api::fetch(const std::string& endpoint) {
 
         if(resp.status_code >= 400)
             throw error::volumen_exception( 
-                "Unexected error while accessing: " + endpoint + 
-                "\n Status code:" + std::to_string(resp.status_code),
-                __FUNCTION__
+                endpoint + ": " + resp.status_line,
+                __FUNCTION__,
+                error::request_failed
             );
         
     }
@@ -53,9 +53,9 @@ std::string api::fetch_url(const std::string& url) {
         );
         if(resp.status_code >= 400)
             throw error::volumen_exception( 
-                "Unexected error while accessing: " + url +
-                "\n Status code:" + std::to_string(resp.status_code),
-                __FUNCTION__
+                url + ": " + resp.status_line,
+                __FUNCTION__,
+                error::request_failed
             );
     }
 
