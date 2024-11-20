@@ -17,8 +17,8 @@ class config {
     class colors {
         const toml::table* config_toml;
         const std::string COLORS_GROUP = "colors";
-        const ft::Color default_main = ft::Color::Green;
-        const ft::Color default_accent_color1 = ft::Color::Red;
+        const ft::Color default_main = ft::Color::Cyan;
+        const ft::Color default_accent_color1 = ft::Color::Blue;
         const ft::Color default_accent_color2 = ft::Color::Magenta;
         ft::Color main_color;
         ft::Color accent_color1;
