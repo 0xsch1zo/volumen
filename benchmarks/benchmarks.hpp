@@ -17,8 +17,6 @@
 #define BLACK_BACKGROUND        "40"
 #define RESET                   "0m"
 
-#define VAR_NAME(x) #x
-
 class benchmarks {
     typedef enum api_test_functions {
         GRADES,

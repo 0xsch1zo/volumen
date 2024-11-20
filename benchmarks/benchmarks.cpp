@@ -4,6 +4,7 @@
 #include <thread>
 #include <fstream>
 #include <filesystem>
+#include <misc/utils.hpp>
 
 namespace fs = std::filesystem;
 
