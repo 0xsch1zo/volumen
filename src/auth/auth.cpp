@@ -29,19 +29,20 @@ void auth::forget_refresh_token() {
 
 // After a request is sent with the bearer token for portal.librus.pl the endpoint will provide all Synergia accounts(and access tokens to said accounts) asociated with the konto librus acc
 void auth::fetch_synergia_accounts() {
+    bool cached_login = ssave::exists(login_service_field);
     cpr::Response r = cpr::Get(
         cpr::Url{
             // If login is saved then get only the fresh token of this login
-            (ssave::exists(login_service_field)) ? 
-            LIBRUS_API_ACCESS_TOKEN_URL 
-            : LIBRUS_API_ACCESS_TOKEN_FRESH_URL + "/" + ssave::get(login_service_field)
+            (cached_login) ? 
+            LIBRUS_API_ACCESS_TOKEN_FRESH_URL + "/" + ssave::get(login_service_field)
+            : LIBRUS_API_ACCESS_TOKEN_URL 
         },
         cpr::Bearer{oauth_data.access_token}
     );
 
     // TODO: improve error handling by providing ready errors and error types
     if(r.status_code >= 400)
-        throw error::volumen_exception("Failed to access resource", __FUNCTION__);
+        throw error::volumen_exception("Status: " + r.status_line, __FUNCTION__, error::request_failed);
 
     json data = json::parse(r.text);
 
@@ -63,13 +64,24 @@ void auth::fetch_synergia_accounts() {
             /*.login = */           account.value()["login"]
         );
 
-        {
-            std::lock_guard lock{access_token_mutex};
-            api_access_tokens.emplace(
-                account.value()["login"],
-                account.value()["accessToken"]
-            );
-        }
+        std::lock_guard lock{access_token_mutex};
+        api_access_tokens.emplace(
+            account.value()["login"],
+            account.value()["accessToken"]
+        );
+    }
+
+    if(cached_login) {
+        synergia_accounts.emplace_back(
+            /*.group = */           data["group"],
+            /*.student_name = */    data["studentName"],
+            /*.login = */           data["login"]
+        );
+        std::lock_guard lock{access_token_mutex};
+        api_access_tokens.emplace(
+            data["login"],
+            data["accessToken"]
+        );
     }
 }
 
