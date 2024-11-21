@@ -10,10 +10,25 @@
 void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     grades_dashboard grades_dashboard_o;
     timetable_dashboard timetable_dashboard_o;
+
+    auto flex = [](ft::Component component) {
+        return ft::Renderer(component, [=]{
+            return component->Render()
+            | ft::flex;
+        });
+    };
+    auto grades = flex(grades_dashboard_o.get_grades_widget(api));
+    auto timetable = flex(timetable_dashboard_o.get_timetable_widget(api));
+    auto weekend_bar = flex(weekend_bar::get_weekend_bar(api));
+    
     auto dashboard_components = ft::Container::Vertical({
-		grades_dashboard_o.get_grades_widget(api),
-        timetable_dashboard_o.get_timetable_widget(api),
-        weekend_bar::get_weekend_bar(api)
+        ft::Container::Horizontal({
+            grades,
+            timetable
+        }),
+        ft::Container::Horizontal({
+            weekend_bar
+        })
     });
 
     // Remove loading screen
