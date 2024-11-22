@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_Diagnostics ON)
-add_compile_definitions(VOLUMEN_TESTING TOML_ENABLE_UNRELEASED_FEATURES TOML_LANG_UNRELEASED TOML_UNRELEASED_FEATURES)
+add_compile_definitions(VOLUMEN_TESTING)
 
 include(FetchContent)
 
@@ -48,6 +48,7 @@ add_executable(volumen
   src/ui/dashboard/timetable_dashboard.cpp 
   src/ui/dashboard/grades_dashboard.cpp
   src/ui/dashboard/weekend_bar.cpp
+  src/ui/dashboard/upcoming_events.cpp
   src/ui/annoucements.cpp 
   src/ui/timetable.cpp
   src/ui/grades.cpp
