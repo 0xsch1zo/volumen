@@ -5,6 +5,7 @@
 
 namespace ft = ftxui;
 
+// Todo add hoverability
 class dashboard {
     class timetable_dashboard {
         static ft::Element get_timeline_widget(const std::vector<api::lesson_t>& day);
@@ -22,6 +23,11 @@ class dashboard {
     class weekend_bar {
     public:
         static ft::Component get_weekend_bar(api* api);
+    };
+
+    class upcoming_events {
+    public:
+        static ft::Component get_upcoming_events(api* api);
     };
 
 public:

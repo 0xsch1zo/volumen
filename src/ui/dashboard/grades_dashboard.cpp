@@ -4,7 +4,7 @@
 #include <memory>
 
 ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
-    const auto grades_o = api->get_recent_grades();
+    const auto grades_o = api->get_grades_unstructured();
     auto grade_component = ft::Container::Vertical({});
 
     for (const auto& grade : grades_o) {

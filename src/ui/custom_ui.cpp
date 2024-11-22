@@ -151,8 +151,7 @@ ft::Element custom_ui::focus_managed_window(ft::Element title, ft::Element conte
     return base(config_p->Colors().get_main_color(), ft::Color::Default);
 }
 
-ft::Component custom_ui::custom_component_window(ft::Element title, ft::Component contents)
-{
+ft::Component custom_ui::custom_component_window(ft::Element title, ft::Component contents) {
     return ft::Renderer(contents, [=] {
         if(contents->Focused())
             return ft::window(

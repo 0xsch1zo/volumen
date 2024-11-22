@@ -19,12 +19,16 @@ void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     };
     auto grades = flex(grades_dashboard_o.get_grades_widget(api));
     auto timetable = flex(timetable_dashboard_o.get_timetable_widget(api));
+    auto events = flex(upcoming_events::get_upcoming_events(api));
     auto weekend_bar = flex(weekend_bar::get_weekend_bar(api));
     
     auto dashboard_components = ft::Container::Vertical({
         ft::Container::Horizontal({
-            grades,
-            timetable
+            ft::Container::Vertical({
+                grades,
+                timetable
+            }),
+            events
         }),
         ft::Container::Horizontal({
             weekend_bar
