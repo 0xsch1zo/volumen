@@ -103,17 +103,20 @@ public:
 
     typedef std::unordered_map<int, subject_with_grades_t> grades_t;
     
-    typedef std::vector<grade_t> recent_grades_t;
+    typedef std::vector<grade_t> grades_unstructured_t;
 
     struct event_t {
         std::string description;
         std::string category;
         std::string date;
         std::string created_by;
+        std::string subject;
         int lesson_offset;
     };
 
-    typedef std::unordered_map<std::string, std::vector<api::event_t>> events_t;
+    typedef std::unordered_map<std::string, std::vector<event_t>> events_t;
+
+    typedef std::vector<event_t> events_unstructured_t;
 
     typedef std::unordered_map<int, const std::string> generic_info_id_map;
 private:
@@ -140,8 +143,9 @@ private:
     void parse_timetable(const std::string& response, timetable_t& timetable_o);
     void parse_messages(const std::string& response, std::deque<api::message_t>& messages_o);
     void parse_grades(const std::string& response, grades_t& grades_o);
-    void parse_recent_grades(const std::string& response, recent_grades_t& grades_o);
+    void parse_grades_unstructured(const std::string& response, grades_unstructured_t& grades_o);
     void parse_events(const std::string& response, api::events_t& events_o);
+    void parse_events_unstructured(const std::string& response, api::events_unstructured_t& events_o);
 public:
 
 
@@ -157,7 +161,9 @@ public:
 
     grades_t get_grades();
 
-    recent_grades_t get_recent_grades();
+    grades_unstructured_t get_grades_unstructured();
 
     events_t get_events();
+
+    events_unstructured_t get_events_unstructured();
 };

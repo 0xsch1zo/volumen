@@ -240,7 +240,8 @@ void api::parse_messages(const std::string& response, std::deque<api::message_t>
 
 std::string api::get_subject_by_id(const int& id) {
     const std::unordered_map<int, const std::string>* subject_map_p = get_subjects();
-    return subject_map_p->at(id);
+    // It turns out that the librus api can give wrong ids for the subject. 
+    return subject_map_p->contains(id) ? subject_map_p->at(id) : "";
 }
 
 const std::unordered_map<int, const std::string>* api::get_subjects() {
@@ -379,14 +380,14 @@ void api::parse_grades(const std::string& response, grades_t& grades_o) {
     }
 }
 
-api::recent_grades_t api::get_recent_grades() {
-    recent_grades_t grades_o;
+api::grades_unstructured_t api::get_grades_unstructured() {
+    grades_unstructured_t grades;
 	
-    parse_recent_grades(fetch(GRADES_ENDPOINT), grades_o);
-    return grades_o;
+    parse_grades_unstructured(fetch(GRADES_ENDPOINT), grades);
+    return grades;
 }
 
-void api::parse_recent_grades(const std::string& response, recent_grades_t& grades_o) {
+void api::parse_grades_unstructured(const std::string& response, grades_unstructured_t& grades_o) {
     const std::string target_data_structure = "Grades";
 	const int MAX_VECTOR_SIZE = 4;
  
@@ -417,10 +418,10 @@ void api::parse_recent_grades(const std::string& response, recent_grades_t& grad
 }
 
 api::events_t api::get_events() {
-    events_t events_o;
+    events_t events;
 	
-    parse_events(fetch(EVENT_ENDPOINT), events_o);
-    return events_o;
+    parse_events(fetch(EVENT_ENDPOINT), events);
+    return events;
 }
 
 void api::parse_events(const std::string& response, api::events_t& events_o) {
@@ -441,6 +442,37 @@ void api::parse_events(const std::string& response, api::events_t& events_o) {
             /*.category =       */    get_category_by_id(event["Category"]["Id"], EVENT),
             /*.date =           */    event["Date"],
             /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
+            /*.subject =        */    event.contains("Subject") ? get_subject_by_id(event["Subject"]["Id"]) : "N/A",
+            /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
+        );
+    }
+}
+
+api::events_unstructured_t api::get_events_unstructured() {
+    events_unstructured_t events;
+
+    parse_events_unstructured(fetch(EVENT_ENDPOINT), events);
+    return events;
+}
+
+void api::parse_events_unstructured(const std::string& response, api::events_unstructured_t& events) {
+    const std::string target_data_structure = "HomeWorks";
+
+    json data = json::parse(response);
+
+    check_if_target_contains(__FUNCTION__, data, target_data_structure);
+    events.reserve(data[target_data_structure].size());
+
+    for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
+        const auto& event = data[target_data_structure].at(i);
+        const std::string date = event["Date"];
+
+        events.emplace_back(
+            /*.description =    */    event["Content"],
+            /*.category =       */    get_category_by_id(event["Category"]["Id"], EVENT),
+            /*.date =           */    event["Date"],
+            /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
+            /*.subject =        */    event.contains("Subject") ? get_subject_by_id(event["Subject"]["Id"]) : "N/A",
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
     }
