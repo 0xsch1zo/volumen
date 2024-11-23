@@ -53,7 +53,7 @@ class benchmarks {
     std::string mock_dir;
 
     test_result parse_grades_test(api& api_o);
-    test_result parse_recent_grades_test(api& api_o);
+    test_result parse_grades_unstructured_test(api& api_o);
     test_result parse_comment_test(api& api_o);
     test_result prase_generic_info_by_id_test(api& api_o);
     test_result parse_events_test(api& api_o);

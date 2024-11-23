@@ -81,7 +81,7 @@ void benchmarks::api_bench(auth& auth_o, int run_count) {
     const std::function<test_result()> void_api_functions[] = {
         [&]{ return parse_comment_test(api_o);             /* pure */},
         [&]{ return prase_generic_info_by_id_test(api_o);  /* pure */},
-        [&]{ return parse_recent_grades_test(api_o);       /* not pure(4) */},
+        [&]{ return parse_grades_unstructured_test(api_o);       /* not pure(4) */},
         [&]{ return parse_events_test(api_o);              /* not pure(2) */},
         [&]{ return parse_messages_test(api_o);            /* not pure(1) */},
         [&]{ return parse_annoucements_test(api_o);        /* not pure(1)*/},
@@ -121,10 +121,10 @@ benchmarks::test_result benchmarks::parse_grades_test(api& api_o) {
     return { VAR_NAME(GRADES), benchmarks::simple_benchmark(handle) };
 }
 
-benchmarks::test_result benchmarks::parse_recent_grades_test(api& api_o) {
-    api::recent_grades_t grades_o;
+benchmarks::test_result benchmarks::parse_grades_unstructured_test(api& api_o) {
+    api::grades_unstructured_t grades;
 
-    std::function<void()> handle = [&]{ api_o.parse_recent_grades(load_mock(RECENT_GRADES), grades_o); };
+    std::function<void()> handle = [&]{ api_o.parse_grades_unstructured(load_mock(RECENT_GRADES), grades); };
 
     return { VAR_NAME(RECENT_GRADES), benchmarks::simple_benchmark(handle) };
 }
