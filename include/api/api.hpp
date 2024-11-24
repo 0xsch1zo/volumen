@@ -123,7 +123,7 @@ private:
 #ifdef VOLUMEN_TESTING
     friend class benchmarks;
 #endif
-    std::string get_subject_by_id(const int& id);
+    std::optional<std::string> get_subject_by_id(const int& id);
     std::string get_category_by_id(const int& id, category_types);
     std::string get_comment_by_id(const int& id);
     std::string get_username_by_id(const int& id);

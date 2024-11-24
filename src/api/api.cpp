@@ -238,10 +238,10 @@ void api::parse_messages(const std::string& response, std::deque<api::message_t>
     }
 }
 
-std::string api::get_subject_by_id(const int& id) {
+std::optional<std::string> api::get_subject_by_id(const int& id) {
     const std::unordered_map<int, const std::string>* subject_map_p = get_subjects();
     // It turns out that the librus api can give wrong ids for the subject. 
-    return subject_map_p->contains(id) ? subject_map_p->at(id) : "";
+    return subject_map_p->contains(id) ? std::optional<std::string>(subject_map_p->at(id)) : std::nullopt;
 }
 
 const std::unordered_map<int, const std::string>* api::get_subjects() {
@@ -364,7 +364,7 @@ void api::parse_grades(const std::string& response, grades_t& grades_o) {
         );*/
 
         grades_o[grade.value()["Subject"]["Id"]].grades.emplace_back(
-            /*.subject                    =*/ get_subject_by_id(grade.value()["Subject"]["Id"]),
+            /*.subject                    =*/ *get_subject_by_id(grade.value()["Subject"]["Id"]), // The api gives invalid subject ids only in events so we don't have to worry about that here
             /*.grade                      =*/ grade.value()["Grade"],
             /*.category                   =*/ get_category_by_id(grade.value()["Category"]["Id"], GRADE),
             /*.added_by                   =*/ get_username_by_id(grade.value()["AddedBy"]["Id"]),
@@ -401,7 +401,7 @@ void api::parse_grades_unstructured(const std::string& response, grades_unstruct
     for(int i = data[target_data_structure].size() - 1; i >= 0; i--) {
         const auto& grade = data[target_data_structure].at(i);
         grades_o.emplace_back(
-            /*.subject                    =*/ get_subject_by_id(grade["Subject"]["Id"]),
+            /*.subject                    =*/ *get_subject_by_id(grade["Subject"]["Id"]), // The api gives invalid subject ids only in events so we don't have to worry about that here
             /*.grade                      =*/ grade["Grade"],
             /*.category                   =*/ get_category_by_id(grade["Category"]["Id"], GRADE),
             /*.added_by                   =*/ get_username_by_id(grade["AddedBy"]["Id"]),
@@ -447,7 +447,7 @@ void api::parse_events(const std::string& response, api::events_t& events_o) {
             /*.date =           */    event["Date"],
             /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
             /*.subject =        */    event.contains("Subject") ?
-                                        std::optional<std::string>(get_subject_by_id(event["Subject"]["Id"]))
+                                        get_subject_by_id(event["Subject"]["Id"])
                                         : std::nullopt,
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
@@ -479,7 +479,7 @@ void api::parse_events_unstructured(const std::string& response, api::events_uns
             /*.date =           */    event["Date"],
             /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
             /*.subject =        */    event.contains("Subject") ? 
-                                        std::optional<std::string>(get_subject_by_id(event["Subject"]["Id"]))
+                                        get_subject_by_id(event["Subject"]["Id"])
                                         : std::nullopt,
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
