@@ -88,7 +88,7 @@ public:
         std::string category;
         std::string added_by;
         std::string date;
-        std::string comment;
+        std::optional<std::string> comment;
         int semester;
         bool is_semester;
         bool is_semester_proposition;
@@ -110,7 +110,7 @@ public:
         std::string category;
         std::string date;
         std::string created_by;
-        std::string subject;
+        std::optional<std::string> subject;
         int lesson_offset;
     };
 

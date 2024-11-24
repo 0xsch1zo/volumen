@@ -11,7 +11,7 @@ ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
         if(i++ >= max_event_count)
             break;
         events_component->Add(ft::MenuEntry({
-            .label = event.subject + " | " + event.category,
+            .label = event.subject.has_value() ? *event.subject + " | " + event.category : event.category,
             .transform = [=](const ft::EntryState& s) {
                 return custom_ui::focus_managed_window(ft::text(s.label), ft::vbox({
                         ft::text("Date: " + event.date),

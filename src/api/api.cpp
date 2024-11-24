@@ -370,7 +370,9 @@ void api::parse_grades(const std::string& response, grades_t& grades_o) {
             /*.added_by                   =*/ get_username_by_id(grade.value()["AddedBy"]["Id"]),
             /*.date                       =*/ grade.value()["Date"],
             // Why would a grade have multiple comments
-            /*.comment                    =*/ grade.value().contains("Comments") ? get_comment_by_id(grade.value()["Comments"][0]["Id"]) : "N/A",
+            /*.comment                    =*/ grade.value().contains("Comments") ? 
+                                                std::optional<std::string>(get_comment_by_id(grade.value()["Comments"][0]["Id"]))
+                                                : std::nullopt,
             /*.semester                   =*/ grade.value()["Semester"],
             /*.is_semester                =*/ grade.value()["IsSemester"],
             /*.is_semester_proposition    =*/ grade.value()["IsSemesterProposition"],
@@ -404,7 +406,9 @@ void api::parse_grades_unstructured(const std::string& response, grades_unstruct
             /*.category                   =*/ get_category_by_id(grade["Category"]["Id"], GRADE),
             /*.added_by                   =*/ get_username_by_id(grade["AddedBy"]["Id"]),
             /*.date                       =*/ grade["Date"],
-            /*.comment                    =*/ grade.contains("Comments") ? get_comment_by_id(grade["Comments"][0]["Id"]) : "N/A",
+            /*.comment                    =*/ grade.contains("Comments") ? 
+                                                std::optional<std::string>(get_comment_by_id(grade["Comments"][0]["Id"]))
+                                                : std::nullopt,
             /*.semester                   =*/ grade["Semester"],
             /*.is_semester                =*/ grade["IsSemester"],
             /*.is_semester_proposition    =*/ grade["IsSemesterProposition"],
@@ -442,7 +446,9 @@ void api::parse_events(const std::string& response, api::events_t& events_o) {
             /*.category =       */    get_category_by_id(event["Category"]["Id"], EVENT),
             /*.date =           */    event["Date"],
             /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
-            /*.subject =        */    event.contains("Subject") ? get_subject_by_id(event["Subject"]["Id"]) : "N/A",
+            /*.subject =        */    event.contains("Subject") ?
+                                        std::optional<std::string>(get_subject_by_id(event["Subject"]["Id"]))
+                                        : std::nullopt,
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
     }
@@ -472,7 +478,9 @@ void api::parse_events_unstructured(const std::string& response, api::events_uns
             /*.category =       */    get_category_by_id(event["Category"]["Id"], EVENT),
             /*.date =           */    event["Date"],
             /*.created_by =     */    get_username_by_id(event["CreatedBy"]["Id"]),
-            /*.subject =        */    event.contains("Subject") ? get_subject_by_id(event["Subject"]["Id"]) : "N/A",
+            /*.subject =        */    event.contains("Subject") ? 
+                                        std::optional<std::string>(get_subject_by_id(event["Subject"]["Id"]))
+                                        : std::nullopt,
             /*.lesson_offset =  */    event["LessonNo"].is_null() ? 0 : std::stoi((std::string)event["LessonNo"])
         );
     }

@@ -56,7 +56,7 @@ ft::Component grades::grade_box(const api::grade_t& grade) {
                         ft::separator(),
                         ft::text("Grade: " + grade.grade),
                         ft::vbox({
-                            utils::split("Comment: " + grade.comment),
+                            utils::split("Comment: " + grade.comment.value_or("N/A")),
                         }),
                         ft::text("Added by: " + grade.added_by),
                         ft::text("Date: " + grade.date),
