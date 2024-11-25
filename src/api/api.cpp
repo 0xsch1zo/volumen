@@ -391,7 +391,6 @@ api::grades_unstructured_t api::get_grades_unstructured() {
 
 void api::parse_grades_unstructured(const std::string& response, grades_unstructured_t& grades_o) {
     const std::string target_data_structure = "Grades";
-	const int MAX_VECTOR_SIZE = 4;
  
     json data = json::parse(response);
 
@@ -415,9 +414,6 @@ void api::parse_grades_unstructured(const std::string& response, grades_unstruct
             /*.is_final                   =*/ grade["IsFinal"],
             /*.is_final_proposition       =*/ grade["IsFinalProposition"]
         );
-
-        if(grades_o.size() >= MAX_VECTOR_SIZE)
-            break;
     }   
 }
 
