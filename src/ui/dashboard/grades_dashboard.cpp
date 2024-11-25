@@ -26,8 +26,8 @@ ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
         return custom_ui::focus_managed_window(
             ft::text(grade_window_name)
 			| ft::hcenter,
-			grade_component->Render(),
+			grade_component->Render() | ft::vscroll_indicator | ft::yframe,
             { .active = active, .focused = grade_component->Focused() }
-        );
+        ) | ft::size(ft::HEIGHT, ft::LESS_THAN, ft::Terminal::Size().dimy); 
     }) | ft::Hoverable(&active);
 }

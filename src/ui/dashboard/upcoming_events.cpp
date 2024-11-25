@@ -19,10 +19,7 @@ ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
     );
 
     auto events_component = ft::Container::Vertical({});
-    int i{};
     for(const auto& event : events) {
-        if(i++ >= max_event_count)
-            break;
         events_component->Add(ft::MenuEntry({
             .label = event.subject.has_value() ? *event.subject + " | " + event.category : event.category,
             .transform = [=](const ft::EntryState& s) {
@@ -36,6 +33,8 @@ ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
         }));
     }
 
-    events_component = custom_ui::custom_component_window(ft::text("Upcoming events"), events_component);
-    return events_component;
+    events_component = ft::Renderer(events_component, [=]{
+        return events_component->Render() | ft::vscroll_indicator | ft::yframe;
+    });
+    return custom_ui::custom_component_window(ft::text("Upcoming events"), events_component);
 }
