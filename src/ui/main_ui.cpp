@@ -75,8 +75,8 @@ bool main_ui::display_interface(const std::string& picked_login) {
     bool logout{};
     error e;
     api api(auth_, picked_login);
-    annoucements annoucements_o(main_screen.ExitLoopClosure());
-    messages messages_o(main_screen.ExitLoopClosure());
+    annoucements annoucements_o;
+    messages messages_o;
     timetable timetable_o(config_p);
     grades grades_o;
 
@@ -124,7 +124,7 @@ bool main_ui::display_interface(const std::string& picked_login) {
         tab_menu,
         tab_container
     })
-    | ft::CatchEvent(utils::exit_on_keybind(main_screen.ExitLoopClosure()))
+    | ft::CatchEvent(utils::exit_active_screen_on_keybind())
     | ft::CatchEvent(logout_handler(logout))
     | ft::CatchEvent(navigation_handler(tab_selected));
 
@@ -198,7 +198,7 @@ bool main_ui::display_interface(const std::string& picked_login) {
                     GUARD(TIMETABLE);
 
                     timetable_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
-                        timetable_o.timetable_display(timetable_component, &api, &selsd, "", &main_screen);
+                        timetable_o.timetable_display(timetable_component, &api, &selsd, "");
                     }, tab_container, TIMETABLE);
 
                     envoked_lazy_load[TIMETABLE] = true;

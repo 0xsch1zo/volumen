@@ -13,7 +13,8 @@ public:
         request_failed,
         json_parsing_error,
         quit_before_login,
-        generic_error
+        generic_error,
+        no_active_screen_error
     };
 
     class volumen_exception : std::runtime_error {

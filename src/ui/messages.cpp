@@ -31,7 +31,7 @@ ft::Component messages::content_view() {
             ft::separator(),
             ft::text(quit_message)
         });
-    }) | ft::CatchEvent(utils::exit_on_keybind(screen_exit_));
+    }) | ft::CatchEvent(utils::exit_active_screen_on_keybind());
 }
 
 void messages::content_display(
@@ -68,10 +68,11 @@ std::mutex* redirect_mutex) {
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(message_components, [=, this]{ return message_components->Render() | ft::yframe; })
-    | ft::CatchEvent([=, this](ft::Event event){
+    content_component->Add(ft::Renderer(message_components, [=]{ return message_components->Render() | ft::yframe; })
+    | ft::CatchEvent([=](ft::Event event){
         if(event == ft::Event::Return) {
-            screen_exit_();
+            auto* screen = ft::ScreenInteractive::Active();
+            screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
             redirect_mutex->lock();
             *redirect = main_ui::MESSAGE_VIEW; 
             redirect_mutex->unlock();

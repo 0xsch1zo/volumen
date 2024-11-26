@@ -11,6 +11,7 @@ constexpr std::string error_type_to_str(error::type t) {
         case error::json_parsing_error: return "json_parsing_erro";
         case error::quit_before_login: return "quit_before_login";
         case error::generic_error: return "generic_error";
+        case error::no_active_screen_error: return "no_active_screen_error";
         default: return "Unknown error";
     };
 }

@@ -2,6 +2,7 @@
 #include <ui/custom_ui.hpp>
 #include <api/api.hpp>
 #include <misc/utils.hpp>
+#include <misc/error_handler.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/captured_mouse.hpp>
@@ -16,8 +17,7 @@ void timetable::timetable_display(
     ft::Component timetable_component, 
     api* api, 
     int* selector,
-    const std::string& url,
-    ft::ScreenInteractive* screen_p
+    const std::string& url
 ) {
     const int TIMETABLE_POSITION = 1;
 
@@ -74,8 +74,9 @@ void timetable::timetable_display(
         // this is the only hacky way I found to predictably update the menu selector and have it work
         // Enjoy :)
         ft::Component menu = ft::Menu(weekdays, selector, ft::MenuOption::HorizontalAnimated())
-        | ft::CatchEvent([screen_p = screen_p](ft::Event event) {
-            screen_p->PostEvent(ft::Event::Special("Why"));
+        | ft::CatchEvent([](ft::Event event) {
+            auto* screen = ft::ScreenInteractive::Active();
+            screen ? screen->PostEvent(ft::Event::Special("Why")) : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
             return false;
         })
         | ft::CatchEvent([=, this](ft::Event e){
@@ -83,12 +84,12 @@ void timetable::timetable_display(
                 if(*selector == 0) {
                     *selector = weekdays.size() - ACTION_COUNT;
                     timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, prev_url, screen_p);
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, prev_url);
                 }
                 else if(*selector == weekdays.size() - 1) {
                     *selector = ACTION_PREV_ENTRY_OFFSET;
                     timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
-                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, next_url, screen_p);
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, next_url);
                 }
                 return true;
             }

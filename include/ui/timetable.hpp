@@ -27,7 +27,6 @@ public:
         ft::Component timetable_component, 
         api* api, 
         int* selector,
-        const std::string& url,
-        ft::ScreenInteractive* screen_p
+        const std::string& url
     );
 };
