@@ -31,21 +31,26 @@ ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
 
     if(empty_counter == timetable_o.timetable[today].size())
         timetable_widget->Add(ft::MenuEntry(weekend_prompt));
+
+    timetable_widget |= switch_focusable_component();
     
     auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_o.timetable[today]);
 
-    return ft::Renderer(timetable_widget, [=, active = active] {
+    auto timetable_container = ft::Renderer(timetable_widget, [=]{
+        return ft::hbox({
+            timeline_widget,
+            ft::separator(),
+            timetable_widget->Render()
+        });
+    }) | switch_focusable_component();
+
+    return ft::Renderer(timetable_container, [=, active = active] {
         return custom_ui::focus_managed_window(
             ft::text("Timetable"), 
-            ft::hbox({
-                timeline_widget,
-                ft::separator(),
-                timetable_widget->Render(),
-            }),
-            { .active = active, .focused = timetable_widget->Focused() }
+            timetable_container->Render(),
+            { .active = active, .focused = timetable_container->Focused() }
         );
     }) | ft::Hoverable(&active);
-    
 }
 
 ft::Element dashboard::timetable_dashboard::get_timeline_widget(const std::vector<api::lesson_t>& day) {

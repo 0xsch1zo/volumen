@@ -35,6 +35,6 @@ ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
 
     events_component = ft::Renderer(events_component, [=]{
         return events_component->Render() | ft::vscroll_indicator | ft::yframe;
-    });
+    }) | switch_focusable_component();
     return custom_ui::custom_component_window(ft::text("Upcoming events"), events_component);
 }
