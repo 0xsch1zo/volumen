@@ -30,6 +30,8 @@ class dashboard {
         static ft::Component get_upcoming_events(api* api);
     };
 
+    static ft::Component switch_focusable_component(ft::Component content);
+    static ft::ComponentDecorator switch_focusable_component();
 public:
     static void dashboard_display(ft::Component dashboard_component, api* api);
 };
