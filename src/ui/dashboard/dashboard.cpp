@@ -10,13 +10,25 @@
 ft::Component dashboard::switch_focusable_component(ft::Component content) {
     class Impl : public ft::ComponentBase {
         bool enabled_{};
+        bool hovered_{};
         ft::Box box_;
     public:
         Impl(ft::Component content) {
-            Add(content);
+            Add(content |= ft::Hoverable(&hovered_));
         }
 
         ft::Element Render() override {
+            if(!Parent())
+                throw error::volumen_exception(__FUNCTION__, "No parent found", error::generic_error);
+
+            // Deactivate when not hovered or focused
+            if(enabled_ && (!Parent()->Focused() && !hovered_))
+                enabled_ = false;
+
+            // Activate if hovered and not focused
+            if(!enabled_ && (hovered_ && !Parent()->Focused()))
+                enabled_ = true;
+
              return children_[0]->Render()
              | (enabled_ ? ft::nothing : ft::dim)
              | ft::reflect(box_);
@@ -25,18 +37,6 @@ ft::Component dashboard::switch_focusable_component(ft::Component content) {
         bool OnEvent(ft::Event event) override {
             if(event == ft::Event::Return) {
                 enabled_ = !enabled_;
-                return true;
-            }
-
-            if(event.is_mouse() && !enabled_ && 
-                box_.Contain(event.mouse().x, event.mouse().y)) {
-                enabled_ = true;
-                return true;
-            }
-
-            if(event.is_mouse() && enabled_ && 
-                !box_.Contain(event.mouse().x, event.mouse().y)) {
-                enabled_ = false;
                 return true;
             }
 
