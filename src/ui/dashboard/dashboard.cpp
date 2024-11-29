@@ -1,3 +1,4 @@
+#include <ui/main_ui.hpp>
 #include <ui/dashboard.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
@@ -70,28 +71,38 @@ ft::ComponentDecorator dashboard::switch_focusable_component() {
 void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     grades_dashboard grades_dashboard_o;
     timetable_dashboard timetable_dashboard_o;
+    upcoming_events upcoming_events_o;
+    weekend_bar weekend_bar_o;
 
-    auto flex = [](ft::Component component) {
+    /*auto flex = [](ft::Component component) {
         return ft::Renderer(component, [=]{
             return component->Render()
             | ft::flex;
         });
-    };
-    auto grades = flex(grades_dashboard_o.get_grades_widget(api));
-    auto timetable = flex(timetable_dashboard_o.get_timetable_widget(api));
-    auto events = flex(upcoming_events::get_upcoming_events(api));
-    auto weekend_bar = flex(weekend_bar::get_weekend_bar(api));
+    };*/
+    auto grades = grades_dashboard_o.get_component(api);
+    auto timetable = timetable_dashboard_o.get_component(api);
+    auto events = upcoming_events_o.get_component(api);
+    auto weekend_bar = weekend_bar_o.get_component(api);
     
     auto dashboard_components = ft::Container::Vertical({
         ft::Container::Horizontal({
             ft::Container::Vertical({
-                grades,
+                ft::Renderer(grades, [grades, &timetable_dashboard_o, &weekend_bar_o] {
+                    return grades->Render()
+                    | ft::size(ft::HEIGHT, ft::LESS_THAN, 
+                        ft::Terminal::Size().dimy - main_ui::top_menu_size - weekend_bar_o.get_size().second - timetable_dashboard_o.get_size().second);
+                }),
                 timetable
             }),
-            events
+            ft::Renderer(events, [events, &weekend_bar_o] { 
+                return events->Render()
+                | ft::size(ft::HEIGHT, ft::LESS_THAN, 
+                    ft::Terminal::Size().dimy - main_ui::top_menu_size - weekend_bar_o.get_size().second);
+            })
         }),
         ft::Container::Horizontal({
-            weekend_bar
+            weekend_bar,
         })
     });
 

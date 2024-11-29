@@ -12,7 +12,7 @@
 #include <spdlog/spdlog.h>
 
 // TODO: implement caching 
-ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
+ft::Component dashboard::timetable_dashboard::get_component(api* api) {
     const std::string weekend_prompt = "No lessons today!";
     const api::timetable_t timetable_o = api->get_timetable();
     int today = utils::get_day_of_week(api->get_today());
@@ -44,12 +44,14 @@ ft::Component dashboard::timetable_dashboard::get_timetable_widget(api* api) {
         });
     }) | switch_focusable_component();
 
-    return ft::Renderer(timetable_container, [=, active = active] {
+    return ft::Renderer(timetable_container, [=, active = active, this] {
         return custom_ui::focus_managed_window(
             ft::text("Timetable"), 
             timetable_container->Render(),
             { .active = active, .focused = timetable_container->Focused() }
-        );
+        )
+        | ft::size(ft::HEIGHT, ft::GREATER_THAN, timetable_o.timetable[today].size() - empty_counter + 2 + 1)
+        | ft::reflect(box_);
     }) | ft::Hoverable(&active);
 }
 

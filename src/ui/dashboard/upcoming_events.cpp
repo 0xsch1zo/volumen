@@ -1,7 +1,7 @@
 #include <ui/dashboard.hpp>
 #include <ui/custom_ui.hpp>
 
-ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
+ft::Component dashboard::upcoming_events::get_component(api* api) {
     auto events = api->get_events_unstructured();
     const std::string today = api->get_today();
     const int max_event_count = 4;
@@ -33,8 +33,11 @@ ft::Component dashboard::upcoming_events::get_upcoming_events(api* api) {
         }));
     }
 
-    events_component = ft::Renderer(events_component, [=]{
-        return events_component->Render() | ft::vscroll_indicator | ft::yframe;
+    events_component = ft::Renderer(events_component, [=, this]{
+        return events_component->Render()
+        | ft::vscroll_indicator
+        | ft::yframe
+        | ft::reflect(box_);
     }) | switch_focusable_component();
     return custom_ui::custom_component_window(ft::text("Upcoming events"), events_component);
 }

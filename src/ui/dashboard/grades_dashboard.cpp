@@ -3,7 +3,7 @@
 #include <ftxui/component/component.hpp>
 #include <memory>
 
-ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
+ft::Component dashboard::grades_dashboard::get_component(api* api) {
     const auto grades_o = api->get_grades_unstructured();
     auto grade_component = ft::Container::Vertical({});
 
@@ -22,7 +22,7 @@ ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
 
     grade_component |= switch_focusable_component();
 
-    return ft::Renderer(grade_component, [grade_component, active = active] {
+    return ft::Renderer(grade_component, [this, grade_component, active = active] {
         const std::string grade_window_name = "Recent grades";
 
         return custom_ui::focus_managed_window(
@@ -30,6 +30,6 @@ ft::Component dashboard::grades_dashboard::get_grades_widget(api* api) {
             | ft::hcenter,
             grade_component->Render() | ft::vscroll_indicator | ft::yframe,
             { .active = active, .focused = grade_component->Focused() }
-        ) | ft::size(ft::HEIGHT, ft::LESS_THAN, ft::Terminal::Size().dimy); 
+        ) | ft::reflect(box_);
     }) | ft::Hoverable(&active);
 }

@@ -4,7 +4,7 @@
 
 namespace ft = ftxui;
 
-ft::Component dashboard::weekend_bar::get_weekend_bar(api* api) {
+ft::Component dashboard::weekend_bar::get_component(api* api) {
     const int FRIDAY = 5;
     const int SATURDAY = 6;
     const int SUNDAY = 7;
@@ -30,8 +30,9 @@ ft::Component dashboard::weekend_bar::get_weekend_bar(api* api) {
         }
     });
 
-    return ft::Renderer(weekend_bar_component, [=]{
+    return ft::Renderer(weekend_bar_component, [=, this]{
         return weekend_bar_component->Render()
+        | ft::reflect(box_)
         // Stop the bar from collapsing
         | ft::size(ft::HEIGHT, ft::EQUAL, 4);
     });
