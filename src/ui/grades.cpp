@@ -38,7 +38,7 @@ void grades::grades_display(ft::Component grades_component, api* api) {
         | ft::vscroll_indicator
         | ft::yframe;
         if(!grades_menu->Focused())
-            return base | custom_ui::terminal_height();
+            return base | ft::size(ft::HEIGHT, ft::LESS_THAN, custom_ui::terminal_height());
         
         return base;
     }));

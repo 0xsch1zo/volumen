@@ -1,4 +1,5 @@
 #include <ui/custom_ui.hpp>
+#include <ui/main_ui.hpp>
 
 using Charset = std::array<std::string, 6>;  // NOLINT
 using Charsets = std::array<Charset, 6>;     // NOLINT
@@ -194,7 +195,7 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
         return content_entries->Render()
         | ft::vscroll_indicator 
         | ft::yframe
-        | terminal_height();
+        | ft::size(ft::HEIGHT, ft::LESS_THAN, terminal_height() - main_ui::top_menu_size);
     });
 }
 
@@ -283,6 +284,6 @@ ft::Component custom_ui::custom_dropdown(ft::ConstStringListRef entries, int* se
     return handle;
 }
 
-ft::ElementDecorator custom_ui::terminal_height() {
-    return ft::size(ft::HEIGHT, ft::LESS_THAN, ft::Terminal::Size().dimy);
+int custom_ui::terminal_height() {
+    return ft::Terminal::Size().dimy;
 }

@@ -44,7 +44,7 @@ std::mutex* redirect_mutex) {
 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(ft::Renderer(annoucement_components, [=, this]{ return annoucement_components->Render() | ft::yframe; })
+    content_component->Add(annoucement_components
     | ft::CatchEvent([=, this](ft::Event event){
         if(event == ft::Event::Return) {
             auto* screen = ft::ScreenInteractive::Active();

@@ -54,7 +54,7 @@ void timetable::timetable_display(
             | ft::vscroll_indicator
             | ft::yframe;
             if(!lessons_component->Focused())
-                return base | custom_ui::terminal_height();
+                return base | ft::size(ft::HEIGHT, ft::LESS_THAN, custom_ui::terminal_height());
 
             return base;
         }));
