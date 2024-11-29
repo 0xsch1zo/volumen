@@ -34,6 +34,7 @@ public:
         ANNOUCEMENT_VIEW,
         EXIT
     };
+    static const int top_menu_size = 2;
     
     main_ui(const config* config, auth& auth) : 
         config_p(config),
