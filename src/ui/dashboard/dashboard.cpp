@@ -1,4 +1,5 @@
 #include <ui/main_ui.hpp>
+#include <ui/custom_ui.hpp>
 #include <ui/dashboard.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
@@ -74,12 +75,6 @@ void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     upcoming_events upcoming_events_o;
     weekend_bar weekend_bar_o;
 
-    /*auto flex = [](ft::Component component) {
-        return ft::Renderer(component, [=]{
-            return component->Render()
-            | ft::flex;
-        });
-    };*/
     auto grades = grades_dashboard_o.get_component(api);
     auto timetable = timetable_dashboard_o.get_component(api);
     auto events = upcoming_events_o.get_component(api);
@@ -91,14 +86,14 @@ void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
                 ft::Renderer(grades, [grades, &timetable_dashboard_o, &weekend_bar_o] {
                     return grades->Render()
                     | ft::size(ft::HEIGHT, ft::LESS_THAN, 
-                        ft::Terminal::Size().dimy - main_ui::top_menu_size - weekend_bar_o.get_size().second - timetable_dashboard_o.get_size().second);
+                        custom_ui::terminal_height() - main_ui::top_menu_size - weekend_bar_o.get_size().second - timetable_dashboard_o.get_size().second);
                 }),
                 timetable
             }),
             ft::Renderer(events, [events, &weekend_bar_o] { 
                 return events->Render()
                 | ft::size(ft::HEIGHT, ft::LESS_THAN, 
-                    ft::Terminal::Size().dimy - main_ui::top_menu_size - weekend_bar_o.get_size().second);
+                    custom_ui::terminal_height() - main_ui::top_menu_size - weekend_bar_o.get_size().second);
             })
         }),
         ft::Container::Horizontal({

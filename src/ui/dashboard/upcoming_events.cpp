@@ -4,7 +4,6 @@
 ft::Component dashboard::upcoming_events::get_component(api* api) {
     auto events = api->get_events_unstructured();
     const std::string today = api->get_today();
-    const int max_event_count = 4;
 
     // Delete the event if it's date is set to before today
     std::erase_if(events, [&](const api::event_t& event) {
