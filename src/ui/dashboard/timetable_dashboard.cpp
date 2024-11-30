@@ -36,23 +36,17 @@ ft::Component dashboard::timetable_dashboard::get_component(api* api) {
     
     auto timeline_widget = timetable_dashboard::get_timeline_widget(timetable_o.timetable[today]);
 
-    auto timetable_container = ft::Renderer(timetable_widget, [=]{
+    auto timetable_container = ft::Renderer(timetable_widget, [=, this]{
         return ft::hbox({
             timeline_widget,
             ft::separator(),
             timetable_widget->Render()
+            | ft::size(ft::HEIGHT, ft::GREATER_THAN, timetable_o.timetable[today].size() - empty_counter + 2)
+            | ft::reflect(box_)
         });
     }) | switch_focusable_component();
 
-    return ft::Renderer(timetable_container, [=, active = active, this] {
-        return custom_ui::focus_managed_window(
-            ft::text("Timetable"), 
-            timetable_container->Render(),
-            { .active = active, .focused = timetable_container->Focused() }
-        )
-        | ft::size(ft::HEIGHT, ft::GREATER_THAN, timetable_o.timetable[today].size() - empty_counter + 2 + 1)
-        | ft::reflect(box_);
-    }) | ft::Hoverable(&active);
+    return custom_ui::custom_component_window(ft::text("Timetable"), timetable_container);
 }
 
 ft::Element dashboard::timetable_dashboard::get_timeline_widget(const std::vector<api::lesson_t>& day) {

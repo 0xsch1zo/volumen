@@ -20,16 +20,12 @@ ft::Component dashboard::grades_dashboard::get_component(api* api) {
         }));
     }
 
-    grade_component |= switch_focusable_component();
+    grade_component = ft::Renderer(grade_component, [=, this]{
+        return grade_component->Render() 
+        | ft::vscroll_indicator
+        | ft::yframe
+        | ft::reflect(box_);
+    }) | switch_focusable_component();
 
-    return ft::Renderer(grade_component, [this, grade_component, active = active] {
-        const std::string grade_window_name = "Recent grades";
-
-        return custom_ui::focus_managed_window(
-            ft::text(grade_window_name)
-            | ft::hcenter,
-            grade_component->Render() | ft::vscroll_indicator | ft::yframe,
-            { .active = active, .focused = grade_component->Focused() }
-        ) | ft::reflect(box_);
-    }) | ft::Hoverable(&active);
+    return custom_ui::custom_component_window(ft::text("Recent grades"), grade_component);
 }

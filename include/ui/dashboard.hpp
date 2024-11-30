@@ -21,13 +21,11 @@ class dashboard {
     };
     class timetable_dashboard : public dashboard_widget {
         static ft::Element get_timeline_widget(const std::vector<api::lesson_t>& day);
-        bool active{};
     public:
         ft::Component get_component(api* api) override;
     };
 
     class grades_dashboard : public dashboard_widget {
-        bool active{};
     public:
         ft::Component get_component(api* api) override;
     };

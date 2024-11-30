@@ -7,7 +7,6 @@
 void grades::grades_display(ft::Component grades_component, api* api) {
     api::grades_t grades_o = api->get_grades();
     ft::Component grades_menu = ft::Container::Vertical({});
-    active.resize(grades_o.size());
 
     int i{};
     for(const auto& subject : grades_o) {
@@ -21,26 +20,24 @@ void grades::grades_display(ft::Component grades_component, api* api) {
         for(const auto& grade : subject.second.grades)
             subject_component->Add( grade_box(grade) );
 
-        grades_menu->Add(ft::Renderer(subject_component, [=, this]{ 
-            return custom_ui::focus_managed_window(
-                ft::text(subject.second.subject), 
-                subject_component->Render() | ft::xframe,
-                { .active = static_cast<bool>(active[i]), .focused = subject_component->Focused() }
-            );
-        }) | ft::Hoverable((bool*)&active[i])
+        subject_component = ft::Renderer(subject_component, [=]{ 
+            return subject_component->Render()
+            | ft::xframe;
+        });
+        
+        grades_menu->Add(custom_ui::custom_component_window(
+            ft::text(subject.second.subject), subject_component)
         );
+
         i++;
     }
 
     grades_component->DetachAllChildren();
     grades_component->Add(ft::Renderer(grades_menu, [=]{ 
-        auto base = grades_menu->Render() 
+        return grades_menu->Render() 
         | ft::vscroll_indicator
-        | ft::yframe;
-        if(!grades_menu->Focused())
-            return base | ft::size(ft::HEIGHT, ft::LESS_THAN, custom_ui::terminal_height());
-        
-        return base;
+        | ft::yframe
+        | ft::size(ft::HEIGHT, ft::LESS_THAN, custom_ui::terminal_height());
     }));
 }
 
