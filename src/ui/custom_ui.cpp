@@ -1,5 +1,6 @@
 #include <ui/custom_ui.hpp>
 #include <ui/main_ui.hpp>
+#include <spdlog/spdlog.h>
 
 using Charset = std::array<std::string, 6>;  // NOLINT
 using Charsets = std::array<Charset, 6>;     // NOLINT
@@ -153,16 +154,16 @@ ft::Element custom_ui::focus_managed_window(ft::Element title, ft::Element conte
 }
 
 ft::Component custom_ui::custom_component_window(ft::Element title, ft::Component contents) {
-    return ft::Renderer(contents, [=] {
-        if(contents->Focused())
-            return ft::window(
-                title, 
-                contents->Render() 
-                | ft::color(ft::Color::White)) 
-                | ft::color(config_p->Colors().get_main_color()
-            );
+    std::shared_ptr box = std::make_shared<ft::Box>();
+    std::shared_ptr hovered = std::make_shared<bool>();
 
-        return ft::window(title | ft::color(config_p->Colors().get_main_color()), contents->Render()); 
+    return ft::Renderer(contents, [=] {
+        return focus_managed_window(title, contents->Render(), { .active = *hovered, .focused = contents->Focused() }) | ft::reflect(*box);
+    })
+    // Custom hover implementation because ft::Hoverable doesn't use shared_ptr
+    | ft::CatchEvent([=](ft::Event event){
+        *hovered = event.is_mouse() && box->Contain(event.mouse().x, event.mouse().y);
+        return false;
     });
 }
 
