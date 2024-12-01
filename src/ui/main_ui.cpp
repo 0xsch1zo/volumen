@@ -90,10 +90,9 @@ bool main_ui::display_interface(const std::string& picked_login) {
     };
 
 
-    const size_t SPINNER_TYPE = 20;    
     size_t load_state{};
     auto loading_screen = [&]{ 
-        return ft::Renderer([&load_state]{ return ft::spinner(SPINNER_TYPE, load_state) | ft::center; });
+        return ft::Renderer([&load_state]{ return ft::spinner(utils::SPINNER_TYPE, load_state) | ft::center; });
     };
 
     std::future<void> dashboard_load_handle;
@@ -132,7 +131,6 @@ bool main_ui::display_interface(const std::string& picked_login) {
     std::mutex redirect_mutex;
 
     const size_t TO_LAZY_LOAD = 5;
-    const auto ANIMATION_WAIT = 70ms;
     std::bitset<TO_LAZY_LOAD> envoked_lazy_load{};
 
     // Waits for all the threads for loading content to finish.
@@ -148,7 +146,7 @@ bool main_ui::display_interface(const std::string& picked_login) {
         || timetable_load_handle.wait_for(0ms)      != std::future_status::ready
         || grades_load_handle.wait_for(0ms)         != std::future_status::ready
         ) && !s_token.stop_requested()) {
-            std::this_thread::sleep_for(ANIMATION_WAIT);
+            std::this_thread::sleep_for(utils::ANIMATION_WAIT);
             if(load_state >= 8)
                 load_state = 0;
             load_state++;
