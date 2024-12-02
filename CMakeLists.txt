@@ -8,7 +8,7 @@ include(FetchContent)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG        1d40687a403b7babdafdd577d10e001840b0f12
+  GIT_TAG        58ff448 
 )
 
 FetchContent_Declare(spdlog
