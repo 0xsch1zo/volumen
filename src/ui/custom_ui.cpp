@@ -168,7 +168,7 @@ ft::Component custom_ui::custom_component_window(ft::Element title, ft::Componen
 }
 
 ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& contents, int* selector) {
-    const size_t PREVIEW_SIZE = 300;
+    const size_t PREVIEW_SIZE = 600;
 
     const std::string deliminator = " | ";
     auto content_entries = ft::Container::Vertical({});
