@@ -19,6 +19,27 @@ void timetable::timetable_display(
     int* selector,
     const std::string& url
 ) {
+    auto loading_screen = std::jthread([&](std::stop_token s_token){
+        if(url.empty())
+            return;
+
+        int spin_counter{};
+        auto loading_screen_component = ft::Renderer([&]{
+            return ft::vbox({
+                ft::separatorEmpty(),
+                ft::spinner(utils::SPINNER_TYPE, spin_counter) | ft::flex | ft::center
+            }) | ft::size(ft::HEIGHT, ft::GREATER_THAN, 6);
+        });
+
+        timetable_contents->Add(loading_screen_component);
+
+        while(!s_token.stop_requested()) {
+            std::this_thread::sleep_for(utils::ANIMATION_WAIT);
+            spin_counter++;
+        }
+        loading_screen_component->Detach();
+    });
+
     const int TIMETABLE_POSITION = 1;
 
     // get_timetable will handle empty url
@@ -65,45 +86,38 @@ void timetable::timetable_display(
 
     // On first run
     if(url.empty()) {
-        timetable_component->DetachAllChildren();
         // WARNING: If you pass timetable_component directly you will create a std::shared_ptr dependency cycly and with that a memory leak
         std::weak_ptr timetable_component_for_lamda = timetable_component;
 
-        // If youre seeing this you might ask:
-        // "Why the hell did you put those CatchEvents in there, this looks awful!?" well, 
-        // this is the only hacky way I found to predictably update the menu selector and have it work
-        // Enjoy :)
-        ft::Component menu = ft::Menu(weekdays, selector, ft::MenuOption::HorizontalAnimated())
-        | ft::CatchEvent([](ft::Event event) {
-            auto* screen = ft::ScreenInteractive::Active();
-            screen ? screen->PostEvent(ft::Event::Special("Why")) : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
-            return false;
-        })
-        | ft::CatchEvent([=, this](ft::Event e){
-            if(e == ft::Event::Special("Why")) {
-                if(*selector == 0) {
-                    *selector = weekdays.size() - ACTION_COUNT;
-                    timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+        *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
+        ft::Component menu = ft::Menu(weekdays, selector, ft::MenuOption::HorizontalAnimated());
+        menu = ft::Renderer(menu, [=, this]{
+            if(*selector == 0) {
+                *selector = weekdays.size() - ACTION_COUNT;
+                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                std::thread([=, this] {
                     timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, prev_url);
-                }
-                else if(*selector == weekdays.size() - 1) {
-                    *selector = ACTION_PREV_ENTRY_OFFSET;
-                    timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                }).detach();
+
+            } else if(*selector == weekdays.size() - 1) {
+                *selector = ACTION_PREV_ENTRY_OFFSET;
+                timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
+                std::thread([=, this] {
                     timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, next_url);
-                }
-                return true;
+                }).detach();
             }
-            return false;
+            return menu->Render();
         });
+
         timetable_contents->Add(menu);
     }
+    
+    loading_screen.request_stop();
+    timetable_component->DetachAllChildren();
 
     timetable_contents->Add(timetable_container);
 
     timetable_component->Add(timetable_contents);
-
-    if(url.empty())
-        *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
 }
 
 ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::events_t& events_o) {
