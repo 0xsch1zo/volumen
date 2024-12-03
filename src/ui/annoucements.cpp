@@ -40,20 +40,17 @@ std::mutex* redirect_mutex) {
     for(const auto& annoucement : annoucements_)
         contents.emplace_back((api::content_t*)&annoucement);
 
-    auto annoucement_components = custom_ui::content_boxes(contents, &selected_);
+    auto on_action = [&] {
+        auto* screen = ft::ScreenInteractive::Active();
+        screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
+        redirect_mutex->lock();
+        *redirect = main_ui::ANNOUCEMENT_VIEW; 
+        redirect_mutex->unlock();
+    };
+
+    auto annoucement_components = custom_ui::content_boxes(contents, &selected_, on_action);
 
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(annoucement_components
-    | ft::CatchEvent([=, this](ft::Event event){
-        if(event == ft::Event::Return) {
-            auto* screen = ft::ScreenInteractive::Active();
-            screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
-            redirect_mutex->lock();
-            *redirect = main_ui::ANNOUCEMENT_VIEW; 
-            redirect_mutex->unlock();
-            return true;
-        }
-        return false;
-    }));
+    content_component->Add(annoucement_components);
 }

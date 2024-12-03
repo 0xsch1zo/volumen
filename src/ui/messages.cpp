@@ -56,9 +56,17 @@ std::mutex* redirect_mutex) {
     const std::vector<std::string> menu_labels = { "Recieved", "Sent" };
     auto message_type_menu = ft::Menu(menu_labels, &messages_type_selected_, ft::MenuOption::HorizontalAnimated());
 
+    auto on_action = [&]{
+        auto* screen = ft::ScreenInteractive::Active();
+        screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
+        redirect_mutex->lock();
+        *redirect = main_ui::MESSAGE_VIEW; 
+        redirect_mutex->unlock();
+    };
+
     auto message_types_container = ft::Container::Tab({
-        custom_ui::content_boxes(contents.recieved, &message_selected_),
-        custom_ui::content_boxes(contents.sent, &message_selected_),
+        custom_ui::content_boxes(contents.recieved, &message_selected_, on_action),
+        custom_ui::content_boxes(contents.sent, &message_selected_, on_action),
     }, &messages_type_selected_);
 
     auto message_components = ft::Container::Vertical({
@@ -68,16 +76,5 @@ std::mutex* redirect_mutex) {
  
     // Remove loading screen
     content_component->ChildAt(0)->Detach();
-    content_component->Add(message_components
-    | ft::CatchEvent([=](ft::Event event){
-        if(event == ft::Event::Return) {
-            auto* screen = ft::ScreenInteractive::Active();
-            screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
-            redirect_mutex->lock();
-            *redirect = main_ui::MESSAGE_VIEW; 
-            redirect_mutex->unlock();
-            return true;
-        }
-        return false;
-    }));
+    content_component->Add(message_components);
 }
