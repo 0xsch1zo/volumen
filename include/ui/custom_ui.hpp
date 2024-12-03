@@ -10,7 +10,6 @@ class custom_ui {
     // Hurr durr, you're holding state in a static class
     // Please show me a way to factor in the configuration without passing the config to every fucking method
     inline static const config* config_p = nullptr;
-    static ft::Element custom_window(ft::Element title, ft::Element contents);
 public:
     struct focus_management_t {
         bool active;
