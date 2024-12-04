@@ -60,11 +60,7 @@ ft::Component custom_ui::custom_component_window(ft::Element title, ft::Componen
     return ft::Renderer(contents, [=] {
         return focus_managed_window(title, contents->Render(), { .active = *hovered, .focused = contents->Focused() }) | ft::reflect(*box);
     })
-    // Custom hover implementation because ft::Hoverable doesn't use shared_ptr
-    | ft::CatchEvent([=](ft::Event event){
-        *hovered = event.is_mouse() && box->Contain(event.mouse().x, event.mouse().y);
-        return false;
-    });
+    | ft::Hoverable([=](bool h){ *hovered = h; });
 }
 
 ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& contents, int* selector, std::function<void()> on_select) {
@@ -74,7 +70,6 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
     
     for(int i{}; i < contents.size(); i++) {
         const std::string& content = contents.at(i)->content;
-        std::shared_ptr hovered = std::make_shared<bool>();
 
         content_entries->Add(ft::MenuEntry({
             .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
@@ -91,15 +86,14 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
                 );
             }
         })
-        | ft::Hoverable([=](bool h){ *hovered = h; })
         | ft::CatchEvent([&](ft::Event event) {
             if(event == ft::Event::Return) {
                 on_select();
                 return true;
             }
 
-            if(/**hovered &&*/
-                event.is_mouse() && event.mouse().button == ft::Mouse::Button::Left && event.mouse().motion == ft::Mouse::Motion::Pressed)
+            if(event.is_mouse() && 
+                event.mouse().button == ft::Mouse::Button::Left && event.mouse().motion == ft::Mouse::Motion::Released)
                 on_select();
 
             return false;
