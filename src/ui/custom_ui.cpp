@@ -70,6 +70,7 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
     
     for(int i{}; i < contents.size(); i++) {
         const std::string& content = contents.at(i)->content;
+        std::shared_ptr hovered = std::make_shared<bool>();
 
         content_entries->Add(ft::MenuEntry({
             .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
@@ -86,18 +87,20 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
                 );
             }
         })
-        | ft::CatchEvent([&](ft::Event event) {
+        | ft::CatchEvent([&, hovered](ft::Event event) {
             if(event == ft::Event::Return) {
                 on_select();
                 return true;
             }
 
-            if(event.is_mouse() && 
+            if(event.is_mouse() &&
+                *hovered &&
                 event.mouse().button == ft::Mouse::Button::Left && event.mouse().motion == ft::Mouse::Motion::Released)
                 on_select();
 
             return false;
-        }));
+        })
+        | ft::Hoverable([=](bool h){ *hovered = h; }));
     }
 
     return ft::Renderer(content_entries, [=]{ 
