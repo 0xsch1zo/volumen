@@ -9,15 +9,15 @@ config::config()/* : misc_o(config_toml), colors_o(config_toml) */{
 #if defined(_WIN32) || defined(_WIN64)
     char* appdata = std::getenv("APPDATA");  // C:\Users\YourUser\AppData\Roaming
     if(appdata)
-        const_cast<std::string&>(config_path) = fs::path(appdata) / NAME / CONFIG_NAME;
+        const_cast<std::string&>(config_path) = (fs::path(appdata) / NAME / CONFIG_NAME).string();
 #elif defined(__APPLE__)
     char* home = std::getenv("HOME");
     if(home)
-        const_cast<std::string&>(config_path) = fs::path(home) / "Library" / "Preferences" / NAME / CONFIG_NAME;
+        const_cast<std::string&>(config_path) = (fs::path(home) / "Library" / "Preferences" / NAME / CONFIG_NAME).string();
 #else  // Linux or other Unix-like
     char* home = std::getenv("HOME");
     if(home)
-        const_cast<std::string&>(config_path) = fs::path(home) / ".config" / NAME / CONFIG_NAME;
+        const_cast<std::string&>(config_path) = (fs::path(home) / ".config" / NAME / CONFIG_NAME).string();
 #endif
     
     // If no config later calls on config_toml objectw will result in defaults being used
@@ -41,7 +41,7 @@ config::colors::colors(const toml::table* config) : config_toml(config) {
     accent_color2 = parse_accent_color2();
 }
 
-std::string config::get_error_msg(ERROR e, const std::string& key) {
+std::string config::get_error_msg(errors e, const std::string& key) {
     switch(e) {
         case INVALID_INT:
             return "Invalid intiger value for '" + key + "'. The value needs to be between 0 - 15";

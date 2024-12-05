@@ -67,12 +67,12 @@ class config {
     std::unique_ptr<misc> misc_o;
     std::unique_ptr<colors> colors_o;
 protected:
-    enum ERROR {
+    enum errors {
         INVALID_INT,
         INVALID_VAL,
         INVALID_HEX
     };    
-    static std::string get_error_msg(ERROR e, const std::string& key);
+    static std::string get_error_msg(errors e, const std::string& key);
 
 public:
     config();

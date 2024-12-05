@@ -28,9 +28,10 @@ void volumen() {
     
     custom_ui::init(config_p);
     login login(config_p);
-    auth auth_o([&]{
+    std::shared_ptr<auth> auth_p;
+    auth_p = std::make_shared<auth>([&, auth_p]{
         try {
-            login.login_screen(auth_o);
+            login.login_screen(*auth_p);
         } catch(error::volumen_exception& e) {
             if(e.get_type() == error::auth_error)
                 spdlog::error(e.get_error_message());
@@ -42,11 +43,11 @@ void volumen() {
         }
     });
 
-    main_ui main_ui(config_p, auth_o);
+    main_ui main_ui(config_p, *auth_p);
     do {
-        auth_o.refresh_api_tokens();
+        auth_p->refresh_api_tokens();
         if(!ssave::exists(auth::login_service_field))
-            login.choose_account_screen(auth_o);
+            login.choose_account_screen(*auth_p);
     } while(ssave::exists(auth::login_service_field) && main_ui.display_interface(ssave::get(auth::login_service_field)));
 
     delete config_p;
