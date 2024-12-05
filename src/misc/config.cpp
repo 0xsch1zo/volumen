@@ -92,7 +92,7 @@ config::colors::rgb config::colors::hextorgb(const std::string& hex) const {
 }
 
 ft::Color config::colors::parse_main_color() const {
-    const std::string main_key = "main";
+    const std::string main_key = "main_color";
     if(!config_toml || !(*config_toml)[COLORS_GROUP][main_key].is_value())
         return default_main;
     else
