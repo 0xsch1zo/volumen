@@ -36,7 +36,7 @@ FetchContent_Declare(keychain
   GIT_TAG        82acee89623d0d84e1575147fb83ed387646bce8 
 )
 
-FetchContent_MakeAvailable(ftxui spdlog json cpr tomlplusplus keychain)
+FetchContent_MakeAvailable(ftxui spdlog json tomlplusplus keychain cpr)
 
 project(volumen)
 

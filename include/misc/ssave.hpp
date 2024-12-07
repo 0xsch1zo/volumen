@@ -11,5 +11,9 @@ public:
 private:
     ssave();
     static const inline std::string package_    = "volumen";
-    static const inline std::string user_       = getenv("USER");
+#ifdef _WIN32
+    static const inline std::string user_       = std::getenv("UserName");
+#else
+    static const inline std::string user_       = std::getenv("USER");
+#endif
 };
