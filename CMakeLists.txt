@@ -7,33 +7,33 @@ add_compile_definitions(VOLUMEN_TESTING)
 include(FetchContent)
 
 FetchContent_Declare(ftxui
-  GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG        58ff448 
+  GIT_REPOSITORY  https://github.com/ArthurSonzogni/ftxui
+  GIT_TAG         58ff448 
 )
 
 FetchContent_Declare(spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG        v1.14.1
+  GIT_REPOSITORY  https://github.com/gabime/spdlog
+  GIT_TAG         24dde318fe034f0c7e809daa5a6e81dc85e1155a
 )
 
 FetchContent_Declare(json
-  GIT_REPOSITORY https://github.com/nlohmann/json
-  GIT_TAG        v3.11.3
+  GIT_REPOSITORY  https://github.com/nlohmann/json
+  GIT_TAG         9f60e855576bb1e95f39ab23b3821982cccb0bab
 )
 
 FetchContent_Declare(cpr 
-  GIT_REPOSITORY https://github.com/libcpr/cpr
-  GIT_TAG         1.10.5
+  GIT_REPOSITORY  https://github.com/libcpr/cpr
+  GIT_TAG         1d296d5439560e0d0b188707142e3f1cd48bdfcd
 )
 
 FetchContent_Declare(tomlplusplus
-  GIT_REPOSITORY https://github.com/marzer/tomlplusplus
-  GIT_TAG        v3.4.0
+  GIT_REPOSITORY  https://github.com/marzer/tomlplusplus
+  GIT_TAG         c4369ae1d8955cae20c4ab40b9813ef4b60e48be
 )
 
 FetchContent_Declare(keychain
-  GIT_REPOSITORY https://github.com/hrantzsch/keychain
-  GIT_TAG        82acee89623d0d84e1575147fb83ed387646bce8 
+  GIT_REPOSITORY  https://github.com/hrantzsch/keychain
+  GIT_TAG         82acee89623d0d84e1575147fb83ed387646bce8 
 )
 
 FetchContent_MakeAvailable(ftxui spdlog json tomlplusplus keychain cpr)
