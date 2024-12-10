@@ -66,7 +66,7 @@ class benchmarks {
 public:
     benchmarks(const std::string& mocks);
     class benchmark {
-        std::chrono::_V2::high_resolution_clock::time_point start_time;
+        std::chrono::high_resolution_clock::time_point start_time;
         int64_t total_time;
     public:
         void start();
