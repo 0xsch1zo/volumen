@@ -87,7 +87,7 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
                 );
             }
         })
-        | ft::CatchEvent([&, hovered](ft::Event event) {
+        | ft::CatchEvent([=](ft::Event event) {
             if(event == ft::Event::Return) {
                 on_select();
                 return true;

@@ -56,12 +56,11 @@ std::mutex* redirect_mutex) {
     const std::vector<std::string> menu_labels = { "Recieved", "Sent" };
     auto message_type_menu = ft::Menu(menu_labels, &messages_type_selected_, ft::MenuOption::HorizontalAnimated());
 
-    auto on_action = [&]{
+    auto on_action = [=]{
         auto* screen = ft::ScreenInteractive::Active();
         screen ? screen->Exit() : throw error::volumen_exception(__FUNCTION__, "", error::no_active_screen_error);
-        redirect_mutex->lock();
+        std::lock_guard lock(*redirect_mutex);
         *redirect = main_ui::MESSAGE_VIEW; 
-        redirect_mutex->unlock();
     };
 
     auto message_types_container = ft::Container::Tab({
