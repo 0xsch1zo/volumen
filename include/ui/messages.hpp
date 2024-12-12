@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <api/api.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>

@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <api/api.hpp>
 #include <bitset>
 #include <ftxui/component/screen_interactive.hpp>

@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ui/timetable.hpp>

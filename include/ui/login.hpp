@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <auth/auth.hpp>
 #include <misc/config.hpp>
 #include <ftxui/dom/elements.hpp>
