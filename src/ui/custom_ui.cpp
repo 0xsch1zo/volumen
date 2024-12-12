@@ -36,6 +36,31 @@ ft::ButtonOption custom_ui::button_rounded()
     return option;
 }
 
+ft::Component custom_ui::on_action(ft::Component component, std::function<void()> on_action_) {
+    std::shared_ptr hovered = std::make_shared<bool>();
+    return component
+    | ft::CatchEvent([=](ft::Event event) {
+        if(event == ft::Event::Return) {
+            on_action_();
+            return true;
+        }
+
+        if(event.is_mouse() &&
+        *hovered &&
+        event.mouse().button == ft::Mouse::Button::Left && event.mouse().motion == ft::Mouse::Motion::Released)
+            on_action_();
+
+        return false;
+    })
+    | ft::Hoverable([=](bool h){ *hovered = h; });
+}
+
+ft::ComponentDecorator custom_ui::on_action(std::function<void()> on_action_) {
+    return [=](ft::Component component) {
+        return on_action(component, on_action_);
+    };
+}
+
 ft::Element custom_ui::focus_managed_window(ft::Element title, ft::Element contents, const focus_management_t& focus_management)
 {
     auto base = [&](ft::Color title_color, ft::Color overall_color){
@@ -70,7 +95,7 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
     
     for(int i{}; i < contents.size(); i++) {
         const std::string& content = contents.at(i)->content;
-        std::shared_ptr hovered = std::make_shared<bool>();
+        //std::shared_ptr hovered = std::make_shared<bool>();
 
         content_entries->Add(ft::MenuEntry({
             .label = (content.size() < PREVIEW_SIZE) ? content : content.substr(0, PREVIEW_SIZE) + "...",
@@ -87,7 +112,8 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
                 );
             }
         })
-        | ft::CatchEvent([=](ft::Event event) {
+        | on_action(on_select));
+        /*| ft::CatchEvent([=](ft::Event event) {
             if(event == ft::Event::Return) {
                 on_select();
                 return true;
@@ -100,7 +126,7 @@ ft::Component custom_ui::content_boxes(const std::vector<api::content_t*>& conte
 
             return false;
         })
-        | ft::Hoverable([=](bool h){ *hovered = h; }));
+        | ft::Hoverable([=](bool h){ *hovered = h; }));*/
     }
 
     return ft::Renderer(content_entries, [=]{ 

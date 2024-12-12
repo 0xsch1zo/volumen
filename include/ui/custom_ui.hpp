@@ -17,6 +17,8 @@ public:
     };
     static void init(const config* config); // Fuck clean code guidelines
     static ft::ButtonOption button_rounded();
+    static ft::Component on_action(ft::Component component, std::function<void()> on_action);
+    static ft::ComponentDecorator on_action(std::function<void()> on_action);
     static ft::Component custom_component_window(ft::Element title, ft::Component contents);
     static ft::Component custom_dropdown(ft::ConstStringListRef entries, int* selected);
     static ft::Component content_boxes(const std::vector<api::content_t*>& contents, int* selector, std::function<void()> on_select);

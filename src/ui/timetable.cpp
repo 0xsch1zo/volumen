@@ -234,13 +234,7 @@ ft::Component timetable::lesson_box(const api::lesson_t& lesson) {
             }
         }
     })
-    | ft::CatchEvent([=](ft::Event event){
-        if(event == ft::Event::Return) {
-            *show = !(*show);
-            return true;
-        }
-        return false;
-    });
+    | custom_ui::on_action([=]{ *show = !(*show); });
 }
 
 ft::Component timetable::event_box(const api::event_t& event) {
@@ -258,13 +252,7 @@ ft::Component timetable::event_box(const api::event_t& event) {
         }
     })
     | ft::Modal(event_detail_box(event), show.get())
-    | ft::CatchEvent([=](ft::Event event){
-        if(event == ft::Event::Return) {
-            *show = !(*show);
-            return true;
-        }
-        return false;
-    });
+    | custom_ui::on_action([=]{ *show = !(*show); });
 }
 
 ft::Component timetable::event_detail_box(const api::event_t& event) {
