@@ -5,8 +5,20 @@ set(JSON_Diagnostics ON)
 add_compile_definitions(VOLUMEN_TESTING)
 
 if(WIN32)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
+
+if(NOT TARGET uninstall)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+        IMMEDIATE @ONLY
+    )
+
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    )
 endif()
 
 include(FetchContent)
@@ -81,6 +93,18 @@ target_link_libraries(volumen
   PRIVATE cpr::cpr
   PRIVATE keychain 
   PRIVATE spdlog
+)
+
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(BASE_INSTALL_DIR /opt/volumen)
+  set(CMAKE_INSTALL_PREFIX ${BASE_INSTALL_DIR})
+  list(APPEND CMAKE_PROGRAM_PATH ${BASE_INSTALL_DIR}/bin)
+  file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
+endif()
+
+install(TARGETS volumen
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 add_executable(benchmark
