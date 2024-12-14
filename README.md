@@ -13,7 +13,7 @@ You use librus-portal credentials. After the first login the refresh token will 
 ![login screenshot](./assets/login_screen.png)
 
 ## Customization 
-There is also a possibility to customise the app. You can create a directory called `volumen` and afile called `volumen_config.toml`at:
+There is also a possibility to customise the app. You can create a directory called `volumen` and a file called `volumen_config.toml`at:
 On Linux:
 ```
 ~/.config/volumen/volumen_config.toml
@@ -55,9 +55,8 @@ All of them are automatically built by cmake.
 ```sh
 git clone https://github.com/sentientbottleofwine/volumen
 cd volumen
-cmake .
-cmake --build
+cmake . -B build
+cmake --build build/
 ```
-
 ## Issues
 If you're having issues feel free to report them [here](https://github.com/sentientbottleofwine/volumen/issues)
