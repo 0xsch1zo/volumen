@@ -2,13 +2,19 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_Diagnostics ON)
-add_compile_definitions(VOLUMEN_TESTING)
+# Ihnored on windows
+file(RELATIVE_PATH relative_to_libs
+    ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+)
+set(CMAKE_INSTALL_RPATH $ORIGIN $ORIGIN/${relative_to_libs})
 
 if(WIN32)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
   
+add_compile_definitions(VOLUMEN_TESTING)
 include(FetchContent)
 
 FetchContent_Declare(ftxui
@@ -82,13 +88,6 @@ target_link_libraries(volumen
   PRIVATE keychain 
   PRIVATE spdlog
 )
-
-if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(BASE_INSTALL_DIR /opt/volumen)
-  set(CMAKE_INSTALL_PREFIX ${BASE_INSTALL_DIR})
-  list(APPEND CMAKE_PROGRAM_PATH ${BASE_INSTALL_DIR}/bin)
-  file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
-endif()
 
 install(TARGETS volumen
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
