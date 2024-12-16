@@ -75,10 +75,16 @@ void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
     upcoming_events upcoming_events_o;
     weekend_bar weekend_bar_o;
 
-    auto grades = grades_dashboard_o.get_component(api);
-    auto timetable = timetable_dashboard_o.get_component(api);
-    auto events = upcoming_events_o.get_component(api);
-    auto weekend_bar = weekend_bar_o.get_component(api);
+    auto xflex_component = [](ft::Component component) {
+        return ft::Renderer(component, [=]{ 
+            return component->Render() | ft::xflex; 
+        });
+    };
+
+    auto grades = grades_dashboard_o.get_component(api) | xflex_component;
+    auto timetable = timetable_dashboard_o.get_component(api) | xflex_component;
+    auto events = upcoming_events_o.get_component(api) | xflex_component;
+    auto weekend_bar = weekend_bar_o.get_component(api) | xflex_component;
     
     auto dashboard_components = ft::Container::Vertical({
         ft::Container::Horizontal({
@@ -97,7 +103,7 @@ void dashboard::dashboard_display(ft::Component dashboard_component, api* api) {
             })
         }),
         ft::Container::Horizontal({
-            weekend_bar,
+            weekend_bar
         })
     });
 
