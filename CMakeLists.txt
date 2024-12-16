@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(JSON_Diagnostics ON)
 # Ihnored on windows
 file(RELATIVE_PATH relative_to_libs
     ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
@@ -13,8 +12,7 @@ if(WIN32)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
-  
-add_compile_definitions(VOLUMEN_TESTING)
+
 include(FetchContent)
 
 FetchContent_Declare(ftxui
@@ -86,7 +84,7 @@ target_link_libraries(volumen
   PRIVATE tomlplusplus::tomlplusplus
   PRIVATE cpr::cpr
   PRIVATE keychain 
-  PRIVATE spdlog
+  PRIVATE spdlog::spdlog
 )
 
 install(TARGETS volumen
@@ -96,29 +94,34 @@ install(TARGETS volumen
 
 include(CPack)
 
-add_executable(benchmark
-  benchmarks/main.cpp
-  benchmarks/benchmarks.cpp
-  src/ui/custom_ui.cpp
-  src/auth/auth.cpp
-  src/api/api.cpp 
-  src/misc/utils.cpp
-  src/misc/error_handler.cpp
-  src/misc/config.cpp
-  src/misc/ssave.cpp
-)
 
-target_include_directories(benchmark
-  PRIVATE include/
-)
+if(CMAKE_BUILD_TYPE=Debug)
+  set(JSON_Diagnostics ON)
+  add_compile_definitions(VOLUMEN_TESTING)
+  add_executable(benchmark
+    benchmarks/main.cpp
+    benchmarks/benchmarks.cpp
+    src/ui/custom_ui.cpp
+    src/auth/auth.cpp
+    src/api/api.cpp 
+    src/misc/utils.cpp
+    src/misc/error_handler.cpp
+    src/misc/config.cpp
+    src/misc/ssave.cpp
+  )
 
-target_link_libraries(benchmark
-  PRIVATE ftxui::screen
-  PRIVATE ftxui::dom
-  PRIVATE ftxui::component
-  PRIVATE nlohmann_json::nlohmann_json
-  PRIVATE tomlplusplus::tomlplusplus
-  PRIVATE cpr::cpr
-  PRIVATE keychain 
-  PRIVATE spdlog
-)
+  target_include_directories(benchmark
+    PRIVATE include/
+  )
+
+  target_link_libraries(benchmark
+    PRIVATE ftxui::screen
+    PRIVATE ftxui::dom
+    PRIVATE ftxui::component
+    PRIVATE nlohmann_json::nlohmann_json
+    PRIVATE tomlplusplus::tomlplusplus
+    PRIVATE cpr::cpr
+    PRIVATE keychain 
+    PRIVATE spdlog::spdlog
+  )
+endif()
