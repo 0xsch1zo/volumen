@@ -2,6 +2,31 @@
 
 ![dashboad sceenshot](./assets/dashboard.png)
 
+## Dependencies
+```
+keychain
+ftxui
+spdlog
+nlohmann-json
+cpr
+tomlplusplus
+```
+All of them are automatically built by cmake.
+
+## Build && Install
+```sh
+git clone https://github.com/sentientbottleofwine/volumen
+cd volumen
+cmake . -B build
+cmake --build build/
+```
+To install just:
+```sh
+cmake --install .
+```
+### Install on windows
+Due to the pain in the ass that is building on this os, an exe installer is available in the [releases](https://github.com/sentientbottleofwine/volumen/releases) page. Of course nobody stops you from building from source if you want to.
+
 ## Navigation
 You can move around using h,j,k,l(or arrows), the mouse is also supported. If you're using the keyboard in the dashboard widgets will be out of focus by default(this is to ease navigation), you can press enter to focus on a widget. Also there are global keybindings to all segments of the app.
 
@@ -40,23 +65,5 @@ something
 """
 ```
 
-## Dependencies
-```
-keychain
-ftxui
-spdlog
-nlohmann-json
-cpr
-tomlplusplus
-```
-All of them are automatically built by cmake.
-
-## Build
-```sh
-git clone https://github.com/sentientbottleofwine/volumen
-cd volumen
-cmake . -B build
-cmake --build build/
-```
 ## Issues
 If you're having issues feel free to report them [here](https://github.com/sentientbottleofwine/volumen/issues)
