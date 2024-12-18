@@ -12,6 +12,7 @@ class timetable {
     const config* config_p;
     std::string prev_url;
     std::string next_url;
+    int day_selector; 
 
     ft::Component lessons(
         const std::vector<api::lesson_t>& day, 
@@ -27,7 +28,6 @@ public:
     void timetable_display(
         ft::Component timetable_component, 
         api* api, 
-        int* selector,
         const std::string& url
     );
 };

@@ -16,7 +16,6 @@
 void timetable::timetable_display(
     ft::Component timetable_component, 
     api* api, 
-    int* selector,
     const std::string& url
 ) {
     auto loading_screen = std::jthread([&](std::stop_token s_token){
@@ -61,7 +60,7 @@ void timetable::timetable_display(
         ">"
     };
 
-    auto timetable_container = ft::Container::Tab({}, selector);
+    auto timetable_container = ft::Container::Tab({}, &day_selector);
 
     const int ACTION_COUNT = 2;
     const int ACTION_PREV_ENTRY_OFFSET = 1;
@@ -89,21 +88,21 @@ void timetable::timetable_display(
         // WARNING: If you pass timetable_component directly you will create a std::shared_ptr dependency cycly and with that a memory leak
         std::weak_ptr timetable_component_for_lamda = timetable_component;
 
-        *selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
-        ft::Component menu = ft::Menu(weekdays, selector, ft::MenuOption::HorizontalAnimated());
+        day_selector = utils::get_day_of_week(api->get_today()) + ACTION_PREV_ENTRY_OFFSET; // Offset by ACTION_PREV_ENTRY_OFFSET because of action prev('<') element
+        ft::Component menu = ft::Menu(weekdays, &day_selector, ft::MenuOption::HorizontalAnimated());
         menu = ft::Renderer(menu, [=, this]{
-            if(*selector == 0) {
-                *selector = weekdays.size() - ACTION_COUNT;
+            if(day_selector == 0) {
+                day_selector = weekdays.size() - ACTION_COUNT;
                 timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
                 std::thread([=, this] {
-                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, prev_url);
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, prev_url);
                 }).detach();
 
-            } else if(*selector == weekdays.size() - 1) {
-                *selector = ACTION_PREV_ENTRY_OFFSET;
+            } else if(day_selector == weekdays.size() - 1) {
+                day_selector = ACTION_PREV_ENTRY_OFFSET;
                 timetable_contents->ChildAt(TIMETABLE_POSITION)->Detach();
                 std::thread([=, this] {
-                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, selector, next_url);
+                    timetable_display(std::shared_ptr(timetable_component_for_lamda), api, next_url);
                 }).detach();
             }
             return menu->Render();

@@ -101,7 +101,6 @@ bool main_ui::display_interface(const std::string& picked_login) {
     std::future<void> timetable_load_handle;
     std::future<void> grades_load_handle;
 
-    int selsd{};
     ft::Component dashboard_component       = ft::Container::Vertical({ loading_screen() });
     ft::Component messages_component        = ft::Container::Vertical({ loading_screen() });
     ft::Component annoucements_component    = ft::Container::Vertical({ loading_screen() });
@@ -196,7 +195,7 @@ bool main_ui::display_interface(const std::string& picked_login) {
                     GUARD(TIMETABLE);
 
                     timetable_load_handle = std::async(std::launch::async, ui_error_wrapper, &e, [&]{
-                        timetable_o.timetable_display(timetable_component, &api, &selsd, "");
+                        timetable_o.timetable_display(timetable_component, &api, "");
                     }, tab_container, TIMETABLE);
 
                     envoked_lazy_load[TIMETABLE] = true;
