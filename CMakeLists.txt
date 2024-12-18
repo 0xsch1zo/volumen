@@ -84,7 +84,7 @@ target_link_libraries(volumen
   PRIVATE tomlplusplus::tomlplusplus
   PRIVATE cpr::cpr
   PRIVATE keychain 
-  PRIVATE spdlog::spdlog
+  PRIVATE spdlog::spdlog_header_only
 )
 
 install(TARGETS volumen
@@ -92,6 +92,7 @@ install(TARGETS volumen
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 include(CPack)
 
 
@@ -122,6 +123,6 @@ if(CMAKE_BUILD_TYPE=Debug)
     PRIVATE tomlplusplus::tomlplusplus
     PRIVATE cpr::cpr
     PRIVATE keychain 
-    PRIVATE spdlog::spdlog
+    PRIVATE spdlog::spdlog_header_only
   )
 endif()
