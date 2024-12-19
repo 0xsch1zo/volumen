@@ -5,6 +5,7 @@ on: [release, workflow_dispatch]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   build:
