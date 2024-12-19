@@ -36,5 +36,5 @@ jobs:
       run: |
         cd ${{github.workspace}}/build
         cpack -R ${{github.event.release.tag_name}}
-        gh release upload ${{github.event.release.tag_name}}
+        gh release upload ${{github.event.release.tag_name}} volumen-${{github.event.release.tag_name}}-win64.exe
     
