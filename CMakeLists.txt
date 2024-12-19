@@ -47,7 +47,7 @@ FetchContent_Declare(keychain
 
 FetchContent_MakeAvailable(ftxui spdlog json tomlplusplus keychain cpr)
 
-project(volumen)
+project(volumen VERSION 0.1.7)
 
 add_executable(volumen
   src/main.cpp
@@ -93,6 +93,7 @@ install(TARGETS volumen
 )
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 include(CPack)
 
 
