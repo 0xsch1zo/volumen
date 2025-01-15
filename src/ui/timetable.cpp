@@ -128,9 +128,10 @@ ft::Component timetable::lessons(const std::vector<api::lesson_t>& day, api::eve
         if(events_o.contains(lesson.date)) {
             // Find event relevant to lesson number
             for(const auto& event : events_o[lesson.date]) {
-                if(event.lesson_offset == (i++) + 1)
+                if(event.lesson_offset == i + 1)
                     events_component->Add(event_box(event));
             }
+            i++;
         }
 
         if(lesson.is_empty) {
