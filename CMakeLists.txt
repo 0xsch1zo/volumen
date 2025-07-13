@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(JSON_Diagnostics ON)
 # Ihnored on windows
 file(RELATIVE_PATH relative_to_libs
     ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
@@ -18,32 +19,32 @@ include(FetchContent)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY  https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG         58ff448
+  GIT_TAG         v6.1.9
 )
 
 FetchContent_Declare(spdlog
   GIT_REPOSITORY  https://github.com/gabime/spdlog
-  GIT_TAG         24dde318fe034f0c7e809daa5a6e81dc85e1155a
+  GIT_TAG         v1.15.3
 )
 
 FetchContent_Declare(json
   GIT_REPOSITORY  https://github.com/nlohmann/json
-  GIT_TAG         9f60e855576bb1e95f39ab23b3821982cccb0bab
+  GIT_TAG         v3.12.0
 )
 
 FetchContent_Declare(cpr
   GIT_REPOSITORY  https://github.com/libcpr/cpr
-  GIT_TAG         1d296d5439560e0d0b188707142e3f1cd48bdfcd
+  GIT_TAG         1.12.0
 )
 
 FetchContent_Declare(tomlplusplus
   GIT_REPOSITORY  https://github.com/marzer/tomlplusplus
-  GIT_TAG         c4369ae1d8955cae20c4ab40b9813ef4b60e48be
+  GIT_TAG         v3.4.0
 )
 
 FetchContent_Declare(keychain
   GIT_REPOSITORY  https://github.com/hrantzsch/keychain
-  GIT_TAG         82acee89623d0d84e1575147fb83ed387646bce8
+  GIT_TAG         v1.3.1
 )
 
 FetchContent_MakeAvailable(ftxui spdlog json tomlplusplus keychain cpr)
