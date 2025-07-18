@@ -13,7 +13,7 @@
 
 // TODO: implement caching
 ft::Component dashboard::timetable_dashboard::get_component(api *api) {
-  const std::string weekend_prompt = "No lessons today!";
+  const std::string weekend_prompt = "No lessons tommorow!";
   const api::timetable_t timetable_o = api->get_timetable();
   int tomorrow = (utils::get_day_of_week(api->get_today()) + 1) % 7;
   static int selector{};

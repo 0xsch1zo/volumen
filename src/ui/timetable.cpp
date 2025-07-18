@@ -35,10 +35,7 @@ void timetable::timetable_display(ft::Component timetable_component, api *api,
     loading_screen_component->Detach();
   });
 
-  const int TIMETABLE_POSITION = 2;
-
-  timetable_contents->Add(
-      ft::Renderer([] { return ft::text("") | ft::center; }));
+  const int TIMETABLE_POSITION = 1;
 
   // get_timetable will handle empty url
   api::timetable_t timetable_o = api->get_timetable(url);
